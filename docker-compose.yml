@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  mindloom:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./vault:/vault
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - PORT=8000
+    command: sh -c "python parse_projects.py && uvicorn main:app --host 0.0.0.0 --port 8000"
