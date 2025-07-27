@@ -2,9 +2,9 @@ services:
   mindloom:
     build: .
     ports:
-      - "8000:8000"
+      - "8330:8000"
     volumes:
-      - ./vault:/vault
+      - "/mnt/Movies-And-More/Documents/Writing/Obsidian Vault:/vault"
       - ./data:/app/data
     environment:
       - ENVIRONMENT=development

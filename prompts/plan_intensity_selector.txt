@@ -1,0 +1,14 @@
+The user has the following active projects:
+
+{% for task in tasks %}
+- {{task.title}} (effort: {{task.effort}}, energy: {{task.energy_cost}})
+{% endfor %}
+
+Choose tasks to include in today’s plan based on this intensity setting: **{{intensity}}**
+
+Definitions:
+- Light: 1 must-do task + 1 easy win
+- Medium: 2–3 tasks, balanced load
+- Full: 3–5 tasks, productivity mode
+
+Return selected tasks with brief justifications.

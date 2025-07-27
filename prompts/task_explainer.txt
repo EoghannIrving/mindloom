@@ -1,0 +1,11 @@
+Break this high-level goal into 4–7 clear, actionable tasks that can each be completed in under 90 minutes.
+
+Goal:
+{{goal_text}}
+
+Each task should include:
+- A short description
+- Estimated effort: low | medium | high
+- Energy cost (1–5)
+
+Respond in YAML format.
