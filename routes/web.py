@@ -5,12 +5,15 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
-from config import config
+from config import config, PROJECT_ROOT
+
 
 router = APIRouter()
+templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
 
 LOG_FILE = Path(config.LOG_DIR) / "web.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -23,79 +26,9 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-INDEX_HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Mindloom</title>
-</head>
-<body>
-  <h1>Mindloom Interface</h1>
-  <h2>Parse Projects</h2>
-  <button id=\"parseBtn\">Parse</button>
-  <button id=\"tasksBtn\">Save Tasks</button>
-  <pre id=\"parseResult\"></pre>
-  <pre id=\"tasksResult\"></pre>
-  <h2>Record Energy</h2>
-  <input type=\"number\" id=\"energy\" placeholder=\"Energy 1-10\">
-  <input type=\"number\" id=\"mood\" placeholder=\"Mood 1-10\">
-  <button id=\"recordBtn\">Record</button>
-  <pre id=\"recordResult\"></pre>
-  <h2>Data</h2>
-  <button id=\"loadProjects\">Load Projects</button>
-  <pre id=\"projects\"></pre>
-  <button id=\"loadEnergy\">Load Energy</button>
-  <pre id=\"energyData\"></pre>
-
-<script>
-const parseBtn = document.getElementById('parseBtn');
-parseBtn.onclick = async () => {
-  const res = await fetch('/parse-projects', {method: 'POST'});
-  const data = await res.json();
-  document.getElementById('parseResult').textContent = JSON.stringify(data);
-};
-
-const tasksBtn = document.getElementById('tasksBtn');
-tasksBtn.onclick = async () => {
-  const res = await fetch('/save-tasks', {method: 'POST'});
-  const data = await res.json();
-  document.getElementById('tasksResult').textContent = JSON.stringify(data);
-};
-
-const recordBtn = document.getElementById('recordBtn');
-recordBtn.onclick = async () => {
-  const payload = {
-    energy: parseInt(document.getElementById('energy').value),
-    mood: parseInt(document.getElementById('mood').value)
-  };
-  const res = await fetch('/energy', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  document.getElementById('recordResult').textContent = JSON.stringify(data);
-};
-
-document.getElementById('loadProjects').onclick = async () => {
-  const res = await fetch('/projects');
-  const data = await res.json();
-  document.getElementById('projects').textContent = JSON.stringify(data, null, 2);
-};
-
-document.getElementById('loadEnergy').onclick = async () => {
-  const res = await fetch('/energy');
-  const data = await res.json();
-  document.getElementById('energyData').textContent = JSON.stringify(data, null, 2);
-};
-</script>
-</body>
-</html>
-"""
-
 
 @router.get("/", response_class=HTMLResponse)
-def index():
+def index(request: Request):
     """Return the basic web interface."""
     logger.info("GET /")
-    return HTMLResponse(content=INDEX_HTML)
+    return templates.TemplateResponse("index.html", {"request": request})

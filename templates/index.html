@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mindloom</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4">
+  <div class="max-w-xl mx-auto space-y-4">
+    <h1 class="text-2xl font-bold mb-4">Mindloom Interface</h1>
+    <section class="space-y-2">
+      <h2 class="text-xl font-semibold">Parse Projects</h2>
+      <div class="flex gap-2">
+        <button id="parseBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Parse</button>
+        <button id="tasksBtn" class="px-3 py-1 bg-green-500 text-white rounded">Save Tasks</button>
+      </div>
+      <pre id="parseResult" class="bg-gray-100 p-2 rounded"></pre>
+      <pre id="tasksResult" class="bg-gray-100 p-2 rounded"></pre>
+    </section>
+    <section class="space-y-2">
+      <h2 class="text-xl font-semibold">Record Energy</h2>
+      <div class="flex gap-2">
+        <input type="number" id="energy" placeholder="Energy 1-10" class="border p-1 flex-1">
+        <input type="number" id="mood" placeholder="Mood 1-10" class="border p-1 flex-1">
+        <button id="recordBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Record</button>
+      </div>
+      <pre id="recordResult" class="bg-gray-100 p-2 rounded"></pre>
+    </section>
+    <section class="space-y-2">
+      <h2 class="text-xl font-semibold">Data</h2>
+      <div class="flex gap-2">
+        <button id="loadProjects" class="px-3 py-1 bg-blue-500 text-white rounded">Load Projects</button>
+        <button id="loadEnergy" class="px-3 py-1 bg-blue-500 text-white rounded">Load Energy</button>
+      </div>
+      <pre id="projects" class="bg-gray-100 p-2 rounded"></pre>
+      <pre id="energyData" class="bg-gray-100 p-2 rounded"></pre>
+    </section>
+  </div>
+
+<script>
+const parseBtn = document.getElementById('parseBtn');
+parseBtn.onclick = async () => {
+  const res = await fetch('/parse-projects', {method: 'POST'});
+  const data = await res.json();
+  document.getElementById('parseResult').textContent = JSON.stringify(data);
+};
+
+const tasksBtn = document.getElementById('tasksBtn');
+tasksBtn.onclick = async () => {
+  const res = await fetch('/save-tasks', {method: 'POST'});
+  const data = await res.json();
+  document.getElementById('tasksResult').textContent = JSON.stringify(data);
+};
+
+const recordBtn = document.getElementById('recordBtn');
+recordBtn.onclick = async () => {
+  const payload = {
+    energy: parseInt(document.getElementById('energy').value),
+    mood: parseInt(document.getElementById('mood').value)
+  };
+  const res = await fetch('/energy', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  document.getElementById('recordResult').textContent = JSON.stringify(data);
+};
+
+document.getElementById('loadProjects').onclick = async () => {
+  const res = await fetch('/projects');
+  const data = await res.json();
+  document.getElementById('projects').textContent = JSON.stringify(data, null, 2);
+};
+
+document.getElementById('loadEnergy').onclick = async () => {
+  const res = await fetch('/energy');
+  const data = await res.json();
+  document.getElementById('energyData').textContent = JSON.stringify(data, null, 2);
+};
+</script>
+</body>
+</html>
