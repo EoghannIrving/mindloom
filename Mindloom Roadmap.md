@@ -17,12 +17,12 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   - Writing, coding, photography, home, health, etc.
   - Store as YAML or JSON (`life_areas.yaml`)
 
-- [ ] **Parse Obsidian project notes**
+- [x] **Parse Obsidian project notes**
   - Walk `/Projects/` folder
   - Extract frontmatter: `status`, `area`, `effort`, `due`
   - Extract task checkboxes and summarize content
 
-- [ ] **Design task schema**
+- [x] **Design task schema**
   - Fields: `id`, `title`, `area`, `type`, `due`, `recurrence`, `effort`, `energy_cost`, `status`, `last_completed`
   - Store as `tasks.yaml` or SQLite
 
