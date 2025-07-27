@@ -73,7 +73,7 @@ def parse_projects_endpoint():
 
 @router.post("/save-tasks")
 def save_tasks_endpoint():
-    """Parse projects and write tasks.yml."""
+    """Parse projects and write data/tasks.yml."""
     logger.info("POST /save-tasks")
     projects = parse_all_projects()
     tasks = save_tasks_yaml(projects, TASKS_FILE)
