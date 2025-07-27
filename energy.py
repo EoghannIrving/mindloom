@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Utilities for recording daily energy and mood."""
+
+from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
@@ -29,4 +29,3 @@ def record_entry(energy: int, mood: int, path: Path = ENERGY_LOG_PATH) -> Dict:
     with open(path, "w", encoding="utf-8") as handle:
         yaml.dump(entries, handle, allow_unicode=True, sort_keys=False)
     return entry
-
