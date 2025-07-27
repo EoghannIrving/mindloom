@@ -20,8 +20,20 @@
     <section class="space-y-2">
       <h2 class="text-xl font-semibold">Record Energy</h2>
       <div class="flex gap-2">
-        <input type="number" id="energy" placeholder="Energy 1-10" class="border p-1 flex-1">
-        <input type="number" id="mood" placeholder="Mood 1-10" class="border p-1 flex-1">
+        <select id="energy" class="border p-1 flex-1">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+        <select id="mood" class="border p-1 flex-1">
+          <option value="Focused">🎯 Focused</option>
+          <option value="Tired">😴 Tired</option>
+          <option value="Flat">😐 Flat</option>
+          <option value="Anxious">😰 Anxious</option>
+          <option value="Upbeat">😃 Upbeat</option>
+        </select>
         <button id="recordBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Record</button>
       </div>
       <pre id="recordResult" class="bg-gray-100 p-2 rounded"></pre>
@@ -56,7 +68,7 @@ const recordBtn = document.getElementById('recordBtn');
 recordBtn.onclick = async () => {
   const payload = {
     energy: parseInt(document.getElementById('energy').value),
-    mood: parseInt(document.getElementById('mood').value)
+    mood: document.getElementById('mood').value
   };
   const res = await fetch('/energy', {
     method: 'POST',

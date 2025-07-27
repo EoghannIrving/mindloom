@@ -21,8 +21,13 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 parser = argparse.ArgumentParser(description="Record today's energy and mood")
-parser.add_argument("energy", type=int, help="Energy level 1-10")
-parser.add_argument("mood", type=int, help="Mood level 1-10")
+parser.add_argument("energy", type=int, choices=range(1, 6), help="Energy level 1-5")
+parser.add_argument(
+    "mood",
+    type=str,
+    choices=["Focused", "Tired", "Flat", "Anxious", "Upbeat"],
+    help="Mood",
+)
 
 args = parser.parse_args()
 
