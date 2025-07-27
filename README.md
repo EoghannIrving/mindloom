@@ -18,6 +18,14 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
 3. Create a `.env` file if you need to override paths or API keys. `VAULT_PATH` defaults to `vault/Projects`.
 4. Ensure the vault directory exists and contains markdown project files.
+5. If using GitHub Actions, install dependencies in your workflow before running linters:
+   ```yaml
+   - name: Install dependencies
+     run: |
+       python -m pip install --upgrade pip
+       pip install pylint
+       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+   ```
 
 ## Usage
 Parse the projects and start the API:
