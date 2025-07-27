@@ -1,5 +1,7 @@
 """Utilities for recording daily energy and mood."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 from datetime import date

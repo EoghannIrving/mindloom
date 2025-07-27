@@ -1,5 +1,7 @@
 """CLI script to record daily energy and mood."""
 
+# pylint: disable=duplicate-code
+
 import argparse
 import logging
 from pathlib import Path

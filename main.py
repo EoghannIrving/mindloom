@@ -1,8 +1,10 @@
 """FastAPI application entrypoint."""
 
-from fastapi import FastAPI
+# pylint: disable=duplicate-code
+
 import logging
 from pathlib import Path
+from fastapi import FastAPI
 
 from routes import projects, energy, web
 from config import config
