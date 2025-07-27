@@ -1,12 +1,23 @@
 """Utility functions for extracting project metadata from markdown files."""
 
 import re
+import logging
+from pathlib import Path
 import yaml
 
-from config import config
+from config import config, PROJECT_ROOT
 
 PROJECTS_DIR = config.VAULT_PATH
 OUTPUT_FILE = config.OUTPUT_PATH
+LOG_FILE = Path(PROJECT_ROOT) / "parse_projects.log"
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 VALID_KEYS = {"status", "area", "effort", "due"}
 
 def extract_frontmatter(text):
@@ -16,9 +27,11 @@ def extract_frontmatter(text):
         if end != -1:
             try:
                 front = yaml.safe_load(text[3:end])
-                return {k: front.get(k) for k in VALID_KEYS if k in front}, text[end+3:].strip()
-            except yaml.YAMLError:
-                pass
+                data = {k: front.get(k) for k in VALID_KEYS if k in front}
+                logger.debug("Parsed frontmatter: %s", data)
+                return data, text[end+3:].strip()
+            except yaml.YAMLError as exc:
+                logger.warning("Failed to parse frontmatter: %s", exc)
     return {}, text
 
 def extract_tasks(text):
@@ -34,24 +47,34 @@ def summarize_body(text, max_chars=300):
 
 def parse_markdown_file(filepath):
     """Parse a single markdown project file."""
+    logger.info("Parsing %s", filepath)
     with open(filepath, "r", encoding="utf-8") as handle:
         content = handle.read()
     frontmatter, body = extract_frontmatter(content)
     tasks = extract_tasks(body)
     summary = summarize_body(body)
-    return {
+    data = {
         "title": filepath.stem,
         "path": str(filepath.relative_to(PROJECTS_DIR.parent)),
         **frontmatter,
         "tasks": tasks,
         "summary": summary,
     }
+    logger.debug("Parsed data for %s: %s", filepath, data)
+    return data
 
 def parse_all_projects(root=PROJECTS_DIR):
     """Return a list of parsed projects from the given directory."""
-    return [parse_markdown_file(md) for md in root.rglob("*.md")]
+    logger.info("Scanning %s for markdown files", root)
+    md_files = list(root.rglob("*.md"))
+    logger.info("Found %d markdown files", len(md_files))
+    projects = [parse_markdown_file(md) for md in md_files]
+    logger.info("Parsed %d projects", len(projects))
+    return projects
 
 if __name__ == "__main__":
+    logger.info("Starting project parsing")
     all_projects = parse_all_projects()
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         yaml.dump(all_projects, f, sort_keys=False, allow_unicode=True)
+    logger.info("Wrote %d projects to %s", len(all_projects), OUTPUT_FILE)
