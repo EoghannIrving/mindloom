@@ -9,6 +9,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Provide a `/projects` API endpoint with optional filters for status, area and effort.
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
+- Render prompt templates via the `/render-prompt` API or the web interface.
 - Containerized setup using Docker and docker-compose.
 
 ## Setup
@@ -43,7 +44,7 @@ The script writes detailed logs to `data/parse_projects.log`.
 Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects and record energy.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and render prompt templates.
 
 Record today's energy and mood from the command line:
 ```bash
