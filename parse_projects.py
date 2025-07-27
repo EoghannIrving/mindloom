@@ -5,11 +5,12 @@ import logging
 from pathlib import Path
 import yaml
 
-from config import config, PROJECT_ROOT
+from config import config
 
 PROJECTS_DIR = config.VAULT_PATH
 OUTPUT_FILE = config.OUTPUT_PATH
-LOG_FILE = Path(PROJECT_ROOT) / "parse_projects.log"
+LOG_FILE = config.LOG_DIR / "parse_projects.log"
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:

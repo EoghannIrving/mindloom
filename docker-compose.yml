@@ -7,6 +7,7 @@ services:
       - "8000:8000"
     volumes:
       - ./vault:/vault
+      - ./data:/app/data
     environment:
       - ENVIRONMENT=development
       - DEBUG=true
