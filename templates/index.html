@@ -125,6 +125,18 @@ document.getElementById('renderPrompt').onclick = async () => {
   } catch (e) {
     console.error('Failed to load tasks', e);
   }
+  try {
+    const energyRes = await fetch('/energy');
+    if (energyRes.ok) {
+      const energyData = await energyRes.json();
+      const latest = energyData[energyData.length - 1];
+      if (latest && !('time_blocks' in variables)) {
+        variables.time_blocks = Math.round(latest.hours_free * 60);
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load energy data', e);
+  }
   const payload = { template: select.value, variables };
   const res = await fetch('/render-prompt', {
     method: 'POST',
