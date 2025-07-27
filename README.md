@@ -18,7 +18,11 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
 3. Create a `.env` file if you need to override paths or API keys. `VAULT_PATH` defaults to `vault/Projects`.
 4. Ensure the vault directory exists and contains markdown project files.
-5. If using GitHub Actions, install dependencies in your workflow before running linters:
+5. Create a `data` directory to persist logs:
+   ```bash
+   mkdir -p data
+   ```
+6. If using GitHub Actions, install dependencies in your workflow before running linters:
    ```yaml
    - name: Install dependencies
      run: |
@@ -33,7 +37,7 @@ Parse the projects and start the API:
 python parse_projects.py
 uvicorn main:app --reload
 ```
-The script writes detailed logs to `parse_projects.log` in the project root.
+The script writes detailed logs to `data/parse_projects.log`.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects and record energy.
@@ -42,6 +46,7 @@ Record today's energy and mood from the command line:
 ```bash
 python record_energy.py 7 8
 ```
+Energy entries are stored in `data/energy_log.yaml`.
 
 ## Development
 Pushes and pull requests run automated checks on GitHub Actions. Formatting is

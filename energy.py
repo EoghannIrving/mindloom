@@ -10,6 +10,7 @@ import yaml
 from config import config
 
 ENERGY_LOG_PATH = config.ENERGY_LOG_PATH
+ENERGY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def read_entries(path: Path = ENERGY_LOG_PATH) -> List[Dict]:
