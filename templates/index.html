@@ -55,6 +55,7 @@
           <option value="{{ p }}">{{ p }}</option>
           {% endfor %}
         </select>
+        <textarea id="promptVars" placeholder="{\"energy\":5}" class="border p-1 flex-1"></textarea>
         <button id="renderPrompt" class="px-3 py-1 bg-blue-500 text-white rounded">Render</button>
       </div>
       <pre id="promptResult" class="bg-gray-100 p-2 rounded"></pre>
@@ -105,7 +106,15 @@ document.getElementById('loadEnergy').onclick = async () => {
 
 document.getElementById('renderPrompt').onclick = async () => {
   const select = document.getElementById('promptSelect');
-  const payload = { template: select.value, variables: {} };
+  const varsText = document.getElementById('promptVars').value || '{}';
+  let variables = {};
+  try {
+    variables = JSON.parse(varsText);
+  } catch {
+    alert('Invalid JSON in variables');
+    return;
+  }
+  const payload = { template: select.value, variables };
   const res = await fetch('/render-prompt', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
