@@ -13,8 +13,10 @@ if Path(".env.local").exists():
 # === Dynamically detect project root ===
 PROJECT_ROOT = Path(__file__).resolve().parent
 
+
 class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     """Centralized application settings."""
+
     # === General ===
     ENVIRONMENT: str = Field("development", env="ENVIRONMENT")
     DEBUG: bool = Field(True, env="DEBUG")
@@ -23,7 +25,9 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     # === Paths ===
     VAULT_PATH: Path = Field(PROJECT_ROOT / "vault/Projects", env="VAULT_PATH")
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
-    ENERGY_LOG_PATH: Path = Field(PROJECT_ROOT / "energy_log.yaml", env="ENERGY_LOG_PATH")
+    ENERGY_LOG_PATH: Path = Field(
+        PROJECT_ROOT / "energy_log.yaml", env="ENERGY_LOG_PATH"
+    )
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
@@ -33,5 +37,6 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         env_file=".env",
         env_file_encoding="utf-8",
     )
+
 
 config = Config()
