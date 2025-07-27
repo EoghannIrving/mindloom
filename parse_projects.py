@@ -71,7 +71,10 @@ def parse_markdown_file(filepath):
 
 def parse_all_projects(root=PROJECTS_DIR):
     """Return a list of parsed projects from the given directory."""
+    root = Path(root).expanduser()
     logger.info("Scanning %s for markdown files", root)
+    if not root.is_dir():
+        raise FileNotFoundError(f"{root} does not exist")
     md_files = list(root.rglob("*.md"))
     logger.info("Found %d markdown files", len(md_files))
     projects = [parse_markdown_file(md) for md in md_files]

@@ -82,3 +82,28 @@ Some body
     assert result["title"] == "example"
     assert result["status"] == "active"
     assert result["tasks"] == ["- [ ] Task"]
+
+
+def test_parse_all_projects_expands_tilde(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """parse_all_projects should expand '~' in the vault path."""
+    home = tmp_path / "home"
+    vault = home / "vault" / "Projects"
+    vault.mkdir(parents=True)
+    md_file = vault / "note.md"
+    md_file.write_text("Body", encoding="utf-8")
+
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("VAULT_PATH", "~/vault/Projects")
+
+    import importlib
+    import config as cfg
+
+    importlib.reload(cfg)
+    import parse_projects as pp
+
+    importlib.reload(pp)
+
+    projects = pp.parse_all_projects()
+    assert projects[0]["title"] == "note"
