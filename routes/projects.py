@@ -10,6 +10,7 @@ import yaml
 from fastapi import APIRouter, Query
 
 from parse_projects import parse_all_projects, save_tasks_yaml
+from tasks import read_tasks
 
 from config import config
 
@@ -79,3 +80,12 @@ def save_tasks_endpoint():
     tasks = save_tasks_yaml(projects, TASKS_FILE)
     logger.info("Saved %d tasks", len(tasks))
     return {"count": len(tasks)}
+
+
+@router.get("/tasks")
+def get_tasks():
+    """Return saved tasks from data/tasks.yml."""
+    logger.info("GET /tasks")
+    tasks = read_tasks(TASKS_FILE)
+    logger.info("Returning %d tasks", len(tasks))
+    return tasks
