@@ -39,10 +39,23 @@ def read_entries(path: Path = ENERGY_LOG_PATH) -> List[Dict]:
     return data
 
 
-def record_entry(energy: int, mood: int, path: Path = ENERGY_LOG_PATH) -> Dict:
+MOOD_EMOJIS = {
+    "Focused": "🎯",
+    "Tired": "😴",
+    "Flat": "😐",
+    "Anxious": "😰",
+    "Upbeat": "😃",
+}
+
+
+def record_entry(energy: int, mood: str, path: Path = ENERGY_LOG_PATH) -> Dict:
     """Append a new energy/mood entry and return it."""
     logger.info("Recording energy=%s mood=%s", energy, mood)
-    entry = {"date": date.today().isoformat(), "energy": energy, "mood": mood}
+    entry = {
+        "date": date.today().isoformat(),
+        "energy": energy,
+        "mood": mood,
+    }
     entries = read_entries(path)
     entries.append(entry)
     with open(path, "w", encoding="utf-8") as handle:

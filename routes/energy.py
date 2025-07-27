@@ -29,7 +29,7 @@ class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods
     """Input model for energy submissions."""
 
     energy: int
-    mood: int
+    mood: str
 
 
 @router.post("/energy")

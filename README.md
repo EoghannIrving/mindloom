@@ -47,8 +47,9 @@ Open `http://localhost:8000/` in a browser for a simple web interface to parse p
 
 Record today's energy and mood from the command line:
 ```bash
-python record_energy.py 7 8
+python record_energy.py 3 Upbeat
 ```
+Energy is scored 1-5 and mood accepts one of Focused, Tired, Flat, Anxious or Upbeat.
 Energy entries are stored in `data/energy_log.yaml`.
 
 ## Development
