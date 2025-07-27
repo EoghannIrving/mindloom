@@ -1,6 +1,7 @@
 """Application configuration handled via environment variables."""
 
 from pathlib import Path
+from typing import ClassVar
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,7 +24,12 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     PORT: int = Field(8000, env="PORT")
 
     # === Paths ===
-    VAULT_PATH: Path = Field(PROJECT_ROOT / "vault/Projects", env="VAULT_PATH")
+    DEFAULT_VAULT: ClassVar[Path] = (
+        Path("/vault/Projects")
+        if Path("/vault/Projects").exists()
+        else PROJECT_ROOT / "vault/Projects"
+    )
+    VAULT_PATH: Path = Field(DEFAULT_VAULT, env="VAULT_PATH")
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
 
     LOG_DIR: Path = Field(PROJECT_ROOT / "data", env="LOG_DIR")
