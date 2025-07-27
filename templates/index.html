@@ -114,6 +114,14 @@ document.getElementById('renderPrompt').onclick = async () => {
     alert('Invalid JSON in variables');
     return;
   }
+  try {
+    const tasksRes = await fetch('/tasks');
+    if (tasksRes.ok) {
+      variables.tasks = await tasksRes.json();
+    }
+  } catch (e) {
+    console.error('Failed to load tasks', e);
+  }
   const payload = { template: select.value, variables };
   const res = await fetch('/render-prompt', {
     method: 'POST',
