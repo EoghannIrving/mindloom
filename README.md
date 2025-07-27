@@ -15,7 +15,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
    pip install -r requirements.txt
    pip install fastapi uvicorn
    ```
-   The code expects Pydantic v1. If Pydantic v2 is installed add `pydantic<2` to the requirements.
+   `pydantic<2` is pinned in `requirements.txt` to ensure compatibility with Pydantic v1.
 3. Create a `.env` file if you need to override paths or API keys. `VAULT_PATH` defaults to `vault/Projects`.
 4. Ensure the vault directory exists and contains markdown project files.
 
