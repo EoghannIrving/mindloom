@@ -1,0 +1,55 @@
+creative:
+  icon: "🎨"
+  description: "Expressive and artistic activities"
+  subareas:
+    - writing
+    - photography
+    - journaling
+
+technical:
+  icon: "💻"
+  description: "Hands-on building, systems, and automation"
+  subareas:
+    - coding
+    - systems
+    - automation
+
+operational:
+  icon: "🧹"
+  description: "Logistical and life-maintenance tasks"
+  subareas:
+    - home
+    - finances
+    - admin
+
+wellness:
+  icon: "🧘"
+  description: "Physical and mental health, rest, and recovery"
+  subareas:
+    - physical
+    - mental
+    - rest
+
+relational:
+  icon: "🤝"
+  description: "Relationships and social roles"
+  subareas:
+    - family
+    - marriage
+    - social
+
+reflective:
+  icon: "🔍"
+  description: "Learning, insight, and life design"
+  subareas:
+    - learning
+    - review
+    - planning
+
+professional:
+  icon: "📊"
+  description: "Primary work and career responsibilities"
+  subareas:
+    - contracts
+    - reporting
+    - tools
