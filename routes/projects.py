@@ -12,6 +12,7 @@ from config import config
 router = APIRouter()
 PROJECTS_FILE = config.OUTPUT_PATH
 
+
 @router.get("/projects")
 def get_projects(
     status: Optional[str] = Query(None),

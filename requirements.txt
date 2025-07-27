@@ -5,3 +5,4 @@ pyyaml==6.0.2
 fastapi==0.116.1
 uvicorn==0.35.0
 pytest==8.4.1
+black==25.1.0

@@ -35,6 +35,14 @@ Record today's energy and mood from the command line:
 python record_energy.py 7 8
 ```
 
+## Development
+Pushes and pull requests run automated checks on GitHub Actions. Formatting is
+verified with **Black**, linting with Pylint and Flake8, and tests are executed
+with Pytest. To avoid CI failures, format your code locally before committing:
+```bash
+black .
+```
+
 ## Roadmap
 See [Mindloom Roadmap.md](Mindloom%20Roadmap.md) for planned phases and upcoming features.
 

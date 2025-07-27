@@ -20,6 +20,7 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 VALID_KEYS = {"status", "area", "effort", "due"}
 
+
 def extract_frontmatter(text):
     """Return frontmatter dict and remaining body from a markdown string."""
     if text.startswith("---"):
@@ -29,14 +30,16 @@ def extract_frontmatter(text):
                 front = yaml.safe_load(text[3:end])
                 data = {k: front.get(k) for k in VALID_KEYS if k in front}
                 logger.debug("Parsed frontmatter: %s", data)
-                return data, text[end+3:].strip()
+                return data, text[end + 3 :].strip()
             except yaml.YAMLError as exc:
                 logger.warning("Failed to parse frontmatter: %s", exc)
     return {}, text
 
+
 def extract_tasks(text):
     """Extract markdown task list items."""
     return re.findall(r"- \[[ xX]\] .+", text)
+
 
 def summarize_body(text, max_chars=300):
     """Return the first paragraph without headings or block quotes."""
@@ -44,6 +47,7 @@ def summarize_body(text, max_chars=300):
     body = re.sub(r"> .*", "", body)
     paras = [p.strip() for p in body.split("\n\n") if p.strip()]
     return paras[0][:max_chars] if paras else ""
+
 
 def parse_markdown_file(filepath):
     """Parse a single markdown project file."""
@@ -63,6 +67,7 @@ def parse_markdown_file(filepath):
     logger.debug("Parsed data for %s: %s", filepath, data)
     return data
 
+
 def parse_all_projects(root=PROJECTS_DIR):
     """Return a list of parsed projects from the given directory."""
     logger.info("Scanning %s for markdown files", root)
@@ -71,6 +76,7 @@ def parse_all_projects(root=PROJECTS_DIR):
     projects = [parse_markdown_file(md) for md in md_files]
     logger.info("Parsed %d projects", len(projects))
     return projects
+
 
 if __name__ == "__main__":
     logger.info("Starting project parsing")
