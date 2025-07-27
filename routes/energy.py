@@ -8,7 +8,7 @@ from energy import read_entries, record_entry
 router = APIRouter()
 
 
-class EnergyInput(BaseModel):
+class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods
     """Input model for energy submissions."""
 
     energy: int
