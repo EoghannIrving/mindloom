@@ -7,6 +7,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 import textwrap
+import yaml
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -107,3 +108,26 @@ def test_parse_all_projects_expands_tilde(
 
     projects = pp.parse_all_projects()
     assert projects[0]["title"] == "note"
+
+
+def test_save_tasks_yaml(tmp_path: Path):
+    """save_tasks_yaml should write tasks in the expected format."""
+    projects = [
+        {
+            "title": "demo",
+            "path": "demo.md",
+            "area": "work",
+            "effort": "medium",
+            "status": "active",
+        }
+    ]
+    tasks_file = tmp_path / "tasks.yml"
+    from parse_projects import save_tasks_yaml
+
+    tasks = save_tasks_yaml(projects, tasks_file)
+    with open(tasks_file, "r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle)
+
+    assert tasks == data
+    assert data[0]["title"] == "demo"
+    assert data[0]["type"] == "project"

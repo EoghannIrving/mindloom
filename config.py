@@ -33,6 +33,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     )
     VAULT_PATH: Path = Field(DEFAULT_VAULT, env="VAULT_PATH")
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
+    TASKS_PATH: Path = Field(PROJECT_ROOT / "tasks.yml", env="TASKS_PATH")
 
     LOG_DIR: Path = Field(PROJECT_ROOT / "data", env="LOG_DIR")
     ENERGY_LOG_PATH: Path = Field(
@@ -52,6 +53,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         """Expand user home in any path settings."""
         self.VAULT_PATH = self.VAULT_PATH.expanduser()
         self.OUTPUT_PATH = self.OUTPUT_PATH.expanduser()
+        self.TASKS_PATH = self.TASKS_PATH.expanduser()
         self.LOG_DIR = self.LOG_DIR.expanduser()
         self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
 
