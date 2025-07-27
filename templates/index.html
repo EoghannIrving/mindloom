@@ -47,6 +47,18 @@
       <pre id="projects" class="bg-gray-100 p-2 rounded"></pre>
       <pre id="energyData" class="bg-gray-100 p-2 rounded"></pre>
     </section>
+    <section class="space-y-2">
+      <h2 class="text-xl font-semibold">Prompts</h2>
+      <div class="flex gap-2">
+        <select id="promptSelect" class="border p-1 flex-1">
+          {% for p in prompt_files %}
+          <option value="{{ p }}">{{ p }}</option>
+          {% endfor %}
+        </select>
+        <button id="renderPrompt" class="px-3 py-1 bg-blue-500 text-white rounded">Render</button>
+      </div>
+      <pre id="promptResult" class="bg-gray-100 p-2 rounded"></pre>
+    </section>
   </div>
 
 <script>
@@ -89,6 +101,18 @@ document.getElementById('loadEnergy').onclick = async () => {
   const res = await fetch('/energy');
   const data = await res.json();
   document.getElementById('energyData').textContent = JSON.stringify(data, null, 2);
+};
+
+document.getElementById('renderPrompt').onclick = async () => {
+  const select = document.getElementById('promptSelect');
+  const payload = { template: select.value, variables: {} };
+  const res = await fetch('/render-prompt', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  document.getElementById('promptResult').textContent = data.result;
 };
 </script>
 </body>
