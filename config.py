@@ -2,7 +2,8 @@
 
 from pathlib import Path
 from dotenv import load_dotenv
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # === Load .env and .env.local (if exists) ===
 load_dotenv(dotenv_path=".env")
@@ -28,10 +29,9 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
     API_KEY: str = Field(default="", env="API_KEY")
 
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic configuration."""
-
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
 
 config = Config()
