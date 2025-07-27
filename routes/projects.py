@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Query
+"""API routes for project information."""
+
 from typing import Optional
+
 import yaml
-from pathlib import Path
+from fastapi import APIRouter, Query
+
 from config import config
 
 router = APIRouter()
@@ -13,6 +16,7 @@ def get_projects(
     area: Optional[str] = Query(None),
     effort: Optional[str] = Query(None),
 ):
+    """Return projects filtered by query parameters."""
     if not PROJECTS_FILE.exists():
         return {"error": f"{PROJECTS_FILE} not found"}
 

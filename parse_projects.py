@@ -1,6 +1,8 @@
+"""Utility functions for extracting project metadata from markdown files."""
+
 import re
 import yaml
-from pathlib import Path
+
 from config import config
 
 PROJECTS_DIR = config.VAULT_PATH
@@ -8,6 +10,7 @@ OUTPUT_FILE = config.OUTPUT_PATH
 VALID_KEYS = {"status", "area", "effort", "due"}
 
 def extract_frontmatter(text):
+    """Return frontmatter dict and remaining body from a markdown string."""
     if text.startswith("---"):
         end = text.find("---", 3)
         if end != -1:
@@ -19,17 +22,20 @@ def extract_frontmatter(text):
     return {}, text
 
 def extract_tasks(text):
+    """Extract markdown task list items."""
     return re.findall(r"- \[[ xX]\] .+", text)
 
 def summarize_body(text, max_chars=300):
+    """Return the first paragraph without headings or block quotes."""
     body = re.sub(r"#+ .*", "", text)
     body = re.sub(r"> .*", "", body)
     paras = [p.strip() for p in body.split("\n\n") if p.strip()]
     return paras[0][:max_chars] if paras else ""
 
 def parse_markdown_file(filepath):
-    with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
+    """Parse a single markdown project file."""
+    with open(filepath, "r", encoding="utf-8") as handle:
+        content = handle.read()
     frontmatter, body = extract_frontmatter(content)
     tasks = extract_tasks(body)
     summary = summarize_body(body)
@@ -38,10 +44,11 @@ def parse_markdown_file(filepath):
         "path": str(filepath.relative_to(PROJECTS_DIR.parent)),
         **frontmatter,
         "tasks": tasks,
-        "summary": summary
+        "summary": summary,
     }
 
 def parse_all_projects(root=PROJECTS_DIR):
+    """Return a list of parsed projects from the given directory."""
     return [parse_markdown_file(md) for md in root.rglob("*.md")]
 
 if __name__ == "__main__":

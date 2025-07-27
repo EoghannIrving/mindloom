@@ -1,4 +1,5 @@
-import os
+"""Application configuration handled via environment variables."""
+
 from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseSettings, Field
@@ -11,7 +12,8 @@ if Path(".env.local").exists():
 # === Dynamically detect project root ===
 PROJECT_ROOT = Path(__file__).resolve().parent
 
-class Config(BaseSettings):
+class Config(BaseSettings):  # pylint: disable=too-few-public-methods
+    """Centralized application settings."""
     # === General ===
     ENVIRONMENT: str = Field("development", env="ENVIRONMENT")
     DEBUG: bool = Field(True, env="DEBUG")
@@ -25,7 +27,9 @@ class Config(BaseSettings):
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
     API_KEY: str = Field(default="", env="API_KEY")
 
-    class Config:
+    class Config:  # pylint: disable=too-few-public-methods
+        """Pydantic configuration."""
+
         env_file = ".env"
         env_file_encoding = "utf-8"
 
