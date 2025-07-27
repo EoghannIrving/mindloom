@@ -1,8 +1,10 @@
 """API routes for project information."""
 
-from typing import Optional
-from pathlib import Path
+# pylint: disable=duplicate-code
+
 import logging
+from pathlib import Path
+from typing import Optional
 
 import yaml
 from fastapi import APIRouter, Query

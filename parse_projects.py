@@ -1,5 +1,7 @@
 """Utility functions for extracting project metadata from markdown files."""
 
+# pylint: disable=duplicate-code
+
 import re
 import logging
 from pathlib import Path

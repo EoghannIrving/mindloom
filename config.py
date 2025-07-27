@@ -1,5 +1,7 @@
 """Application configuration handled via environment variables."""
 
+# pylint: disable=invalid-name, arguments-differ
+
 from pathlib import Path
 from typing import ClassVar
 from dotenv import load_dotenv

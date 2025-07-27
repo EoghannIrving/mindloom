@@ -1,9 +1,12 @@
 """Simple web interface for Mindloom."""
 
-from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+# pylint: disable=duplicate-code
+
 import logging
 from pathlib import Path
+
+from fastapi import APIRouter
+from fastapi.responses import HTMLResponse
 
 from config import config
 

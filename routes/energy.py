@@ -1,8 +1,11 @@
 """API routes for recording daily energy and mood."""
 
-from fastapi import APIRouter
+# pylint: disable=duplicate-code
+
 import logging
 from pathlib import Path
+
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from energy import read_entries, record_entry
