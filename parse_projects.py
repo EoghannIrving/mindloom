@@ -9,6 +9,8 @@ import yaml
 
 from config import config
 
+TASKS_FILE = Path(config.TASKS_PATH)
+
 PROJECTS_DIR = Path(config.VAULT_PATH)
 OUTPUT_FILE = Path(config.OUTPUT_PATH)
 LOG_FILE = Path(config.LOG_DIR) / "parse_projects.log"
@@ -84,9 +86,40 @@ def parse_all_projects(root=PROJECTS_DIR):
     return projects
 
 
+def projects_to_tasks(projects):
+    """Convert parsed project data to task entries."""
+    mapping = {"low": 1, "medium": 3, "high": 5}
+    tasks = []
+    for proj in projects:
+        task = {
+            "title": proj.get("title"),
+            "type": "project",
+            "source": "summary",
+            "path": proj.get("path"),
+            "area": proj.get("area", ""),
+            "effort": proj.get("effort", "low"),
+            "energy_cost": mapping.get(proj.get("effort", "low"), 1),
+            "status": proj.get("status", "active"),
+        }
+        if proj.get("last_reviewed"):
+            task["last_reviewed"] = proj["last_reviewed"]
+        tasks.append(task)
+    return tasks
+
+
+def save_tasks_yaml(projects, path=TASKS_FILE):
+    """Write project tasks to YAML using the tasks schema."""
+    tasks = projects_to_tasks(projects)
+    with open(path, "w", encoding="utf-8") as handle:
+        yaml.dump(tasks, handle, sort_keys=False, allow_unicode=True)
+    return tasks
+
+
 if __name__ == "__main__":
     logger.info("Starting project parsing")
     all_projects = parse_all_projects()
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         yaml.dump(all_projects, f, sort_keys=False, allow_unicode=True)
     logger.info("Wrote %d projects to %s", len(all_projects), OUTPUT_FILE)
+    save_tasks_yaml(all_projects)
+    logger.info("Wrote tasks to %s", TASKS_FILE)

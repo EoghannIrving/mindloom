@@ -33,7 +33,9 @@ INDEX_HTML = """
   <h1>Mindloom Interface</h1>
   <h2>Parse Projects</h2>
   <button id=\"parseBtn\">Parse</button>
+  <button id=\"tasksBtn\">Save Tasks</button>
   <pre id=\"parseResult\"></pre>
+  <pre id=\"tasksResult\"></pre>
   <h2>Record Energy</h2>
   <input type=\"number\" id=\"energy\" placeholder=\"Energy 1-10\">
   <input type=\"number\" id=\"mood\" placeholder=\"Mood 1-10\">
@@ -51,6 +53,13 @@ parseBtn.onclick = async () => {
   const res = await fetch('/parse-projects', {method: 'POST'});
   const data = await res.json();
   document.getElementById('parseResult').textContent = JSON.stringify(data);
+};
+
+const tasksBtn = document.getElementById('tasksBtn');
+tasksBtn.onclick = async () => {
+  const res = await fetch('/save-tasks', {method: 'POST'});
+  const data = await res.json();
+  document.getElementById('tasksResult').textContent = JSON.stringify(data);
 };
 
 const recordBtn = document.getElementById('recordBtn');

@@ -9,12 +9,13 @@ from typing import Optional
 import yaml
 from fastapi import APIRouter, Query
 
-from parse_projects import parse_all_projects
+from parse_projects import parse_all_projects, save_tasks_yaml
 
 from config import config
 
 router = APIRouter()
 PROJECTS_FILE = Path(config.OUTPUT_PATH)
+TASKS_FILE = Path(config.TASKS_PATH)
 
 LOG_FILE = Path(config.LOG_DIR) / "projects.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -68,3 +69,13 @@ def parse_projects_endpoint():
         yaml.dump(projects, f, sort_keys=False, allow_unicode=True)
     logger.info("Parsed %d projects", len(projects))
     return {"count": len(projects)}
+
+
+@router.post("/save-tasks")
+def save_tasks_endpoint():
+    """Parse projects and write tasks.yml."""
+    logger.info("POST /save-tasks")
+    projects = parse_all_projects()
+    tasks = save_tasks_yaml(projects, TASKS_FILE)
+    logger.info("Saved %d tasks", len(tasks))
+    return {"count": len(tasks)}
