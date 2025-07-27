@@ -3,14 +3,13 @@
 import re
 import logging
 from pathlib import Path
-from typing import cast
 import yaml
 
 from config import config
 
-PROJECTS_DIR: Path = cast(Path, config.VAULT_PATH)
-OUTPUT_FILE: Path = cast(Path, config.OUTPUT_PATH)
-LOG_FILE: Path = cast(Path, config.LOG_DIR) / "parse_projects.log"
+PROJECTS_DIR = Path(config.VAULT_PATH)
+OUTPUT_FILE = Path(config.OUTPUT_PATH)
+LOG_FILE = Path(config.LOG_DIR) / "parse_projects.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)

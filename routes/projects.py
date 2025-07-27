@@ -1,6 +1,6 @@
 """API routes for project information."""
 
-from typing import Optional, cast
+from typing import Optional
 from pathlib import Path
 
 import yaml
@@ -11,7 +11,7 @@ from parse_projects import parse_all_projects
 from config import config
 
 router = APIRouter()
-PROJECTS_FILE: Path = cast(Path, config.OUTPUT_PATH)
+PROJECTS_FILE = Path(config.OUTPUT_PATH)
 
 
 @router.get("/projects")
