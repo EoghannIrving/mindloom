@@ -5,6 +5,8 @@ from typing import Optional
 import yaml
 from fastapi import APIRouter, Query
 
+from parse_projects import parse_all_projects
+
 from config import config
 
 router = APIRouter()
@@ -31,3 +33,12 @@ def get_projects(
         projects = [p for p in projects if p.get("effort") == effort]
 
     return projects
+
+
+@router.post("/parse-projects")
+def parse_projects_endpoint():
+    """Parse vault markdown files and update the projects YAML."""
+    projects = parse_all_projects()
+    with open(PROJECTS_FILE, "w", encoding="utf-8") as f:
+        yaml.dump(projects, f, sort_keys=False, allow_unicode=True)
+    return {"count": len(projects)}
