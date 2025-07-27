@@ -26,7 +26,7 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   - Fields: `id`, `title`, `area`, `type`, `due`, `recurrence`, `effort`, `energy_cost`, `status`, `last_completed`
   - Store as `tasks.yaml` or SQLite
 
-- [ ] **Allow daily energy/mood input**
+- [X] **Allow daily energy/mood input**
   - CLI/PWA toggle or slider
   - Save with timestamp
 
