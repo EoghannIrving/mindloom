@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import sys
-import textwrap
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import textwrap
 import pytest
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 import parse_projects
 from parse_projects import (
