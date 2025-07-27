@@ -40,5 +40,12 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         env_file_encoding="utf-8",
     )
 
+    def model_post_init(self, __context):  # type: ignore[override]
+        """Expand user home in any path settings."""
+        self.VAULT_PATH = self.VAULT_PATH.expanduser()
+        self.OUTPUT_PATH = self.OUTPUT_PATH.expanduser()
+        self.LOG_DIR = self.LOG_DIR.expanduser()
+        self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
+
 
 config = Config()
