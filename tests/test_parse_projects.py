@@ -28,12 +28,16 @@ def test_extract_frontmatter():
 status: active
 area: work
 effort: high
+last_reviewed: 2024-01-01
 ---
 Body text
 """
     )
     frontmatter, body = extract_frontmatter(md)
-    assert frontmatter == {"status": "active", "area": "work", "effort": "high"}
+    assert frontmatter["status"] == "active"
+    assert frontmatter["area"] == "work"
+    assert frontmatter["effort"] == "high"
+    assert str(frontmatter["last_reviewed"]) == "2024-01-01"
     assert body == "Body text"
 
 
@@ -68,6 +72,7 @@ def test_parse_markdown_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     md_content = textwrap.dedent(
         """---
 status: active
+last_reviewed: 2024-02-02
 ---
 Some body
 - [ ] Task
@@ -82,6 +87,7 @@ Some body
 
     assert result["title"] == "example"
     assert result["status"] == "active"
+    assert str(result["last_reviewed"]) == "2024-02-02"
     assert result["tasks"] == ["- [ ] Task"]
 
 
@@ -131,3 +137,5 @@ def test_save_tasks_yaml(tmp_path: Path):
     assert tasks == data
     assert data[0]["title"] == "demo"
     assert data[0]["type"] == "project"
+    assert "last_reviewed" in data[0]
+    assert data[0]["last_reviewed"] is None

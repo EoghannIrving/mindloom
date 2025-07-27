@@ -23,7 +23,7 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-VALID_KEYS = {"status", "area", "effort", "due"}
+VALID_KEYS = {"status", "area", "effort", "due", "last_reviewed"}
 
 
 def extract_frontmatter(text):
@@ -101,8 +101,7 @@ def projects_to_tasks(projects):
             "energy_cost": mapping.get(proj.get("effort", "low"), 1),
             "status": proj.get("status", "active"),
         }
-        if proj.get("last_reviewed"):
-            task["last_reviewed"] = proj["last_reviewed"]
+        task["last_reviewed"] = proj.get("last_reviewed")
         tasks.append(task)
     return tasks
 
