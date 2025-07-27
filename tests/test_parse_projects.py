@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+# pylint: disable=wrong-import-position
+
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 import textwrap
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import parse_projects
 from parse_projects import (
