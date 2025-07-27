@@ -45,7 +45,7 @@ The script writes detailed logs to `data/parse_projects.log`.
 Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and render prompt templates.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free hours) and render prompt templates.
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yml` when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template.
 
 Record today's energy, mood and free hours from the command line:

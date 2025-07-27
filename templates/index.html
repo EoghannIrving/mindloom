@@ -34,6 +34,8 @@
           <option value="Anxious">😰 Anxious</option>
           <option value="Upbeat">😃 Upbeat</option>
         </select>
+        <input id="hoursFree" type="number" step="0.25" placeholder="Hours free"
+          class="border p-1 flex-1" />
         <button id="recordBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Record</button>
       </div>
       <pre id="recordResult" class="bg-gray-100 p-2 rounded"></pre>
@@ -81,7 +83,8 @@ const recordBtn = document.getElementById('recordBtn');
 recordBtn.onclick = async () => {
   const payload = {
     energy: parseInt(document.getElementById('energy').value),
-    mood: document.getElementById('mood').value
+    mood: document.getElementById('mood').value,
+    hours_free: parseFloat(document.getElementById('hoursFree').value || '0')
   };
   const res = await fetch('/energy', {
     method: 'POST',
