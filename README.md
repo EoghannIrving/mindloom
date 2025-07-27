@@ -25,6 +25,7 @@ Parse the projects and start the API:
 python parse_projects.py
 uvicorn main:app --reload
 ```
+The script writes detailed logs to `parse_projects.log` in the project root.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects and record energy.
