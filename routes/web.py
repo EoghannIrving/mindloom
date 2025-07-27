@@ -2,8 +2,23 @@
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+import logging
+from pathlib import Path
+
+from config import config
 
 router = APIRouter()
+
+LOG_FILE = Path(config.LOG_DIR) / "web.log"
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 INDEX_HTML = """
 <!DOCTYPE html>
@@ -70,4 +85,5 @@ document.getElementById('loadEnergy').onclick = async () => {
 @router.get("/", response_class=HTMLResponse)
 def index():
     """Return the basic web interface."""
+    logger.info("GET /")
     return HTMLResponse(content=INDEX_HTML)
