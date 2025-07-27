@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, cast
 import yaml
 
 from config import config
 
-ENERGY_LOG_PATH = config.ENERGY_LOG_PATH
+ENERGY_LOG_PATH: Path = cast(Path, config.ENERGY_LOG_PATH)
 ENERGY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
