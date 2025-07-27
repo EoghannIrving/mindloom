@@ -22,6 +22,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     # === Paths ===
     VAULT_PATH: Path = Field(PROJECT_ROOT / "vault/Projects", env="VAULT_PATH")
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
+    ENERGY_LOG_PATH: Path = Field(PROJECT_ROOT / "energy_log.yaml", env="ENERGY_LOG_PATH")
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")

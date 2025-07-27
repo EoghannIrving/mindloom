@@ -26,6 +26,11 @@ uvicorn main:app --reload
 ```
 The service runs on `http://localhost:8000` by default.
 
+Record today's energy and mood from the command line:
+```bash
+python record_energy.py 7 8
+```
+
 ## Roadmap
 See [Mindloom Roadmap.md](Mindloom%20Roadmap.md) for planned phases and upcoming features.
 
