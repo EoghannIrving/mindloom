@@ -51,7 +51,11 @@ MOOD_EMOJIS = {
 def record_entry(
     energy: int, mood: str, hours_free: float, path: Path = ENERGY_LOG_PATH
 ) -> Dict:
-    """Append a new energy/mood/free time entry and return it."""
+    """Record today's energy and return the entry.
+
+    Only one entry per day is kept. Repeated calls for the same date will
+    overwrite the previous values.
+    """
     logger.info("Recording energy=%s mood=%s hours_free=%s", energy, mood, hours_free)
     entry = {
         "date": date.today().isoformat(),
@@ -60,7 +64,12 @@ def record_entry(
         "hours_free": hours_free,
     }
     entries = read_entries(path)
-    entries.append(entry)
+    for idx, existing in enumerate(entries):
+        if existing.get("date") == entry["date"]:
+            entries[idx] = entry
+            break
+    else:
+        entries.append(entry)
     with open(path, "w", encoding="utf-8") as handle:
         yaml.dump(entries, handle, allow_unicode=True, sort_keys=False)
     logger.info("Wrote %d entries to %s", len(entries), path)

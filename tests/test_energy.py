@@ -19,3 +19,15 @@ def test_record_entry_writes_hours_free(tmp_path: Path):
     assert entry["hours_free"] == 2.0
     entries = read_entries(path)
     assert entries[-1]["hours_free"] == 2.0
+
+
+def test_record_entry_overwrites_same_day(tmp_path: Path):
+    """Saving multiple times in a day replaces the previous entry."""
+    path = tmp_path / "energy.yaml"
+    record_entry(3, "Focused", 2.0, path)
+    record_entry(4, "Tired", 1.0, path)
+    entries = read_entries(path)
+    assert len(entries) == 1
+    assert entries[0]["energy"] == 4
+    assert entries[0]["mood"] == "Tired"
+    assert entries[0]["hours_free"] == 1.0
