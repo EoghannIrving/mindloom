@@ -115,8 +115,8 @@ def test_parse_all_projects_expands_tilde(
     assert projects[0]["title"] == "note"
 
 
-def test_save_tasks_txt(tmp_path: Path):
-    """save_tasks_txt should write tasks in the expected format."""
+def test_save_tasks_yaml(tmp_path: Path):
+    """save_tasks_yaml should write tasks in the expected format."""
     projects = [
         {
             "title": "demo",
@@ -126,11 +126,11 @@ def test_save_tasks_txt(tmp_path: Path):
             "status": "active",
         }
     ]
-    tasks_file = tmp_path / "todo.txt"
-    from parse_projects import save_tasks_txt
+    tasks_file = tmp_path / "tasks.yaml"
+    from parse_projects import save_tasks_yaml
     from tasks import read_tasks
 
-    tasks = save_tasks_txt(projects, tasks_file)
+    tasks = save_tasks_yaml(projects, tasks_file)
     data = read_tasks(tasks_file)
 
     assert tasks == data

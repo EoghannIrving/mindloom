@@ -9,7 +9,7 @@ from typing import Optional
 import yaml
 from fastapi import APIRouter, Query
 
-from parse_projects import parse_all_projects, save_tasks_txt
+from parse_projects import parse_all_projects, save_tasks_yaml
 from tasks import read_tasks
 
 from config import config
@@ -74,17 +74,17 @@ def parse_projects_endpoint():
 
 @router.post("/save-tasks")
 def save_tasks_endpoint():
-    """Parse projects and write data/todo.txt."""
+    """Parse projects and write data/tasks.yaml."""
     logger.info("POST /save-tasks")
     projects = parse_all_projects()
-    tasks = save_tasks_txt(projects, TASKS_FILE)
+    tasks = save_tasks_yaml(projects, TASKS_FILE)
     logger.info("Saved %d tasks", len(tasks))
     return {"count": len(tasks)}
 
 
 @router.get("/tasks")
 def get_tasks():
-    """Return saved tasks from data/todo.txt."""
+    """Return saved tasks from data/tasks.yaml."""
     logger.info("GET /tasks")
     tasks = read_tasks(TASKS_FILE)
     logger.info("Returning %d tasks", len(tasks))

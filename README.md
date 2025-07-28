@@ -5,7 +5,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 ## Features
 - Parse markdown project files from a configured vault directory.
 - Store project metadata and summaries in `projects.yaml`.
-- Convert parsed projects into task entries saved in `data/todo.txt`.
+- Convert parsed projects into task entries saved in `data/tasks.yaml`.
 - Provide a `/projects` API endpoint with optional filters for status, area and effort.
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
@@ -46,7 +46,7 @@ Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/todo.txt` and the latest energy entry (mood and level) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml` and the latest energy entry (mood and level) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template.
 
 Record today's energy, mood and free time blocks from the command line:
 ```bash

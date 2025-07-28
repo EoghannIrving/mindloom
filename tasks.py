@@ -6,6 +6,8 @@ import logging
 from pathlib import Path
 from typing import List, Dict
 
+import yaml
+
 from config import config
 
 TASKS_FILE = Path(config.TASKS_PATH)
@@ -23,40 +25,20 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
-def parse_todo_line(line: str) -> Dict:
-    """Convert a single todo.txt line into a task dictionary."""
-    tokens = line.strip().split()
-    task: Dict[str, str | int] = {"title": ""}
-    title_parts: List[str] = []
-    for token in tokens:
-        if token.startswith("path:"):
-            task["path"] = token.split(":", 1)[1]
-        elif token.startswith("area:"):
-            task["area"] = token.split(":", 1)[1]
-        elif token.startswith("effort:"):
-            task["effort"] = token.split(":", 1)[1]
-        elif token.startswith("status:"):
-            task["status"] = token.split(":", 1)[1]
-        elif token.startswith("energy:"):
-            task["energy_cost"] = int(token.split(":", 1)[1])
-        elif token.startswith("last_reviewed:"):
-            task["last_reviewed"] = token.split(":", 1)[1]
-        else:
-            title_parts.append(token)
-    task["title"] = " ".join(title_parts)
-    task.setdefault("type", "project")
-    task.setdefault("source", "summary")
-    return task
-
-
 def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
-    """Return all task entries from the todo.txt file."""
+    """Return all task entries from the YAML file."""
     logger.info("Reading tasks from %s", path)
     if not path.exists():
         logger.info("%s does not exist", path)
         return []
     with open(path, "r", encoding="utf-8") as handle:
-        lines = [line.strip() for line in handle if line.strip()]
-    tasks = [parse_todo_line(line) for line in lines]
+        tasks = yaml.safe_load(handle) or []
     logger.debug("Loaded %d tasks", len(tasks))
     return tasks
+
+
+def write_tasks(tasks: List[Dict], path: Path = TASKS_FILE) -> None:
+    """Write tasks to a YAML file."""
+    logger.info("Writing %d tasks to %s", len(tasks), path)
+    with open(path, "w", encoding="utf-8") as handle:
+        yaml.dump(tasks, handle, sort_keys=False, allow_unicode=True)
