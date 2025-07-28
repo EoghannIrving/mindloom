@@ -12,6 +12,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Retrieve saved tasks through the `/tasks` API endpoint.
 - Render prompt templates via the `/render-prompt` API or the web interface.
 - Query ChatGPT via the `/ask` API endpoint.
+- Record daily energy via the `/energy` API or `record_energy.py`.
 - Containerized setup using Docker and docker-compose.
 
 ## Setup
@@ -63,9 +64,12 @@ Recording again on the same day will update the existing entry instead of adding
 Pushes and pull requests run automated checks on GitHub Actions. Formatting is
 verified with **Black**, linting with Pylint and Flake8, and tests are executed
 with Pytest. To avoid CI failures, format your code locally before committing:
+
 ```bash
 black .
+pytest -q
 ```
+
 
 ## Roadmap
 See [Mindloom Roadmap.md](Mindloom%20Roadmap.md) for planned phases and upcoming features.

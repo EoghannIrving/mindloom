@@ -37,10 +37,10 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   - Reflection prompt: “What went well? What to adjust?”
 
 - [ ] **FastAPI endpoints**
-  - `GET /projects`
-  - `GET /tasks`
-  - `POST /plan` (generates daily plan via GPT)
-  - `POST /goal-breakdown` (expands goal into tasks)
+  - [x] `GET /projects`
+  - [x] `GET /tasks`
+  - [ ] `POST /plan` (generates daily plan via GPT)
+  - [ ] `POST /goal-breakdown` (expands goal into tasks)
 
 ---
 
