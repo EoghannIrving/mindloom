@@ -42,7 +42,6 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
-    OPENAPI_KEY: str = Field(default="", env="OPENAPI_KEY")
     API_KEY: str = Field(default="", env="API_KEY")
 
     model_config = SettingsConfigDict(
