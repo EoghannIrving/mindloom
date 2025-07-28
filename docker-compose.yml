@@ -10,4 +10,6 @@ services:
       - ENVIRONMENT=development
       - DEBUG=true
       - PORT=8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAPI_KEY=${OPENAPI_KEY}
     command: sh -c "python parse_projects.py && uvicorn main:app --host 0.0.0.0 --port 8000"
