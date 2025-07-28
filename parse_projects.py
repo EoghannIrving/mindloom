@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from config import config
+from tasks import read_tasks
 
 TASKS_FILE = Path(config.TASKS_PATH)
 
@@ -106,12 +107,26 @@ def projects_to_tasks(projects):
     return tasks
 
 
-def save_tasks_yaml(projects, path=TASKS_FILE):
-    """Write project tasks to YAML using the tasks schema."""
+def task_to_todo_line(task: dict) -> str:
+    """Serialize a task dictionary into a todo.txt line."""
+    parts = [task.get("title", "")]
+    parts.append(f"path:{task.get('path','')}")
+    parts.append(f"area:{task.get('area','')}")
+    parts.append(f"effort:{task.get('effort','')}")
+    parts.append(f"status:{task.get('status','')}")
+    parts.append(f"energy:{task.get('energy_cost','')}")
+    if task.get("last_reviewed"):
+        parts.append(f"last_reviewed:{task['last_reviewed']}")
+    return " ".join(parts)
+
+
+def save_tasks_txt(projects, path=TASKS_FILE):
+    """Write project tasks to todo.txt using the tasks schema."""
     tasks = projects_to_tasks(projects)
     with open(path, "w", encoding="utf-8") as handle:
-        yaml.dump(tasks, handle, sort_keys=False, allow_unicode=True)
-    return tasks
+        for task in tasks:
+            handle.write(task_to_todo_line(task) + "\n")
+    return read_tasks(path)
 
 
 if __name__ == "__main__":
@@ -120,5 +135,5 @@ if __name__ == "__main__":
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
         yaml.dump(all_projects, f, sort_keys=False, allow_unicode=True)
     logger.info("Wrote %d projects to %s", len(all_projects), OUTPUT_FILE)
-    save_tasks_yaml(all_projects)
+    save_tasks_txt(all_projects)
     logger.info("Wrote tasks to %s", TASKS_FILE)
