@@ -5,3 +5,4 @@
 3. **Import errors** - All dependencies are now version pinned in `requirements.txt` and the README instructs running `pip install -r requirements.txt` to resolve `E0401` errors.
 4. **Test imports** - Added `pytest` to `requirements.txt` and reorganized `tests/test_parse_projects.py` so linting no longer reports import errors.
 5. **Prompt variables** - The web interface now includes a JSON textarea so prompts render with provided variables instead of blanks.
+6. **OpenAI client closure** - `ask_chatgpt` now uses an async context manager to close `AsyncOpenAI` and avoid connection leaks.

@@ -12,8 +12,9 @@ async def ask_chatgpt(prompt: str, model: str = "gpt-3.5-turbo") -> str:
     if not config.OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is not configured")
 
-    client = openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY)
-    chat_completion = await client.chat.completions.create(
-        model=model, messages=[{"role": "user", "content": prompt}]
-    )
-    return chat_completion.choices[0].message.content
+    async with openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY) as client:
+        chat_completion = await client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return chat_completion.choices[0].message.content
