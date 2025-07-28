@@ -30,7 +30,7 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   - CLI/PWA toggle or slider
   - Save with timestamp
 
-- [ ] **Build GPT prompt templates**
+- [x] **Build GPT prompt templates**
   - Morning planner: inputs = energy, time blocks, tasks
   - Task explainer: “Break this goal down”
   - Light/Medium/Heavy plan selector
