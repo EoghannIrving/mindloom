@@ -1,4 +1,4 @@
-"""Utilities for recording daily energy, mood and free time."""
+"""Utilities for recording daily energy, mood and free time blocks."""
 
 # pylint: disable=duplicate-code
 
@@ -49,19 +49,19 @@ MOOD_EMOJIS = {
 
 
 def record_entry(
-    energy: int, mood: str, hours_free: float, path: Path = ENERGY_LOG_PATH
+    energy: int, mood: str, time_blocks: int, path: Path = ENERGY_LOG_PATH
 ) -> Dict:
-    """Record today's energy and return the entry.
+    """Record today's energy and free time blocks, then return the entry.
 
     Only one entry per day is kept. Repeated calls for the same date will
     overwrite the previous values.
     """
-    logger.info("Recording energy=%s mood=%s hours_free=%s", energy, mood, hours_free)
+    logger.info("Recording energy=%s mood=%s time_blocks=%s", energy, mood, time_blocks)
     entry = {
         "date": date.today().isoformat(),
         "energy": energy,
         "mood": mood,
-        "hours_free": hours_free,
+        "time_blocks": time_blocks,
     }
     entries = read_entries(path)
     for idx, existing in enumerate(entries):

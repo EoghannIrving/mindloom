@@ -12,22 +12,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from energy import record_entry, read_entries
 
 
-def test_record_entry_writes_hours_free(tmp_path: Path):
-    """Record an entry and ensure ``hours_free`` is persisted."""
+def test_record_entry_writes_time_blocks(tmp_path: Path):
+    """Record an entry and ensure ``time_blocks`` is persisted."""
     path = tmp_path / "energy.yaml"
-    entry = record_entry(3, "Focused", 2.0, path)
-    assert entry["hours_free"] == 2.0
+    entry = record_entry(3, "Focused", 2, path)
+    assert entry["time_blocks"] == 2
     entries = read_entries(path)
-    assert entries[-1]["hours_free"] == 2.0
+    assert entries[-1]["time_blocks"] == 2
 
 
 def test_record_entry_overwrites_same_day(tmp_path: Path):
     """Saving multiple times in a day replaces the previous entry."""
     path = tmp_path / "energy.yaml"
-    record_entry(3, "Focused", 2.0, path)
-    record_entry(4, "Tired", 1.0, path)
+    record_entry(3, "Focused", 2, path)
+    record_entry(4, "Tired", 1, path)
     entries = read_entries(path)
     assert len(entries) == 1
     assert entries[0]["energy"] == 4
     assert entries[0]["mood"] == "Tired"
-    assert entries[0]["hours_free"] == 1.0
+    assert entries[0]["time_blocks"] == 1

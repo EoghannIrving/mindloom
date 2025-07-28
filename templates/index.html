@@ -34,7 +34,7 @@
           <option value="Anxious">😰 Anxious</option>
           <option value="Upbeat">😃 Upbeat</option>
         </select>
-        <input id="hoursFree" type="number" step="0.25" placeholder="Hours free"
+        <input id="timeBlocks" type="number" step="1" placeholder="Time blocks free"
           class="border p-1 flex-1" />
         <button id="recordBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Record</button>
       </div>
@@ -84,7 +84,7 @@ recordBtn.onclick = async () => {
   const payload = {
     energy: parseInt(document.getElementById('energy').value),
     mood: document.getElementById('mood').value,
-    hours_free: parseFloat(document.getElementById('hoursFree').value || '0')
+    time_blocks: parseInt(document.getElementById('timeBlocks').value || '0')
   };
   const res = await fetch('/energy', {
     method: 'POST',
@@ -131,7 +131,7 @@ document.getElementById('renderPrompt').onclick = async () => {
       const energyData = await energyRes.json();
       const latest = energyData[energyData.length - 1];
       if (latest && !('time_blocks' in variables)) {
-        variables.time_blocks = Math.round(latest.hours_free * 60);
+        variables.time_blocks = latest.time_blocks;
       }
     }
   } catch (e) {

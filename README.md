@@ -45,15 +45,15 @@ The script writes detailed logs to `data/parse_projects.log`.
 Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free hours) and render prompt templates.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates.
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yml` when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template.
 
-Record today's energy, mood and free hours from the command line:
+Record today's energy, mood and free time blocks from the command line:
 ```bash
-python record_energy.py 3 Upbeat 2
+python record_energy.py 3 Upbeat 8
 ```
 Energy is scored 1-5, mood accepts one of Focused, Tired, Flat, Anxious or Upbeat,
-and the final argument specifies how many hours of free time you have.
+and the final argument specifies how many 15-minute blocks of free time you have.
 Energy entries are stored in `data/energy_log.yaml`.
 Recording again on the same day will update the existing entry instead of adding a new one.
 
