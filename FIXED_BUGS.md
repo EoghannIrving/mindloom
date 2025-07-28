@@ -6,3 +6,4 @@
 4. **Test imports** - Added `pytest` to `requirements.txt` and reorganized `tests/test_parse_projects.py` so linting no longer reports import errors.
 5. **Prompt variables** - The web interface now includes a JSON textarea so prompts render with provided variables instead of blanks.
 6. **OpenAI client closure** - `ask_chatgpt` now uses an async context manager to close `AsyncOpenAI` and avoid connection leaks.
+7. **HTTPX compatibility** - Pinned `httpx<0.27` in `requirements.txt` to fix `AsyncClient.__init__()` errors triggered by OpenAI's proxy handling.
