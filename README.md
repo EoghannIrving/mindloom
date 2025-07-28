@@ -55,6 +55,7 @@ python record_energy.py 3 Upbeat 2
 Energy is scored 1-5, mood accepts one of Focused, Tired, Flat, Anxious or Upbeat,
 and the final argument specifies how many hours of free time you have.
 Energy entries are stored in `data/energy_log.yaml`.
+Recording again on the same day will update the existing entry instead of adding a new one.
 
 ## Development
 Pushes and pull requests run automated checks on GitHub Actions. Formatting is
