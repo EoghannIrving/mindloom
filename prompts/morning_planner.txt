@@ -2,7 +2,7 @@ You are a helpful assistant that creates a personalized daily plan.
 
 The user has the following:
 - Energy level: {{energy}} / 5
-- Free time blocks today: {{time_blocks}} minutes total
+- Free time blocks today: {{time_blocks}} blocks (15 min each)
 - Available projects (tasks):
 
 {% for task in tasks %}
