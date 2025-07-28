@@ -130,8 +130,16 @@ document.getElementById('renderPrompt').onclick = async () => {
     if (energyRes.ok) {
       const energyData = await energyRes.json();
       const latest = energyData[energyData.length - 1];
-      if (latest && !('time_blocks' in variables)) {
-        variables.time_blocks = latest.time_blocks;
+      if (latest) {
+        if (!('time_blocks' in variables)) {
+          variables.time_blocks = latest.time_blocks;
+        }
+        if (!('energy' in variables)) {
+          variables.energy = latest.energy;
+        }
+        if (!('mood' in variables)) {
+          variables.mood = latest.mood;
+        }
       }
     }
   } catch (e) {
