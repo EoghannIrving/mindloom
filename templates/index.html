@@ -59,8 +59,10 @@
         </select>
         <textarea id="promptVars" placeholder="{\"energy\":5}" class="border p-1 flex-1"></textarea>
         <button id="renderPrompt" class="px-3 py-1 bg-blue-500 text-white rounded">Render</button>
+        <button id="askBtn" class="px-3 py-1 bg-purple-500 text-white rounded">Ask</button>
       </div>
       <pre id="promptResult" class="bg-gray-100 p-2 rounded"></pre>
+      <pre id="askResult" class="bg-gray-100 p-2 rounded"></pre>
     </section>
   </div>
 
@@ -153,6 +155,25 @@ document.getElementById('renderPrompt').onclick = async () => {
   });
   const data = await res.json();
   document.getElementById('promptResult').textContent = data.result;
+};
+
+document.getElementById('askBtn').onclick = async () => {
+  const prompt = document.getElementById('promptResult').textContent.trim();
+  if (!prompt) {
+    alert('Render a prompt first');
+    return;
+  }
+  const res = await fetch('/ask', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json();
+  if (data.response) {
+    document.getElementById('askResult').textContent = data.response;
+  } else {
+    document.getElementById('askResult').textContent = JSON.stringify(data);
+  }
 };
 </script>
 </body>

@@ -48,8 +48,8 @@ Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml` and the latest energy entry (mood and level) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template.
-You can also query ChatGPT from the command line or web interface by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml` and the latest energy entry (mood and level) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template. Once rendered you can click **Ask** to send the prompt to ChatGPT and display the response.
+You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
 Record today's energy, mood and free time blocks from the command line:
 ```bash
