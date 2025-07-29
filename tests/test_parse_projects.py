@@ -115,9 +115,7 @@ def test_parse_all_projects_expands_tilde(
     assert projects[0]["title"] == "note"
 
 
-def test_parse_all_projects_creates_missing_root(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_parse_all_projects_creates_missing_root(tmp_path: Path):
     """parse_all_projects should create and return [] for a missing vault."""
     missing = tmp_path / "vault" / "Projects"
     projects = parse_projects.parse_all_projects(missing)
