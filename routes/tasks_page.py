@@ -31,9 +31,9 @@ if not logger.handlers:
 
 @router.get("/daily-tasks", response_class=HTMLResponse)
 def tasks_page(request: Request):
-    """Display today's tasks with checkboxes."""
+    """Display all saved tasks with checkboxes."""
     logger.info("GET /daily-tasks")
-    tasks = [t for t in read_tasks() if t.get("due_today")]
+    tasks = read_tasks()
     return templates.TemplateResponse(
         "tasks.html", {"request": request, "tasks": tasks}
     )
