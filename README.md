@@ -32,6 +32,11 @@ Tasks are stored in `data/tasks.yaml` with the following fields:
 - `status`
 - `last_completed`
 - `executive_trigger`
+- `next_due` (computed)
+- `due_today` (computed)
+
+Recurring tasks populate `next_due` and `due_today` based on the
+`recurrence` interval and the `last_completed` date.
 
 ### Field definitions
 
