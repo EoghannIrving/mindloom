@@ -52,11 +52,15 @@ def apply_recurrence(tasks: List[Dict], today: date | None = None) -> List[Dict]
     """Update tasks with next due dates and due_today flag."""
     today = today or date.today()
     for task in tasks:
-        if not task.get("recurrence"):
-            continue
-        next_due = _next_due(task, today)
-        task["next_due"] = next_due.isoformat()
-        task["due_today"] = next_due <= today
+        if task.get("recurrence"):
+            next_due = _next_due(task, today)
+            task["next_due"] = next_due.isoformat()
+            task["due_today"] = next_due <= today
+        elif task.get("due"):
+            due_date = date.fromisoformat(str(task["due"]))
+            task["due_today"] = due_date <= today
+        else:
+            task["due_today"] = False
     return tasks
 
 
