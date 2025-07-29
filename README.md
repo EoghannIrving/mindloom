@@ -36,8 +36,8 @@ Tasks are stored in `data/tasks.yaml` with the following fields:
 ### Field definitions
 
 - **effort** – rough estimate of complexity or time commitment (`low`, `medium`, `high`).
-- **energy_cost** – numeric 1–5 rating of how taxing the task will be, mapped from `effort` when projects are parsed.
-- **executive_trigger** – situational cue or reminder that helps you start the task.
+- **energy_cost** – numeric 1–5 rating of how taxing the task will be for the individual.
+- **executive_trigger** – tasks that are high_friction starts.
 
 _A future update will add `activation_difficulty` for high-friction starts._
 
