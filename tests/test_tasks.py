@@ -56,3 +56,13 @@ def test_mark_tasks_complete(tmp_path: Path):
     assert count == 1
     assert updated[0]["status"] == "complete"
     assert updated[0]["last_completed"] == date.today().isoformat()
+
+
+def test_due_date_flag(tmp_path: Path):
+    """Tasks with a due date should set due_today accordingly."""
+    target = tmp_path / "tasks.yaml"
+    today = date.today().isoformat()
+    tasks = [{"title": "deadline", "due": today}]
+    write_tasks(tasks, target)
+    result = read_tasks(target)
+    assert result[0]["due_today"] is True
