@@ -142,6 +142,7 @@ def test_save_tasks_yaml(tmp_path: Path):
     data = read_tasks(tasks_file)
 
     assert tasks == data
+    assert data[0]["id"] == 1
     assert data[0]["title"] == "demo"
     assert data[0]["type"] == "project"
-    assert data[0].get("last_reviewed") is None
+    assert data[0].get("due") is None

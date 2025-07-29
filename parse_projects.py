@@ -24,7 +24,16 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
-VALID_KEYS = {"status", "area", "effort", "due", "last_reviewed"}
+VALID_KEYS = {
+    "status",
+    "area",
+    "effort",
+    "due",
+    "recurrence",
+    "last_completed",
+    "executive_trigger",
+    "last_reviewed",
+}
 
 
 def extract_frontmatter(text):
@@ -90,21 +99,23 @@ def parse_all_projects(root=PROJECTS_DIR):
 
 
 def projects_to_tasks(projects):
-    """Convert parsed project data to task entries."""
+    """Convert parsed project data to task entries using the task schema."""
     mapping = {"low": 1, "medium": 3, "high": 5}
     tasks = []
-    for proj in projects:
+    for idx, proj in enumerate(projects, start=1):
         task = {
+            "id": idx,
             "title": proj.get("title"),
-            "type": "project",
-            "source": "summary",
-            "path": proj.get("path"),
             "area": proj.get("area", ""),
+            "type": "project",
+            "due": proj.get("due"),
+            "recurrence": proj.get("recurrence"),
             "effort": proj.get("effort", "low"),
             "energy_cost": mapping.get(proj.get("effort", "low"), 1),
             "status": proj.get("status", "active"),
+            "last_completed": proj.get("last_completed"),
+            "executive_trigger": proj.get("executive_trigger"),
         }
-        task["last_reviewed"] = proj.get("last_reviewed")
         tasks.append(task)
     return tasks
 
