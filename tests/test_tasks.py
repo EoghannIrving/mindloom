@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from datetime import date, timedelta
 
-from tasks import write_tasks, read_tasks
+from tasks import write_tasks, read_tasks, mark_tasks_complete
 
 
 def test_write_tasks_creates_parent(tmp_path: Path):
@@ -44,3 +44,15 @@ def test_recurring_task_future_due(tmp_path: Path):
     result = read_tasks(target)
     assert result[0]["due_today"] is False
     assert result[0]["next_due"] != today
+
+
+def test_mark_tasks_complete(tmp_path: Path):
+    """mark_tasks_complete should update status and last_completed."""
+    path = tmp_path / "tasks.yaml"
+    tasks = [{"id": 1, "title": "demo", "status": "active"}]
+    write_tasks(tasks, path)
+    count = mark_tasks_complete([1], path)
+    updated = read_tasks(path)
+    assert count == 1
+    assert updated[0]["status"] == "complete"
+    assert updated[0]["last_completed"] == date.today().isoformat()

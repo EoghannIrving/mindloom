@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from fastapi import FastAPI
 
-from routes import projects, energy, web, openai_route
+from routes import projects, energy, web, openai_route, tasks_page
 from config import config
 
 LOG_FILE = Path(config.LOG_DIR) / "server.log"
@@ -26,4 +26,5 @@ app.include_router(projects.router)
 app.include_router(energy.router)
 app.include_router(web.router)
 app.include_router(openai_route.router)
+app.include_router(tasks_page.router)
 logger.info("Routers registered")

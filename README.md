@@ -11,6 +11,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
 - Retrieve saved tasks through the `/tasks` API endpoint.
+- Mark tasks complete via the `/daily-tasks` web page.
 - Render prompt templates via the `/render-prompt` API or the web interface.
 - Query ChatGPT via the `/ask` API endpoint.
 - Generate a daily plan via the `/plan` API endpoint.
@@ -81,7 +82,7 @@ The script writes detailed logs to `data/parse_projects.log`.
 Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks.
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml` and the latest energy entry (mood and level) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template. Once rendered you can click **Ask** to send the prompt to ChatGPT and display the response.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
