@@ -24,7 +24,7 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
 
 [ ] **Design task schema**  
   Fields: `id`, `title`, `area`, `type`, `due`, `recurrence`, `effort`, `energy_cost`, `status`, `last_completed`, `executive_trigger?`  
-  Store as `tasks.yaml` or SQLite  
+  Store as `tasks.yaml`  
   _Future: add `activation_difficulty` for high-friction starts._
 
 [x] **Allow daily energy/mood input**  
