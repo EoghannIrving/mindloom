@@ -42,7 +42,7 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   `POST /plan` (generate daily plan via GPT)  
   `POST /goal-breakdown` (expand goal into tasks)
 
-[ ] **Document future flexible input modes**  
+[x] **Document future flexible input modes**  
   Voice, image capture, or rapid log features  
   Placeholder only; implement post-UI phase
 
