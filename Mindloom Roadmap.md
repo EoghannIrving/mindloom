@@ -233,6 +233,6 @@ Make the assistant helpful even when you don’t ask, and kinder when things sli
 - Import media stats from Last.fm, Jellyfin
 - Voice mode (Whisper + TTS)
 - Memory trimming/logging for GPT
-- Flexible input capture (voice, OCR, quick log)
+- Flexible input capture (voice, OCR, quick log) – placeholder until the UI milestone is complete
 - Safe to Forget mode: guilt-free archival
 - Spark Tracker: track what energized you

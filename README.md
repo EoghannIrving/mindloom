@@ -16,6 +16,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Expand goals into tasks via the `/goal-breakdown` API endpoint.
 - Record daily energy via the `/energy` API or `record_energy.py`.
 - Containerized setup using Docker and docker-compose.
+- **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
 
 ## Task schema
 Tasks are stored in `data/tasks.yaml` with the following fields:
@@ -31,6 +32,12 @@ Tasks are stored in `data/tasks.yaml` with the following fields:
 - `status`
 - `last_completed`
 - `executive_trigger`
+
+### Field definitions
+
+- **effort** – rough estimate of complexity or time commitment (`low`, `medium`, `high`).
+- **energy_cost** – numeric 1–5 rating of how taxing the task will be, mapped from `effort` when projects are parsed.
+- **executive_trigger** – situational cue or reminder that helps you start the task.
 
 _A future update will add `activation_difficulty` for high-friction starts._
 
