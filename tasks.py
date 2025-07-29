@@ -76,3 +76,21 @@ def write_tasks(tasks: List[Dict], path: Path = TASKS_FILE) -> None:
     Path(path).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         yaml.dump(tasks, handle, sort_keys=False, allow_unicode=True)
+
+
+def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
+    """Set selected task ids to complete and update ``last_completed``."""
+    logger.info("Marking tasks complete: %s", task_ids)
+    tasks = read_tasks(path)
+    today = date.today().isoformat()
+    count = 0
+    for task in tasks:
+        if task.get("id") in task_ids:
+            task["status"] = "complete"
+            task["last_completed"] = today
+            count += 1
+        task.pop("next_due", None)
+        task.pop("due_today", None)
+    write_tasks(tasks, path)
+    logger.info("Updated %d tasks", count)
+    return count
