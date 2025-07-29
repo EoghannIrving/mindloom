@@ -98,25 +98,38 @@ def parse_all_projects(root=PROJECTS_DIR):
     return projects
 
 
+def _parse_task_line(line):
+    """Return task text and completion flag from a markdown list item."""
+    match = re.match(r"- \[(?P<box>[ xX])\] (?P<title>.+)", line)
+    if not match:
+        return line.strip(), False
+    return match.group("title").strip(), match.group("box").lower() == "x"
+
+
 def projects_to_tasks(projects):
     """Convert parsed project data to task entries using the task schema."""
     mapping = {"low": 1, "medium": 3, "high": 5}
     tasks = []
-    for idx, proj in enumerate(projects, start=1):
-        task = {
-            "id": idx,
-            "title": proj.get("title"),
-            "area": proj.get("area", ""),
-            "type": "project",
-            "due": proj.get("due"),
-            "recurrence": proj.get("recurrence"),
-            "effort": proj.get("effort", "low"),
-            "energy_cost": mapping.get(proj.get("effort", "low"), 1),
-            "status": proj.get("status", "active"),
-            "last_completed": proj.get("last_completed"),
-            "executive_trigger": proj.get("executive_trigger"),
-        }
-        tasks.append(task)
+    idx = 1
+    for proj in projects:
+        for line in proj.get("tasks", []):
+            title, completed = _parse_task_line(line)
+            task = {
+                "id": idx,
+                "title": title,
+                "project": proj.get("path"),
+                "area": proj.get("area", ""),
+                "type": "task",
+                "due": proj.get("due"),
+                "recurrence": proj.get("recurrence"),
+                "effort": proj.get("effort", "low"),
+                "energy_cost": mapping.get(proj.get("effort", "low"), 1),
+                "status": "complete" if completed else proj.get("status", "active"),
+                "last_completed": proj.get("last_completed") if completed else None,
+                "executive_trigger": proj.get("executive_trigger"),
+            }
+            tasks.append(task)
+            idx += 1
     return tasks
 
 
