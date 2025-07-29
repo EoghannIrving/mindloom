@@ -40,5 +40,6 @@ def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
 def write_tasks(tasks: List[Dict], path: Path = TASKS_FILE) -> None:
     """Write tasks to a YAML file."""
     logger.info("Writing %d tasks to %s", len(tasks), path)
+    Path(path).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         yaml.dump(tasks, handle, sort_keys=False, allow_unicode=True)

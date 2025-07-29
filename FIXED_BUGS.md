@@ -7,3 +7,5 @@
 5. **Prompt variables** - The web interface now includes a JSON textarea so prompts render with provided variables instead of blanks.
 6. **OpenAI client closure** - `ask_chatgpt` now uses an async context manager to close `AsyncOpenAI` and avoid connection leaks.
 7. **HTTPX compatibility** - Pinned `httpx<0.27` in `requirements.txt` to fix `AsyncClient.__init__()` errors triggered by OpenAI's proxy handling.
+8. **Vault directory** - `parse_projects.parse_all_projects` now creates the vault path and returns an empty list when it doesn't exist.
+9. **Custom task path** - `tasks.write_tasks` ensures the destination directory is created before writing.

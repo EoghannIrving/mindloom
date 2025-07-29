@@ -115,6 +115,16 @@ def test_parse_all_projects_expands_tilde(
     assert projects[0]["title"] == "note"
 
 
+def test_parse_all_projects_creates_missing_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """parse_all_projects should create and return [] for a missing vault."""
+    missing = tmp_path / "vault" / "Projects"
+    projects = parse_projects.parse_all_projects(missing)
+    assert projects == []
+    assert missing.is_dir()
+
+
 def test_save_tasks_yaml(tmp_path: Path):
     """save_tasks_yaml should write tasks in the expected format."""
     projects = [
