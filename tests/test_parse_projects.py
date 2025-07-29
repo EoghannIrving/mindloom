@@ -132,6 +132,7 @@ def test_save_tasks_yaml(tmp_path: Path):
             "area": "work",
             "effort": "medium",
             "status": "active",
+            "tasks": ["- [ ] First", "- [x] Second"],
         }
     ]
     tasks_file = tmp_path / "tasks.yaml"
@@ -142,7 +143,8 @@ def test_save_tasks_yaml(tmp_path: Path):
     data = read_tasks(tasks_file)
 
     assert tasks == data
+    assert len(data) == 2
     assert data[0]["id"] == 1
-    assert data[0]["title"] == "demo"
-    assert data[0]["type"] == "project"
-    assert data[0].get("due") is None
+    assert data[0]["title"] == "First"
+    assert data[0]["type"] == "task"
+    assert data[0]["project"] == "demo.md"
