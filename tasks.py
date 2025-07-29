@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date, timedelta
 from pathlib import Path
 from typing import List, Dict
 
@@ -25,6 +26,38 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
+RECURRENCE_DAYS = {
+    "daily": 1,
+    "weekly": 7,
+    "monthly": 30,
+    "yearly": 365,
+}
+
+
+def _next_due(task: Dict, today: date) -> date:
+    """Return the next due date for a recurring task."""
+    base = today
+    if task.get("last_completed"):
+        base = date.fromisoformat(str(task["last_completed"]))
+    elif task.get("due"):
+        base = date.fromisoformat(str(task["due"]))
+
+    days = RECURRENCE_DAYS.get(str(task.get("recurrence", "")).lower())
+    return base + timedelta(days=days) if days else base
+
+
+def apply_recurrence(tasks: List[Dict], today: date | None = None) -> List[Dict]:
+    """Update tasks with next due dates and due_today flag."""
+    today = today or date.today()
+    for task in tasks:
+        if not task.get("recurrence"):
+            continue
+        next_due = _next_due(task, today)
+        task["next_due"] = next_due.isoformat()
+        task["due_today"] = next_due <= today
+    return tasks
+
+
 def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
     """Return all task entries from the YAML file."""
     logger.info("Reading tasks from %s", path)
@@ -34,7 +67,7 @@ def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
     with open(path, "r", encoding="utf-8") as handle:
         tasks = yaml.safe_load(handle) or []
     logger.debug("Loaded %d tasks", len(tasks))
-    return tasks
+    return apply_recurrence(tasks)
 
 
 def write_tasks(tasks: List[Dict], path: Path = TASKS_FILE) -> None:
