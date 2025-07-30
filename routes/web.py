@@ -11,6 +11,8 @@ from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from prompt_renderer import render_prompt
+from tasks import read_tasks
+from energy import read_entries
 
 
 router = APIRouter()
@@ -47,6 +49,22 @@ def render_prompt_endpoint(data: dict = Body(...)):
     """Render a prompt template with optional variables."""
     template_name = data.get("template")
     variables = data.get("variables", {})
+
+    # automatically inject tasks and latest energy entry if not provided
+    tasks = read_tasks()
+    if "tasks" not in variables:
+        variables["tasks"] = tasks
+    if "completed_tasks" not in variables:
+        variables["completed_tasks"] = [
+            t for t in tasks if t.get("status") == "complete"
+        ]
+
+    entries = read_entries()
+    latest = entries[-1] if entries else {}
+    variables.setdefault("energy", latest.get("energy", 3))
+    variables.setdefault("mood", latest.get("mood", ""))
+    variables.setdefault("time_blocks", latest.get("time_blocks", 0))
+
     prompts_dir = PROJECT_ROOT / "prompts"
     template_path = prompts_dir / template_name
     result = render_prompt(str(template_path), variables)
