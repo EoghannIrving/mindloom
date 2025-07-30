@@ -35,7 +35,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
     TASKS_PATH: Path = Field(PROJECT_ROOT / "data/tasks.yaml", env="TASKS_PATH")
 
-    LOG_DIR: Path = Field(PROJECT_ROOT / "data", env="LOG_DIR")
+    LOG_DIR: Path = Field(PROJECT_ROOT / "data/logs", env="LOG_DIR")
     ENERGY_LOG_PATH: Path = Field(
         PROJECT_ROOT / "data/energy_log.yaml", env="ENERGY_LOG_PATH"
     )
