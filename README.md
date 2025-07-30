@@ -7,6 +7,8 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Store project metadata and summaries in `projects.yaml`.
 - Convert each project checklist item into a task entry referencing its project
   in `data/tasks.yaml`.
+- Parse inline `Due Date: YYYY-MM-DD` and `Recurrence: interval` markers from
+  each task line.
 - Provide a `/projects` API endpoint with optional filters for status, area and effort.
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.

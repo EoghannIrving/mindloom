@@ -148,3 +148,29 @@ def test_save_tasks_yaml(tmp_path: Path):
     assert data[0]["title"] == "First"
     assert data[0]["type"] == "task"
     assert data[0]["project"] == "demo.md"
+
+
+def test_parse_task_line_with_metadata():
+    """Inline due dates and recurrence should be parsed from each line."""
+    line = "- [ ] Demo Recurrence: weekly Due Date: 2025-01-01"
+    title, completed, due, recurrence = parse_projects._parse_task_line(line)
+    assert title == "Demo"
+    assert completed is False
+    assert due == "2025-01-01"
+    assert recurrence == "weekly"
+
+
+def test_line_overrides_frontmatter():
+    """Per-line metadata should override project frontmatter."""
+    projects = [
+        {
+            "title": "demo",
+            "path": "demo.md",
+            "due": "2025-12-31",
+            "recurrence": "monthly",
+            "tasks": ["- [ ] Task Recurrence: weekly Due Date: 2025-01-01"],
+        }
+    ]
+    tasks = parse_projects.projects_to_tasks(projects)
+    assert tasks[0]["due"] == "2025-01-01"
+    assert tasks[0]["recurrence"] == "weekly"

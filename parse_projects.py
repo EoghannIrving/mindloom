@@ -99,11 +99,36 @@ def parse_all_projects(root=PROJECTS_DIR):
 
 
 def _parse_task_line(line):
-    """Return task text and completion flag from a markdown list item."""
+    """Return task info parsed from a markdown list item."""
     match = re.match(r"- \[(?P<box>[ xX])\] (?P<title>.+)", line)
     if not match:
-        return line.strip(), False
-    return match.group("title").strip(), match.group("box").lower() == "x"
+        return line.strip(), False, None, None
+
+    text = match.group("title").strip()
+    completed = match.group("box").lower() == "x"
+
+    # extract recurrence indicator like "Recurrence: weekly"
+    rec_match = re.search(r"Recurrence:\s*(\w+)", text, flags=re.IGNORECASE)
+    recurrence = rec_match.group(1).lower() if rec_match else None
+    if rec_match:
+        text = re.sub(r"\s*Recurrence:\s*\w+", "", text, flags=re.IGNORECASE)
+
+    # extract due date indicator like "Due Date: 2024-01-01"
+    due_match = re.search(
+        r"Due Date:\s*(\d{4}-\d{2}-\d{2})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    due = due_match.group(1) if due_match else None
+    if due_match:
+        text = re.sub(
+            r"\s*Due Date:\s*\d{4}-\d{2}-\d{2}",
+            "",
+            text,
+            flags=re.IGNORECASE,
+        )
+
+    return text.strip(), completed, due, recurrence
 
 
 def projects_to_tasks(projects):
@@ -113,15 +138,17 @@ def projects_to_tasks(projects):
     idx = 1
     for proj in projects:
         for line in proj.get("tasks", []):
-            title, completed = _parse_task_line(line)
+            title, completed, line_due, line_recurrence = _parse_task_line(line)
             task = {
                 "id": idx,
                 "title": title,
                 "project": proj.get("path"),
                 "area": proj.get("area", ""),
                 "type": "task",
-                "due": proj.get("due"),
-                "recurrence": proj.get("recurrence"),
+                "due": line_due if line_due else proj.get("due"),
+                "recurrence": (
+                    line_recurrence if line_recurrence else proj.get("recurrence")
+                ),
                 "effort": proj.get("effort", "low"),
                 "energy_cost": mapping.get(proj.get("effort", "low"), 1),
                 "status": "complete" if completed else proj.get("status", "active"),
