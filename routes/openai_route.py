@@ -1,5 +1,6 @@
 """FastAPI router for interacting with the OpenAI API."""
 
+from datetime import date
 from fastapi import APIRouter, Body
 
 from openai_client import ask_chatgpt
@@ -24,14 +25,18 @@ async def ask_endpoint(data: dict = Body(...)):
 
 @router.post("/plan")
 async def plan_endpoint():
-    """Generate a daily plan using saved tasks and the latest energy log."""
-    tasks = read_tasks()
+    """Generate a daily plan using incomplete tasks and today's energy log."""
+    tasks = [t for t in read_tasks() if t.get("status") != "complete"]
     entries = read_entries()
-    latest = entries[-1] if entries else {}
+    today = date.today().isoformat()
+    today_entry = next(
+        (e for e in reversed(entries) if e.get("date") == today),
+        {},
+    )
     variables = {
         "tasks": tasks,
-        "energy": latest.get("energy", 3),
-        "time_blocks": latest.get("time_blocks", 0),
+        "energy": today_entry.get("energy", 0),
+        "time_blocks": today_entry.get("time_blocks", 0),
     }
     template = PROJECT_ROOT / "prompts" / "morning_planner.txt"
     prompt = render_prompt(str(template), variables)
