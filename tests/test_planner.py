@@ -25,3 +25,12 @@ def test_filter_tasks_by_plan():
     filtered = filter_tasks_by_plan(tasks, plan)
     assert len(filtered) == 1
     assert filtered[0]["title"] == "Write code"
+
+
+def test_filter_tasks_ignores_punctuation():
+    """Titles should match even when the plan omits punctuation."""
+    tasks = [{"title": "Check garden hose."}, {"title": "Write code"}]
+    plan = "1. Check garden hose (home) - make sure it works"
+    filtered = filter_tasks_by_plan(tasks, plan)
+    assert len(filtered) == 1
+    assert filtered[0]["title"] == "Check garden hose."
