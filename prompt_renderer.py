@@ -1,7 +1,7 @@
 """Utility for rendering Jinja templates used in the prompts."""
 
 from pathlib import Path
-from jinja2 import Environment, Template, meta
+from jinja2 import Environment, meta
 
 
 def render_prompt(template_path: str, variables: dict) -> str:
