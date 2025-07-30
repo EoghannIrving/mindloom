@@ -12,6 +12,8 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
 - Retrieve saved tasks through the `/tasks` API endpoint.
 - Mark tasks complete via the `/daily-tasks` web page.
+- If `data/morning_plan.txt` exists, `/daily-tasks` shows only tasks referenced
+  by the latest morning plan.
 - Render prompt templates via the `/render-prompt` API or the web interface.
 - Query ChatGPT via the `/ask` API endpoint.
 - Generate a daily plan via the `/plan` API endpoint.
@@ -90,6 +92,8 @@ Generate a daily plan using incomplete tasks and today's energy entry:
 ```bash
 curl -X POST http://localhost:8000/plan
 ```
+The response is stored in `data/morning_plan.txt` and used to filter
+`/daily-tasks`.
 
 Break down a high-level goal into actionable tasks:
 ```bash
