@@ -61,9 +61,9 @@ _A future update will add `activation_difficulty` for high-friction starts._
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, `python-multipart`, `jinja2`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
 3. Copy `example.env` to `.env` and set `OPENAI_API_KEY` for ChatGPT access. `VAULT_PATH` defaults to `/vault/Projects` when that folder exists, otherwise `vault/Projects` relative to the project root. Paths containing `~` are expanded to your home directory.
 4. Ensure the vault directory exists and contains markdown project files.
-5. Create a `data` directory to persist logs:
+5. Create a `data/logs` directory to persist logs:
    ```bash
-   mkdir -p data
+   mkdir -p data/logs
    ```
 6. If using GitHub Actions, install dependencies in your workflow before running linters:
    ```yaml
@@ -80,8 +80,8 @@ Parse the projects and start the API:
 python parse_projects.py
 uvicorn main:app --reload
 ```
-The script writes detailed logs to `data/parse_projects.log`.
-Other components log to files in the `data` directory as well.
+The script writes detailed logs to `data/logs/parse_projects.log`.
+Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks.
