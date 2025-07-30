@@ -39,6 +39,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     ENERGY_LOG_PATH: Path = Field(
         PROJECT_ROOT / "data/energy_log.yaml", env="ENERGY_LOG_PATH"
     )
+    PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.txt", env="PLAN_PATH")
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
@@ -56,6 +57,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         self.TASKS_PATH = self.TASKS_PATH.expanduser()
         self.LOG_DIR = self.LOG_DIR.expanduser()
         self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
+        self.PLAN_PATH = self.PLAN_PATH.expanduser()
 
 
 config = Config()
