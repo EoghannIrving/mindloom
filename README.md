@@ -83,10 +83,10 @@ Other components log to files in the `data` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry (mood, level and time blocks) when rendering. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template. Once rendered you can click **Ask** to send the prompt to ChatGPT and display the response.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry (mood, level and time blocks) when rendering. The **Morning Planner** template filters out completed tasks and only uses today's energy entry if available. Enter additional variables in the textarea next to the dropdown, then click **Render** to see the filled template. Once rendered you can click **Ask** to send the prompt to ChatGPT and display the response.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
-Generate a daily plan using the saved tasks and latest energy entry:
+Generate a daily plan using incomplete tasks and today's energy entry:
 ```bash
 curl -X POST http://localhost:8000/plan
 ```

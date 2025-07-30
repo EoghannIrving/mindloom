@@ -5,6 +5,7 @@
 import logging
 from pathlib import Path
 
+from datetime import date
 from fastapi import APIRouter, Request, Body
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -50,18 +51,26 @@ def render_prompt_endpoint(data: dict = Body(...)):
     template_name = data.get("template")
     variables = data.get("variables", {})
 
-    # automatically inject tasks and latest energy entry if not provided
+    # automatically inject tasks and energy data if not provided
     tasks = read_tasks()
+    completed = [t for t in tasks if t.get("status") == "complete"]
+    is_morning = Path(template_name).name == "morning_planner.txt"
+    if is_morning:
+        tasks = [t for t in tasks if t.get("status") != "complete"]
+
     if "tasks" not in variables:
         variables["tasks"] = tasks
     if "completed_tasks" not in variables:
-        variables["completed_tasks"] = [
-            t for t in tasks if t.get("status") == "complete"
-        ]
+        variables["completed_tasks"] = completed
 
     entries = read_entries()
-    latest = entries[-1] if entries else {}
-    variables.setdefault("energy", latest.get("energy", 3))
+    if is_morning:
+        today = date.today().isoformat()
+        latest = next((e for e in reversed(entries) if e.get("date") == today), {})
+    else:
+        latest = entries[-1] if entries else {}
+
+    variables.setdefault("energy", latest.get("energy", 0))
     variables.setdefault("mood", latest.get("mood", ""))
     variables.setdefault("time_blocks", latest.get("time_blocks", 0))
 
