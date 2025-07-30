@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from tasks import read_tasks, mark_tasks_complete
+from planner import read_plan, filter_tasks_by_plan
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
@@ -34,6 +35,8 @@ def tasks_page(request: Request):
     """Display all saved tasks with checkboxes."""
     logger.info("GET /daily-tasks")
     tasks = read_tasks()
+    plan_text = read_plan()
+    tasks = filter_tasks_by_plan(tasks, plan_text)
     return templates.TemplateResponse(
         "tasks.html", {"request": request, "tasks": tasks}
     )

@@ -7,6 +7,7 @@ from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import read_tasks
 from energy import read_entries
+from planner import save_plan
 from config import PROJECT_ROOT
 
 router = APIRouter()
@@ -41,6 +42,7 @@ async def plan_endpoint():
     template = PROJECT_ROOT / "prompts" / "morning_planner.txt"
     prompt = render_prompt(str(template), variables)
     plan = await ask_chatgpt(prompt)
+    save_plan(plan)
     return {"plan": plan}
 
 
