@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Dict
+import string
+
+PUNCT_TABLE = str.maketrans("", "", string.punctuation)
+
+
+def _clean(text: str) -> str:
+    """Lowercase and remove punctuation from ``text``."""
+    return text.translate(PUNCT_TABLE).lower()
+
 
 from config import config, PROJECT_ROOT
 
@@ -30,5 +39,5 @@ def filter_tasks_by_plan(tasks: List[Dict], plan_text: str | None = None) -> Lis
     """Return only tasks whose titles appear in the plan text."""
     if not plan_text:
         return tasks
-    plan_lower = plan_text.lower()
-    return [t for t in tasks if str(t.get("title", "")).lower() in plan_lower]
+    plan_clean = _clean(plan_text)
+    return [t for t in tasks if _clean(str(t.get("title", ""))) in plan_clean]

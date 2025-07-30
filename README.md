@@ -16,6 +16,8 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Mark tasks complete via the `/daily-tasks` web page.
 - If `data/morning_plan.txt` exists, `/daily-tasks` shows only tasks referenced
   by the latest morning plan.
+- Task matching ignores punctuation so titles like `Check garden hose.` still
+  match the plan text.
 - Render prompt templates via the `/render-prompt` API or the web interface.
 - Query ChatGPT via the `/ask` API endpoint.
 - Generate a daily plan via the `/plan` API endpoint.
