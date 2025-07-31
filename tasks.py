@@ -120,3 +120,13 @@ def due_within(
         if due_date <= limit:
             results.append(task)
     return results
+
+
+def upcoming_tasks(
+    path: Path = TASKS_FILE,
+    days: int = 7,
+    today: date | None = None,
+) -> List[Dict]:
+    """Return incomplete tasks overdue or due soon."""
+    tasks = [t for t in read_tasks(path) if t.get("status") != "complete"]
+    return due_within(tasks, days=days, today=today)
