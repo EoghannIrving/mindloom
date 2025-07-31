@@ -152,7 +152,7 @@ def test_save_tasks_yaml(tmp_path: Path):
 
 def test_parse_task_line_with_metadata():
     """Inline due dates and recurrence should be parsed from each line."""
-    line = "- [ ] Demo Recurrence: weekly Due Date: 2025-01-01"
+    line = "- [ ] Demo | due:2025-01-01 | recur:weekly"
     title, completed, due, recurrence = parse_projects._parse_task_line(line)
     assert title == "Demo"
     assert completed is False
@@ -168,7 +168,7 @@ def test_line_overrides_frontmatter():
             "path": "demo.md",
             "due": "2025-12-31",
             "recurrence": "monthly",
-            "tasks": ["- [ ] Task Recurrence: weekly Due Date: 2025-01-01"],
+            "tasks": ["- [ ] Task | recur:weekly | due:2025-01-01"],
         }
     ]
     tasks = parse_projects.projects_to_tasks(projects)
@@ -203,4 +203,4 @@ def test_write_tasks_to_projects(tmp_path: Path):
 
     lines = md_file.read_text(encoding="utf-8").splitlines()
     assert lines[0] == "- [x] First"
-    assert lines[1] == "- [ ] Second Recurrence: daily"
+    assert lines[1] == "- [ ] Second | recur:daily"
