@@ -46,7 +46,9 @@ def filter_tasks_by_plan(tasks: List[Dict], plan_text: str | None = None) -> Lis
 def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
     """Return a mapping of cleaned task titles to GPT-provided reasons."""
     reasons: Dict[str, str] = {}
-    pattern = re.compile(r"^\s*(?:\d+\.?|[-*])\s*(.+?)(?:\s*[-:\u2013]\s*(.+))?$")
+    pattern = re.compile(
+        r"^\s*(?:\d+[.)]?|[-*])\s*(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$"
+    )
     for line in plan_text.splitlines():
         line = line.strip()
         if not line:
