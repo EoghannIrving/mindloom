@@ -100,3 +100,23 @@ def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     write_tasks(tasks, path)
     logger.info("Updated %d tasks", count)
     return count
+
+
+def due_within(
+    tasks: List[Dict], days: int = 7, today: date | None = None
+) -> List[Dict]:
+    """Return tasks overdue or due within ``days`` from ``today``."""
+    today = today or date.today()
+    limit = today + timedelta(days=days)
+    results = []
+    for task in tasks:
+        date_str = task.get("next_due") or task.get("due")
+        if not date_str:
+            continue
+        try:
+            due_date = date.fromisoformat(str(date_str))
+        except ValueError:
+            continue
+        if due_date <= limit:
+            results.append(task)
+    return results
