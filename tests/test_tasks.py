@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from datetime import date, timedelta
 
-from tasks import write_tasks, read_tasks, mark_tasks_complete
+from tasks import write_tasks, read_tasks, mark_tasks_complete, due_within
 
 
 def test_write_tasks_creates_parent(tmp_path: Path):
@@ -66,3 +66,23 @@ def test_due_date_flag(tmp_path: Path):
     write_tasks(tasks, target)
     result = read_tasks(target)
     assert result[0]["due_today"] is True
+
+
+def test_due_within(tmp_path: Path):
+    """due_within should filter tasks by upcoming deadlines."""
+    target = tmp_path / "tasks.yaml"
+    today = date.today()
+    tasks = [
+        {"title": "overdue", "due": (today - timedelta(days=1)).isoformat()},
+        {"title": "soon", "due": (today + timedelta(days=6)).isoformat()},
+        {"title": "later", "due": (today + timedelta(days=8)).isoformat()},
+        {"title": "nodate"},
+    ]
+    write_tasks(tasks, target)
+    items = read_tasks(target)
+    result = due_within(items, days=7, today=today)
+    titles = [t["title"] for t in result]
+    assert "overdue" in titles
+    assert "soon" in titles
+    assert "later" not in titles
+    assert "nodate" not in titles

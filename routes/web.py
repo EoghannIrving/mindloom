@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from prompt_renderer import render_prompt
-from tasks import read_tasks
+from tasks import read_tasks, due_within
 from energy import read_entries
 
 
@@ -56,7 +56,7 @@ def render_prompt_endpoint(data: dict = Body(...)):
     completed = [t for t in tasks if t.get("status") == "complete"]
     is_morning = Path(template_name).name == "morning_planner.txt"
     if is_morning:
-        tasks = [t for t in tasks if t.get("status") != "complete"]
+        tasks = due_within([t for t in tasks if t.get("status") != "complete"], days=7)
 
     if "tasks" not in variables:
         variables["tasks"] = tasks

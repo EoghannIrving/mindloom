@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body
 
 from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
-from tasks import read_tasks
+from tasks import read_tasks, due_within
 from energy import read_entries
 from planner import save_plan
 from config import PROJECT_ROOT
@@ -28,6 +28,7 @@ async def ask_endpoint(data: dict = Body(...)):
 async def plan_endpoint():
     """Generate a daily plan using incomplete tasks and today's energy log."""
     tasks = [t for t in read_tasks() if t.get("status") != "complete"]
+    tasks = due_within(tasks, days=7)
     entries = read_entries()
     today = date.today().isoformat()
     today_entry = next(
