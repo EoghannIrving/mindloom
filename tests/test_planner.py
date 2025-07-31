@@ -42,3 +42,11 @@ def test_parse_plan_reasons():
     reasons = parse_plan_reasons(text)
     assert reasons["write code"] == "finish feature"
     assert reasons["exercise"] == "stay healthy"
+
+
+def test_parse_plan_reasons_em_dash_and_parenthesis():
+    """parse_plan_reasons should handle em dashes and numbered parentheses."""
+    text = "1) Write code — finish feature\n- Exercise: stay healthy"
+    reasons = parse_plan_reasons(text)
+    assert reasons["write code"] == "finish feature"
+    assert reasons["exercise"] == "stay healthy"
