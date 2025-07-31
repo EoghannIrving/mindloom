@@ -55,8 +55,16 @@ def manage_tasks_page(request: Request):
     """Display editable list of all tasks."""
     logger.info("GET /manage-tasks")
     tasks = read_tasks()
+    projects = sorted({t.get("project") for t in tasks if t.get("project")})
+    areas = sorted({t.get("area") for t in tasks if t.get("area")})
     return templates.TemplateResponse(
-        "manage_tasks.html", {"request": request, "tasks": tasks}
+        "manage_tasks.html",
+        {
+            "request": request,
+            "tasks": tasks,
+            "project_options": projects,
+            "area_options": areas,
+        },
     )
 
 
