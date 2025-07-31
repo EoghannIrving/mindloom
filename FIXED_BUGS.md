@@ -9,3 +9,4 @@
 7. **HTTPX compatibility** - Pinned `httpx<0.27` in `requirements.txt` to fix `AsyncClient.__init__()` errors triggered by OpenAI's proxy handling.
 8. **Vault directory** - `parse_projects.parse_all_projects` now creates the vault path and returns an empty list when it doesn't exist.
 9. **Custom task path** - `tasks.write_tasks` ensures the destination directory is created before writing.
+10. **Morning planner tasks** - `index.html` no longer sends the full task list when rendering `morning_planner.txt`, so the backend injects only overdue or soon-due items.

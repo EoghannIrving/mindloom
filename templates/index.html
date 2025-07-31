@@ -126,7 +126,10 @@ async function renderPromptAction() {
   try {
     const tasksRes = await fetch('/tasks');
     if (tasksRes.ok) {
-      variables.tasks = await tasksRes.json();
+      const tasksData = await tasksRes.json();
+      if (!select.value.endsWith('morning_planner.txt')) {
+        variables.tasks = tasksData;
+      }
     }
   } catch (e) {
     console.error('Failed to load tasks', e);
