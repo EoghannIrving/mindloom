@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import List, Dict
+import re
 import string
 from config import config, PROJECT_ROOT
 
@@ -40,3 +41,20 @@ def filter_tasks_by_plan(tasks: List[Dict], plan_text: str | None = None) -> Lis
         return tasks
     plan_clean = _clean(plan_text)
     return [t for t in tasks if _clean(str(t.get("title", ""))) in plan_clean]
+
+
+def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
+    """Return a mapping of cleaned task titles to GPT-provided reasons."""
+    reasons: Dict[str, str] = {}
+    pattern = re.compile(r"^\s*(?:\d+\.?|[-*])\s*(.+?)(?:\s*[-:\u2013]\s*(.+))?$")
+    for line in plan_text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        match = pattern.match(line)
+        if not match:
+            continue
+        title = match.group(1).strip()
+        reason = (match.group(2) or "").strip()
+        reasons[_clean(title)] = reason
+    return reasons

@@ -8,7 +8,7 @@ from pathlib import Path
 # pylint: disable=wrong-import-position, import-outside-toplevel
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from planner import save_plan, read_plan, filter_tasks_by_plan
+from planner import save_plan, read_plan, filter_tasks_by_plan, parse_plan_reasons
 
 
 def test_save_and_read_plan(tmp_path: Path):
@@ -34,3 +34,11 @@ def test_filter_tasks_ignores_punctuation():
     filtered = filter_tasks_by_plan(tasks, plan)
     assert len(filtered) == 1
     assert filtered[0]["title"] == "Check garden hose."
+
+
+def test_parse_plan_reasons():
+    """parse_plan_reasons should map titles to explanations."""
+    text = "1. Write code - finish feature\n2. Exercise - stay healthy"
+    reasons = parse_plan_reasons(text)
+    assert reasons["write code"] == "finish feature"
+    assert reasons["exercise"] == "stay healthy"
