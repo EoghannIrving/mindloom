@@ -8,55 +8,37 @@
       <div class="border p-2 rounded space-y-1">
         <input type="hidden" name="project-{{t.id}}" value="{{ t.project or '' }}">
         <input type="hidden" name="type-{{t.id}}" value="{{ t.type or '' }}">
-        <div class="grid grid-cols-4 gap-2">
-          <div class="col-span-2">
-            <input type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-1 w-full">
-          </div>
-          <div>
-            <input type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-1 w-full">
-          </div>
-          <div>
-            <select name="status-{{t.id}}" class="border p-1 w-full">
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-1 flex-grow min-w-[12rem]">
+          <input type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-1 w-36">
+          <select name="status-{{t.id}}" class="border p-1 w-28">
               {% for opt in ["active", "complete"] %}
                 <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>
           </div>
-        </div>
-        <div class="grid grid-cols-6 gap-2">
-          <div>
-            <input type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-1 w-full">
-          </div>
-          <div>
-            <select name="effort-{{t.id}}" class="border p-1 w-full">
+        <div class="flex flex-wrap gap-2 items-center">
+          <input type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-1 flex-grow min-w-[8rem]">
+          <select name="effort-{{t.id}}" class="border p-1 w-24">
               {% for opt in ["low", "medium", "high"] %}
                 <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>
-          </div>
-          <div>
-            <input type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-1 w-full">
-          </div>
-          <div>
-            <select name="executive_trigger-{{t.id}}" class="border p-1 w-full">
+          <input type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-1 w-20">
+          <select name="executive_trigger-{{t.id}}" class="border p-1 w-24">
               {% for opt in ["low", "medium", "high"] %}
                 <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>
-          </div>
-          <div>
-            <select name="recurrence-{{t.id}}" class="border p-1 w-full">
+          <select name="recurrence-{{t.id}}" class="border p-1 w-24">
               <option value="" {% if not t.recurrence %}selected{% endif %}></option>
               {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
                 <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>
-          </div>
-          <div>
-            <input type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-1 w-full">
+          <input type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-1 w-36">
           </div>
         </div>
-      </div>
       {% endfor %}
       <div class="text-right sticky bottom-0 bg-white py-2">
         <button class="px-3 py-1 bg-blue-500 text-white rounded">Save</button>
