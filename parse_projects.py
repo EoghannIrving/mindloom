@@ -101,35 +101,22 @@ def parse_all_projects(root=PROJECTS_DIR):
 
 def _parse_task_line(line):
     """Return task info parsed from a markdown list item."""
-    match = re.match(r"- \[(?P<box>[ xX])\] (?P<title>.+)", line)
+    match = re.match(r"- \[(?P<box>[ xX])\] (?P<rest>.+)", line.strip())
     if not match:
         return line.strip(), False, None, None
 
-    text = match.group("title").strip()
     completed = match.group("box").lower() == "x"
+    rest = match.group("rest")
 
-    # extract recurrence indicator like "Recurrence: weekly"
-    rec_match = re.search(r"Recurrence:\s*(\w+)", text, flags=re.IGNORECASE)
-    recurrence = rec_match.group(1).lower() if rec_match else None
-    if rec_match:
-        text = re.sub(r"\s*Recurrence:\s*\w+", "", text, flags=re.IGNORECASE)
+    parts = [p.strip() for p in rest.split(" | ")]
+    title = parts[0]
+    metadata = {}
+    for segment in parts[1:]:
+        if ":" in segment:
+            key, value = segment.split(":", 1)
+            metadata[key.strip()] = value.strip()
 
-    # extract due date indicator like "Due Date: 2024-01-01"
-    due_match = re.search(
-        r"Due Date:\s*(\d{4}-\d{2}-\d{2})",
-        text,
-        flags=re.IGNORECASE,
-    )
-    due = due_match.group(1) if due_match else None
-    if due_match:
-        text = re.sub(
-            r"\s*Due Date:\s*\d{4}-\d{2}-\d{2}",
-            "",
-            text,
-            flags=re.IGNORECASE,
-        )
-
-    return text.strip(), completed, due, recurrence
+    return title, completed, metadata.get("due"), metadata.get("recur")
 
 
 def projects_to_tasks(projects):
@@ -194,10 +181,21 @@ def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
                 t = items[idx]
                 text = "- [x] " if t.get("status") == "complete" else "- [ ] "
                 text += t.get("title", "")
-                if t.get("recurrence"):
-                    text += f" Recurrence: {t['recurrence']}"
+                meta = []
                 if t.get("due"):
-                    text += f" Due Date: {t['due']}"
+                    meta.append(f"due:{t['due']}")
+                if t.get("recurrence"):
+                    meta.append(f"recur:{t['recurrence']}")
+                if t.get("effort"):
+                    meta.append(f"effort:{t['effort']}")
+                if t.get("energy_cost"):
+                    meta.append(f"energy:{t['energy_cost']}")
+                if t.get("last_completed"):
+                    meta.append(f"last:{t['last_completed']}")
+                if t.get("executive_trigger"):
+                    meta.append(f"exec:{t['executive_trigger']}")
+                if meta:
+                    text += " | " + " | ".join(meta)
                 new_lines.append(text)
                 idx += 1
             elif re.match(r"\s*- \[[ xX]\] ", line):
@@ -209,10 +207,21 @@ def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
         for t in items[idx:]:
             text = "- [x] " if t.get("status") == "complete" else "- [ ] "
             text += t.get("title", "")
-            if t.get("recurrence"):
-                text += f" Recurrence: {t['recurrence']}"
+            meta = []
             if t.get("due"):
-                text += f" Due Date: {t['due']}"
+                meta.append(f"due:{t['due']}")
+            if t.get("recurrence"):
+                meta.append(f"recur:{t['recurrence']}")
+            if t.get("effort"):
+                meta.append(f"effort:{t['effort']}")
+            if t.get("energy_cost"):
+                meta.append(f"energy:{t['energy_cost']}")
+            if t.get("last_completed"):
+                meta.append(f"last:{t['last_completed']}")
+            if t.get("executive_trigger"):
+                meta.append(f"exec:{t['executive_trigger']}")
+            if meta:
+                text += " | " + " | ".join(meta)
             new_lines.append(text)
 
         with open(filepath, "w", encoding="utf-8") as handle:

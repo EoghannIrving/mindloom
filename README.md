@@ -7,8 +7,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Store project metadata and summaries in `projects.yaml`.
 - Convert each project checklist item into a task entry referencing its project
   in `data/tasks.yaml`.
-- Parse inline `Due Date: YYYY-MM-DD` and `Recurrence: interval` markers from
-  each task line.
+- Parse task lines using the format `- [ ] Task description | due:2025-01-01 | recur:weekly`.
 - Provide a `/projects` API endpoint with optional filters for status, area and effort.
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
@@ -57,6 +56,29 @@ Recurring tasks populate `next_due` and `due_today` based on the
 - **project** – path of the project this task originated from.
 
 _A future update will add `activation_difficulty` for high-friction starts._
+
+### Markdown task line format
+Tasks in project files store optional metadata on the same line as the
+description:
+
+```
+- [ ] Example task | due:2025-08-15 | recur:weekly | effort:med | energy:2 | last:2025-07-25 | exec:high
+```
+
+Rules:
+
+- Start with `- [ ]` for incomplete or `- [x]` for completed tasks.
+- The task description comes first.
+- Metadata fields follow separated by `|` and use `key:value`.
+
+Supported keys:
+
+- `due` – due date in `YYYY-MM-DD` format
+- `recur` – recurrence rule
+- `effort` – estimated effort (`low`, `med`, `high`)
+- `energy` – energy cost from 1–5
+- `last` – date last completed
+- `exec` – executive function demand (`low`, `med`, `high`)
 
 ## Setup
 1. Install Python 3.10+.
