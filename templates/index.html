@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Mindloom</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="p-4">
+{% extends "base.html" %}
+{% block title %}Mindloom{% endblock %}
+{% block content %}
   <div class="max-w-xl mx-auto space-y-4">
     <h1 class="text-2xl font-bold mb-4">Mindloom Interface</h1>
     <section class="space-y-2">
@@ -198,5 +193,4 @@ document.getElementById('askBtn').onclick = async () => {
   }
 };
 </script>
-</body>
-</html>
+{% endblock %}
