@@ -66,20 +66,39 @@ async def save_tasks(request: Request):
     logger.info("POST /manage-tasks")
     form = await request.form()
     tasks = read_tasks()
+    fields = [
+        "title",
+        "project",
+        "area",
+        "type",
+        "effort",
+        "energy_cost",
+        "executive_trigger",
+        "recurrence",
+        "due",
+        "last_completed",
+        "status",
+    ]
+
     for task in tasks:
         tid = str(task.get("id"))
-        rec_key = f"recurrence-{tid}"
-        due_key = f"due-{tid}"
-        comp_key = f"completed-{tid}"
-        if rec_key in form and form[rec_key]:
-            task["recurrence"] = str(form[rec_key])
-        else:
-            task.pop("recurrence", None)
-        if due_key in form and form[due_key]:
-            task["due"] = str(form[due_key])
-        else:
-            task.pop("due", None)
-        task["status"] = "complete" if comp_key in form else "active"
+        for field in fields:
+            key = f"{field}-{tid}"
+            if key in form:
+                value = form[key]
+                if value:
+                    if field == "energy_cost":
+                        try:
+                            task[field] = int(value)
+                        except ValueError:
+                            task[field] = str(value)
+                    else:
+                        task[field] = str(value)
+                else:
+                    if field != "title":
+                        task.pop(field, None)
+                    else:
+                        task[field] = ""
         task.pop("next_due", None)
         task.pop("due_today", None)
     write_tasks(tasks)
