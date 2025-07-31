@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
-from tasks import read_tasks, mark_tasks_complete
+from tasks import read_tasks, write_tasks, mark_tasks_complete
 from planner import read_plan, filter_tasks_by_plan
 
 router = APIRouter()
@@ -48,3 +48,39 @@ def complete_tasks(task_id: List[int] = Form([])):
     logger.info("POST /daily-tasks ids=%s", task_id)
     mark_tasks_complete([int(i) for i in task_id])
     return RedirectResponse("/daily-tasks", status_code=303)
+
+
+@router.get("/manage-tasks", response_class=HTMLResponse)
+def manage_tasks_page(request: Request):
+    """Display editable list of all tasks."""
+    logger.info("GET /manage-tasks")
+    tasks = read_tasks()
+    return templates.TemplateResponse(
+        "manage_tasks.html", {"request": request, "tasks": tasks}
+    )
+
+
+@router.post("/manage-tasks")
+async def save_tasks(request: Request):
+    """Persist edited task fields back to tasks.yaml."""
+    logger.info("POST /manage-tasks")
+    form = await request.form()
+    tasks = read_tasks()
+    for task in tasks:
+        tid = str(task.get("id"))
+        rec_key = f"recurrence-{tid}"
+        due_key = f"due-{tid}"
+        comp_key = f"completed-{tid}"
+        if rec_key in form and form[rec_key]:
+            task["recurrence"] = str(form[rec_key])
+        else:
+            task.pop("recurrence", None)
+        if due_key in form and form[due_key]:
+            task["due"] = str(form[due_key])
+        else:
+            task.pop("due", None)
+        task["status"] = "complete" if comp_key in form else "active"
+        task.pop("next_due", None)
+        task.pop("due_today", None)
+    write_tasks(tasks)
+    return RedirectResponse("/manage-tasks", status_code=303)
