@@ -80,25 +80,26 @@ async def save_tasks(request: Request):
         "status",
     ]
 
+    def _update_field(task: dict, field: str, value: str | None) -> None:
+        if value:
+            if field == "energy_cost":
+                try:
+                    task[field] = int(value)
+                except ValueError:
+                    task[field] = str(value)
+            else:
+                task[field] = str(value)
+        else:
+            if field != "title":
+                task.pop(field, None)
+            else:
+                task[field] = ""
+
     for task in tasks:
         tid = str(task.get("id"))
         for field in fields:
             key = f"{field}-{tid}"
-            if key in form:
-                value = form[key]
-                if value:
-                    if field == "energy_cost":
-                        try:
-                            task[field] = int(value)
-                        except ValueError:
-                            task[field] = str(value)
-                    else:
-                        task[field] = str(value)
-                else:
-                    if field != "title":
-                        task.pop(field, None)
-                    else:
-                        task[field] = ""
+            _update_field(task, field, form.get(key))
         task.pop("next_due", None)
         task.pop("due_today", None)
     write_tasks(tasks)

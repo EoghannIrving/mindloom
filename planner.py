@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Dict
 import string
+from config import config, PROJECT_ROOT
 
 PUNCT_TABLE = str.maketrans("", "", string.punctuation)
 
@@ -13,8 +14,6 @@ def _clean(text: str) -> str:
     """Lowercase and remove punctuation from ``text``."""
     return text.translate(PUNCT_TABLE).lower()
 
-
-from config import config, PROJECT_ROOT
 
 PLAN_PATH = Path(getattr(config, "PLAN_PATH", PROJECT_ROOT / "data/morning_plan.txt"))
 PLAN_PATH.parent.mkdir(parents=True, exist_ok=True)

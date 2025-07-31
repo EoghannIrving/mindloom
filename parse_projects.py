@@ -155,6 +155,30 @@ def save_tasks_yaml(projects, path=TASKS_FILE):
     return tasks
 
 
+META_KEYS = {
+    "due": "due",
+    "recurrence": "recur",
+    "effort": "effort",
+    "energy_cost": "energy",
+    "last_completed": "last",
+    "executive_trigger": "exec",
+}
+
+
+def _task_to_line(task: Dict) -> str:
+    """Return the markdown representation of a task."""
+    line = "- [x] " if task.get("status") == "complete" else "- [ ] "
+    line += task.get("title", "")
+    meta = [
+        f"{label}:{task[field]}"
+        for field, label in META_KEYS.items()
+        if task.get(field)
+    ]
+    if meta:
+        line += " | " + " | ".join(meta)
+    return line
+
+
 def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
     """Update markdown checklists based on tasks.yaml."""
     root = Path(root).expanduser()
@@ -178,25 +202,7 @@ def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
         new_lines: List[str] = []
         for line in lines:
             if re.match(r"\s*- \[[ xX]\] ", line) and idx < len(items):
-                t = items[idx]
-                text = "- [x] " if t.get("status") == "complete" else "- [ ] "
-                text += t.get("title", "")
-                meta = []
-                if t.get("due"):
-                    meta.append(f"due:{t['due']}")
-                if t.get("recurrence"):
-                    meta.append(f"recur:{t['recurrence']}")
-                if t.get("effort"):
-                    meta.append(f"effort:{t['effort']}")
-                if t.get("energy_cost"):
-                    meta.append(f"energy:{t['energy_cost']}")
-                if t.get("last_completed"):
-                    meta.append(f"last:{t['last_completed']}")
-                if t.get("executive_trigger"):
-                    meta.append(f"exec:{t['executive_trigger']}")
-                if meta:
-                    text += " | " + " | ".join(meta)
-                new_lines.append(text)
+                new_lines.append(_task_to_line(items[idx]))
                 idx += 1
             elif re.match(r"\s*- \[[ xX]\] ", line):
                 # skip leftover task lines beyond the yaml list
@@ -205,24 +211,7 @@ def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
                 new_lines.append(line)
 
         for t in items[idx:]:
-            text = "- [x] " if t.get("status") == "complete" else "- [ ] "
-            text += t.get("title", "")
-            meta = []
-            if t.get("due"):
-                meta.append(f"due:{t['due']}")
-            if t.get("recurrence"):
-                meta.append(f"recur:{t['recurrence']}")
-            if t.get("effort"):
-                meta.append(f"effort:{t['effort']}")
-            if t.get("energy_cost"):
-                meta.append(f"energy:{t['energy_cost']}")
-            if t.get("last_completed"):
-                meta.append(f"last:{t['last_completed']}")
-            if t.get("executive_trigger"):
-                meta.append(f"exec:{t['executive_trigger']}")
-            if meta:
-                text += " | " + " | ".join(meta)
-            new_lines.append(text)
+            new_lines.append(_task_to_line(t))
 
         with open(filepath, "w", encoding="utf-8") as handle:
             handle.write("\n".join(new_lines) + "\n")
