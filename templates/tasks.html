@@ -11,6 +11,9 @@
             <input type="checkbox" name="task_id" value="{{ t.id }}" class="mr-2" {% if t.status == 'complete' %}checked{% endif %}>
             <span>{{ t.title }}</span>
           </label>
+          {% if t.reason %}
+          <p class="ml-6 text-sm text-gray-600">{{ t.reason }}</p>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>

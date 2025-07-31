@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from tasks import read_tasks, write_tasks, mark_tasks_complete
-from planner import read_plan, filter_tasks_by_plan
+from planner import read_plan, filter_tasks_by_plan, parse_plan_reasons, _clean
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
@@ -36,7 +36,10 @@ def tasks_page(request: Request):
     logger.info("GET /daily-tasks")
     tasks = read_tasks()
     plan_text = read_plan()
+    reasons = parse_plan_reasons(plan_text)
     tasks = filter_tasks_by_plan(tasks, plan_text)
+    for task in tasks:
+        task["reason"] = reasons.get(_clean(str(task.get("title", ""))), "")
     return templates.TemplateResponse(
         "tasks.html", {"request": request, "tasks": tasks}
     )
