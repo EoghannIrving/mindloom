@@ -5,6 +5,7 @@
 import re
 import logging
 from pathlib import Path
+from typing import List, Dict
 import yaml
 
 from config import config
@@ -165,6 +166,61 @@ def save_tasks_yaml(projects, path=TASKS_FILE):
     tasks = projects_to_tasks(projects)
     write_tasks(tasks, path)
     return tasks
+
+
+def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
+    """Update markdown checklists based on tasks.yaml."""
+    root = Path(root).expanduser()
+    grouped: Dict[str, List[Dict]] = {}
+    for task in tasks:
+        proj = task.get("project")
+        if proj:
+            grouped.setdefault(str(proj), []).append(task)
+
+    count = 0
+    for rel_path, items in grouped.items():
+        filepath = root.parent / rel_path
+        if not filepath.exists():
+            logger.warning("%s not found", filepath)
+            continue
+
+        with open(filepath, "r", encoding="utf-8") as handle:
+            lines = handle.read().splitlines()
+
+        idx = 0
+        new_lines: List[str] = []
+        for line in lines:
+            if re.match(r"\s*- \[[ xX]\] ", line) and idx < len(items):
+                t = items[idx]
+                text = "- [x] " if t.get("status") == "complete" else "- [ ] "
+                text += t.get("title", "")
+                if t.get("recurrence"):
+                    text += f" Recurrence: {t['recurrence']}"
+                if t.get("due"):
+                    text += f" Due Date: {t['due']}"
+                new_lines.append(text)
+                idx += 1
+            elif re.match(r"\s*- \[[ xX]\] ", line):
+                # skip leftover task lines beyond the yaml list
+                continue
+            else:
+                new_lines.append(line)
+
+        for t in items[idx:]:
+            text = "- [x] " if t.get("status") == "complete" else "- [ ] "
+            text += t.get("title", "")
+            if t.get("recurrence"):
+                text += f" Recurrence: {t['recurrence']}"
+            if t.get("due"):
+                text += f" Due Date: {t['due']}"
+            new_lines.append(text)
+
+        with open(filepath, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(new_lines) + "\n")
+
+        count += 1
+
+    return count
 
 
 if __name__ == "__main__":
