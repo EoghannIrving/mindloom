@@ -174,3 +174,33 @@ def test_line_overrides_frontmatter():
     tasks = parse_projects.projects_to_tasks(projects)
     assert tasks[0]["due"] == "2025-01-01"
     assert tasks[0]["recurrence"] == "weekly"
+
+
+def test_write_tasks_to_projects(tmp_path: Path):
+    """write_tasks_to_projects should update markdown tasks."""
+    project_dir = tmp_path / "Projects"
+    project_dir.mkdir()
+    md_file = project_dir / "demo.md"
+    md_file.write_text("- [ ] First\n- [ ] Second\n", encoding="utf-8")
+
+    tasks = [
+        {
+            "id": 1,
+            "title": "First",
+            "project": "Projects/demo.md",
+            "status": "complete",
+        },
+        {
+            "id": 2,
+            "title": "Second",
+            "project": "Projects/demo.md",
+            "recurrence": "daily",
+            "status": "active",
+        },
+    ]
+
+    parse_projects.write_tasks_to_projects(tasks, project_dir)
+
+    lines = md_file.read_text(encoding="utf-8").splitlines()
+    assert lines[0] == "- [x] First"
+    assert lines[1] == "- [ ] Second Recurrence: daily"

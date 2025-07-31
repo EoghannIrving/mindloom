@@ -8,9 +8,11 @@
       <div class="flex gap-2">
         <button id="parseBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Parse</button>
         <button id="tasksBtn" class="px-3 py-1 bg-green-500 text-white rounded">Save Tasks</button>
+        <button id="writeTasksBtn" class="px-3 py-1 bg-purple-500 text-white rounded">Write Tasks</button>
       </div>
       <pre id="parseResult" class="bg-gray-100 p-2 rounded"></pre>
       <pre id="tasksResult" class="bg-gray-100 p-2 rounded"></pre>
+      <pre id="writeTasksResult" class="bg-gray-100 p-2 rounded"></pre>
     </section>
     <section class="space-y-2">
       <h2 class="text-xl font-semibold">Record Energy</h2>
@@ -74,6 +76,13 @@ tasksBtn.onclick = async () => {
   const res = await fetch('/save-tasks', {method: 'POST'});
   const data = await res.json();
   document.getElementById('tasksResult').textContent = JSON.stringify(data);
+};
+
+const writeTasksBtn = document.getElementById('writeTasksBtn');
+writeTasksBtn.onclick = async () => {
+  const res = await fetch('/write-tasks', {method: 'POST'});
+  const data = await res.json();
+  document.getElementById('writeTasksResult').textContent = JSON.stringify(data);
 };
 
 const recordBtn = document.getElementById('recordBtn');

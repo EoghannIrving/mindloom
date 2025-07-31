@@ -12,6 +12,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Provide a `/projects` API endpoint with optional filters for status, area and effort.
 - Trigger project parsing via the `/parse-projects` API endpoint or the web interface.
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
+- Write modified tasks back to markdown via the `/write-tasks` API endpoint or the web interface.
 - Retrieve saved tasks through the `/tasks` API endpoint.
 - Mark tasks complete via the `/daily-tasks` web page.
 - Edit task recurrence, due dates and completion via the `/manage-tasks` page.
