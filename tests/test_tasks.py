@@ -11,7 +11,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from datetime import date, timedelta
 
-from tasks import write_tasks, read_tasks, mark_tasks_complete, due_within
+from tasks import (
+    write_tasks,
+    read_tasks,
+    mark_tasks_complete,
+    due_within,
+    upcoming_tasks,
+)
 
 
 def test_write_tasks_creates_parent(tmp_path: Path):
@@ -86,3 +92,20 @@ def test_due_within(tmp_path: Path):
     assert "soon" in titles
     assert "later" not in titles
     assert "nodate" not in titles
+
+
+def test_upcoming_tasks(tmp_path: Path):
+    """upcoming_tasks should return overdue or soon items only."""
+    target = tmp_path / "tasks.yaml"
+    today = date.today()
+    tasks = [
+        {"id": 1, "title": "overdue", "due": (today - timedelta(days=1)).isoformat()},
+        {"id": 2, "title": "soon", "due": (today + timedelta(days=3)).isoformat()},
+        {"id": 3, "title": "later", "due": (today + timedelta(days=10)).isoformat()},
+    ]
+    write_tasks(tasks, target)
+    result = upcoming_tasks(target, days=7, today=today)
+    titles = [t["title"] for t in result]
+    assert "overdue" in titles
+    assert "soon" in titles
+    assert "later" not in titles
