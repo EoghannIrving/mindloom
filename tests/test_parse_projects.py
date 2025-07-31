@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-# pylint: disable=wrong-import-position, duplicate-code, import-outside-toplevel, reimported
+# pylint: disable=wrong-import-position, duplicate-code, import-outside-toplevel, reimported, protected-access
 
 import sys
 from pathlib import Path
