@@ -4,27 +4,59 @@
   <div class="max-w-3xl mx-auto space-y-4">
     <h1 class="text-2xl font-bold mb-4">Edit Tasks</h1>
     <form method="post" class="space-y-2">
-      <table class="min-w-full border">
+      <table class="min-w-full border text-sm">
         <thead>
           <tr class="bg-gray-100">
+            <th class="px-2 py-1 border">ID</th>
             <th class="px-2 py-1 border">Title</th>
+            <th class="px-2 py-1 border">Project</th>
+            <th class="px-2 py-1 border">Area</th>
+            <th class="px-2 py-1 border">Type</th>
+            <th class="px-2 py-1 border">Effort</th>
+            <th class="px-2 py-1 border">Energy</th>
+            <th class="px-2 py-1 border">Exec Trigger</th>
             <th class="px-2 py-1 border">Recurrence</th>
-            <th class="px-2 py-1 border">Due Date</th>
-            <th class="px-2 py-1 border">Completed</th>
+            <th class="px-2 py-1 border">Due</th>
+            <th class="px-2 py-1 border">Last Completed</th>
+            <th class="px-2 py-1 border">Status</th>
           </tr>
         </thead>
         <tbody>
         {% for t in tasks %}
           <tr>
-            <td class="px-2 py-1 border">{{ t.title }}</td>
+            <td class="px-2 py-1 border">{{ t.id }}</td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="project-{{t.id}}" value="{{ t.project or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="type-{{t.id}}" value="{{ t.type or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="effort-{{t.id}}" value="{{ t.effort or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="executive_trigger-{{t.id}}" value="{{ t.executive_trigger or '' }}" class="border p-1 w-full">
+            </td>
             <td class="px-2 py-1 border">
               <input type="text" name="recurrence-{{t.id}}" value="{{ t.recurrence or '' }}" class="border p-1 w-full">
             </td>
             <td class="px-2 py-1 border">
               <input type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-1 w-full">
             </td>
-            <td class="px-2 py-1 border text-center">
-              <input type="checkbox" name="completed-{{t.id}}" {% if t.status == 'complete' %}checked{% endif %}>
+            <td class="px-2 py-1 border">
+              <input type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-1 w-full">
+            </td>
+            <td class="px-2 py-1 border">
+              <input type="text" name="status-{{t.id}}" value="{{ t.status or '' }}" class="border p-1 w-full">
             </td>
           </tr>
         {% endfor %}
