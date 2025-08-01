@@ -26,6 +26,7 @@ def test_plan_endpoint_intensity(monkeypatch: pytest.MonkeyPatch):
     )
     monkeypatch.setattr(openai_route, "save_plan", lambda plan: None)
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
+    monkeypatch.setattr(openai_route, "load_events", lambda s, e: [])
 
     responses = iter(["- Task A", "Plan"])
 
