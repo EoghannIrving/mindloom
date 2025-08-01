@@ -68,5 +68,5 @@ async def suggest_task():
         candidates = await _call_activation_engine(payload)
     except Exception as exc:  # pylint: disable=broad-except
         logger.error("ActivationEngine request failed: %s", exc)
-        return {"error": str(exc)}
+        return {"error": "An internal error has occurred."}
     return {"suggestion": candidates[0] if candidates else None}
