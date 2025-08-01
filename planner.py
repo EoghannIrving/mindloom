@@ -49,11 +49,31 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
     pattern = re.compile(
         r"^\s*(?:\d+[.)]?|[-*\u2022])\s*(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$"
     )
+    bullet_only = re.compile(r"^\s*[-*\u2022]\s*(.+)")
+    split_pattern = re.compile(r"^(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$")
     last_title: str | None = None
+    last_was_number = False
     for line in plan_text.splitlines():
         line = line.strip()
         if not line:
             continue
+        bullet_match = bullet_only.match(line)
+        if bullet_match:
+            bullet_text = bullet_match.group(1).strip()
+            m = split_pattern.match(bullet_text)
+            if last_title and last_was_number and not (m and m.group(2)):
+                if not reasons.get(last_title):
+                    reasons[last_title] = bullet_text
+                last_was_number = False
+                continue
+            if m:
+                title = m.group(1).strip()
+                reason = (m.group(2) or "").strip()
+                title = re.sub(r"\([^\)]*\)\s*$", "", title).strip()
+                last_title = _clean(title)
+                reasons[last_title] = reason
+                last_was_number = False
+                continue
         match = pattern.match(line)
         if not match:
             continue
@@ -73,4 +93,5 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
             continue
         last_title = _clean(title)
         reasons[last_title] = reason
+        last_was_number = is_number
     return reasons
