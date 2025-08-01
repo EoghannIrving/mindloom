@@ -40,11 +40,10 @@ def read_entries(path: Path = ENERGY_LOG_PATH) -> List[Dict]:
 
 
 MOOD_EMOJIS = {
-    "Focused": "🎯",
-    "Tired": "😴",
-    "Flat": "😐",
-    "Anxious": "😰",
-    "Upbeat": "😃",
+    "Sad": "😔",
+    "Meh": "😐",
+    "Okay": "😊",
+    "Joyful": "😍",
 }
 
 
