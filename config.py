@@ -39,7 +39,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     ENERGY_LOG_PATH: Path = Field(
         PROJECT_ROOT / "data/energy_log.yaml", env="ENERGY_LOG_PATH"
     )
-    PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.txt", env="PLAN_PATH")
+    PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.yaml", env="PLAN_PATH")
     CALENDAR_ICS_PATH: str = Field(
         str(PROJECT_ROOT / "data/calendar.ics"), env="CALENDAR_ICS_PATH"
     )

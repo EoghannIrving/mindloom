@@ -35,9 +35,9 @@ def tasks_page(request: Request):
     """Display all saved tasks with checkboxes."""
     logger.info("GET /daily-tasks")
     tasks = read_tasks()
-    plan_text = read_plan()
-    reasons = parse_plan_reasons(plan_text)
-    tasks = filter_tasks_by_plan(tasks, plan_text)
+    plan = read_plan()
+    reasons = parse_plan_reasons(plan)
+    tasks = filter_tasks_by_plan(tasks, plan)
     for task in tasks:
         task["reason"] = reasons.get(_clean(str(task.get("title", ""))), "")
     return templates.TemplateResponse(
