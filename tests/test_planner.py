@@ -66,3 +66,12 @@ def test_parse_plan_reasons_multiline_reason():
     reasons = parse_plan_reasons(text)
     assert reasons["write code"] == "finish feature"
     assert reasons["exercise"] == "stay healthy"
+
+
+def test_parse_plan_reasons_parenthetical_metadata():
+    """Parenthetical metadata after the title should be ignored."""
+    text = (
+        "1. Flexible recurrence nudges (effort: high)\n" "- Work on flexible recurrence"
+    )
+    reasons = parse_plan_reasons(text)
+    assert reasons["flexible recurrence nudges"] == "Work on flexible recurrence"
