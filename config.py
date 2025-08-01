@@ -44,6 +44,10 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         str(PROJECT_ROOT / "data/calendar.ics"), env="CALENDAR_ICS_PATH"
     )
     TIME_ZONE: str = Field("UTC", env="TIME_ZONE")
+    GOOGLE_CALENDAR_ID: str | None = Field(default=None, env="GOOGLE_CALENDAR_ID")
+    GOOGLE_CREDENTIALS_PATH: str | None = Field(
+        default=None, env="GOOGLE_CREDENTIALS_PATH"
+    )
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
@@ -63,6 +67,10 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
         self.PLAN_PATH = self.PLAN_PATH.expanduser()
         self.CALENDAR_ICS_PATH = str(Path(self.CALENDAR_ICS_PATH).expanduser())
+        if self.GOOGLE_CREDENTIALS_PATH:
+            self.GOOGLE_CREDENTIALS_PATH = str(
+                Path(self.GOOGLE_CREDENTIALS_PATH).expanduser()
+            )
 
 
 config = Config()
