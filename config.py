@@ -40,6 +40,10 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         PROJECT_ROOT / "data/energy_log.yaml", env="ENERGY_LOG_PATH"
     )
     PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.txt", env="PLAN_PATH")
+    CALENDAR_ICS_PATH: str = Field(
+        str(PROJECT_ROOT / "data/calendar.ics"), env="CALENDAR_ICS_PATH"
+    )
+    TIME_ZONE: str = Field("UTC", env="TIME_ZONE")
 
     # === Optional tokens ===
     OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
@@ -58,6 +62,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         self.LOG_DIR = self.LOG_DIR.expanduser()
         self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
         self.PLAN_PATH = self.PLAN_PATH.expanduser()
+        self.CALENDAR_ICS_PATH = str(Path(self.CALENDAR_ICS_PATH).expanduser())
 
 
 config = Config()
