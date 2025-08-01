@@ -47,7 +47,7 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
     """Return a mapping of cleaned task titles to GPT-provided reasons."""
     reasons: Dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:\d+[.)]?|[-*])\s*(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$"
+        r"^\s*(?:\d+[.)]?|[-*\u2022])\s*(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$"
     )
     for line in plan_text.splitlines():
         line = line.strip()

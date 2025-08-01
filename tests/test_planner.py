@@ -50,3 +50,11 @@ def test_parse_plan_reasons_em_dash_and_parenthesis():
     reasons = parse_plan_reasons(text)
     assert reasons["write code"] == "finish feature"
     assert reasons["exercise"] == "stay healthy"
+
+
+def test_parse_plan_reasons_bullet_char():
+    """parse_plan_reasons should parse lines starting with a bullet character."""
+    text = "\u2022 Write code - finish feature\n* Exercise - stay healthy"
+    reasons = parse_plan_reasons(text)
+    assert reasons["write code"] == "finish feature"
+    assert reasons["exercise"] == "stay healthy"
