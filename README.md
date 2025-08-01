@@ -122,6 +122,8 @@ curl -X POST http://localhost:8000/plan
 ```
 The response is stored in `data/morning_plan.txt` and used to filter
 `/daily-tasks`.
+Tasks with an `energy_cost` higher than your latest logged energy are removed
+before generating the plan.
 
 Break down a high-level goal into actionable tasks:
 ```bash

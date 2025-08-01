@@ -7,7 +7,7 @@ from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import upcoming_tasks
 from energy import read_entries
-from planner import save_plan
+from planner import save_plan, filter_tasks_by_energy
 from config import PROJECT_ROOT
 
 router = APIRouter()
@@ -29,6 +29,10 @@ async def plan_endpoint():
     """Generate a daily plan using incomplete tasks and today's energy log."""
     tasks = upcoming_tasks()
     entries = read_entries()
+    latest = entries[-1] if entries else {}
+    energy_level = latest.get("energy")
+    if energy_level is not None:
+        tasks = filter_tasks_by_energy(tasks, int(energy_level))
     today = date.today().isoformat()
     today_entry = next(
         (e for e in reversed(entries) if e.get("date") == today),
