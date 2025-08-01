@@ -27,7 +27,7 @@ parser.add_argument("energy", type=int, choices=range(1, 6), help="Energy level 
 parser.add_argument(
     "mood",
     type=str,
-    choices=["Focused", "Tired", "Flat", "Anxious", "Upbeat"],
+    choices=["Sad", "Meh", "Okay", "Joyful"],
     help="Mood",
 )
 parser.add_argument(

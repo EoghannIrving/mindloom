@@ -24,6 +24,9 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Generate a daily plan via the `/plan` API endpoint.
 - Expand goals into tasks via the `/goal-breakdown` API endpoint.
 - Record daily energy via the `/energy` API or `record_energy.py`.
+- Request a single task suggestion via the `/suggest-task` endpoint when
+  [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
+  configured.
 - Load calendar events from `.ics` files or Google Calendar into `data/calendar_cache.json`.
 - Containerized setup using Docker and docker-compose.
 - **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
@@ -92,6 +95,7 @@ Supported keys:
    - `OPENAI_API_KEY` for ChatGPT access.
    - `CALENDAR_ICS_PATH` path(s) to exported `.ics` files.
    - `TIME_ZONE` sets the IANA time zone for event parsing.
+   - `ACTIVATION_ENGINE_URL` endpoint for the optional task suggestion service.
 4. *(Optional)* Enable Google Calendar access:
    - Create a Google Cloud service account and enable the Calendar API.
    - Share your calendar with the service account's email address.
@@ -147,9 +151,9 @@ curl -X POST http://localhost:8000/goal-breakdown \
 
 Record today's energy, mood and free time blocks from the command line:
 ```bash
-python record_energy.py 3 Upbeat 8
+python record_energy.py 3 Joyful 8
 ```
-Energy is scored 1-5, mood accepts one of Focused, Tired, Flat, Anxious or Upbeat,
+Energy is scored 1-5 and mood accepts one of Sad, Meh, Okay or Joyful,
 and the final argument specifies how many 15-minute blocks of free time you have.
 Energy entries are stored in `data/energy_log.yaml`.
 Recording again on the same day will update the existing entry instead of adding a new one.
