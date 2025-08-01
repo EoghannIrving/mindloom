@@ -88,16 +88,22 @@ Supported keys:
    pip install -r requirements.txt
    ```
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, `python-multipart`, `jinja2`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
-3. Copy `example.env` to `.env` and set `OPENAI_API_KEY` for ChatGPT access. `VAULT_PATH` defaults to `/vault/Projects` when that folder exists, otherwise `vault/Projects` relative to the project root. Paths containing `~` are expanded to your home directory.
-   `CALENDAR_ICS_PATH` points to your exported calendar file and `TIME_ZONE` sets
-   the IANA time zone used when parsing events. Set `GOOGLE_CALENDAR_ID` and
-   `GOOGLE_CREDENTIALS_PATH` to read events directly from Google Calendar.
-4. Ensure the vault directory exists and contains markdown project files.
-5. Create a `data/logs` directory to persist logs:
+3. Copy `example.env` to `.env` and edit the environment variables:
+   - `OPENAI_API_KEY` for ChatGPT access.
+   - `CALENDAR_ICS_PATH` path(s) to exported `.ics` files.
+   - `TIME_ZONE` sets the IANA time zone for event parsing.
+4. *(Optional)* Enable Google Calendar access:
+   - Create a Google Cloud service account and enable the Calendar API.
+   - Share your calendar with the service account's email address.
+   - Download the service account credentials JSON and set `GOOGLE_CREDENTIALS_PATH` to its path.
+   - Set `GOOGLE_CALENDAR_ID` to the ID of the calendar you shared.
+   - When using Docker, mount the credentials file and update the path accordingly.
+5. Ensure the vault directory exists and contains markdown project files.
+6. Create a `data/logs` directory to persist logs:
    ```bash
    mkdir -p data/logs
    ```
-6. If using GitHub Actions, install dependencies in your workflow before running linters:
+7. If using GitHub Actions, install dependencies in your workflow before running linters:
    ```yaml
    - name: Install dependencies
      run: |
