@@ -116,14 +116,17 @@ Open `http://localhost:8000/` in a browser for a simple web interface to parse p
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.txt` and takes you to `/daily-tasks`. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
-Generate a daily plan using incomplete tasks and today's energy entry:
+Generate a daily plan using incomplete tasks and today's energy entry. You can
+optionally control how many tasks are recommended by passing an `intensity`
+query parameter (`light`, `medium` or `full`):
 ```bash
-curl -X POST http://localhost:8000/plan
+curl -X POST 'http://localhost:8000/plan?intensity=full'
 ```
 The response is stored in `data/morning_plan.txt` and used to filter
 `/daily-tasks`.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
-before generating the plan.
+before generating the plan. Task selection is performed with the
+`prompts/plan_intensity_selector.txt` template based on the chosen intensity.
 
 Break down a high-level goal into actionable tasks:
 ```bash
