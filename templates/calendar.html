@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block content %}
+  <div class="max-w-xl mx-auto space-y-4">
+    <h1 class="text-2xl font-bold mb-4">Calendar Events</h1>
+    {% if events %}
+    <ul class="space-y-2">
+      {% for e in events %}
+      <li>
+        <span class="font-semibold">{{ e.start.strftime('%Y-%m-%d %H:%M') }}</span>
+        -
+        <span>{{ e.end.strftime('%H:%M') }}</span>
+        : {{ e.summary }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No events loaded.</p>
+    {% endif %}
+  </div>
+{% endblock %}

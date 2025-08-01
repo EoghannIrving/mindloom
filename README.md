@@ -28,6 +28,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
   [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
   configured.
 - Load calendar events from `.ics` files or Google Calendar into `data/calendar_cache.json`.
+- View cached events on the `/calendar` page.
 - Containerized setup using Docker and docker-compose.
 - **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
 
@@ -126,7 +127,7 @@ The script writes detailed logs to `data/logs/parse_projects.log`.
 Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks. Use `/manage-tasks` to edit all task fields.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks, `/manage-tasks` to edit them and `/calendar` to view loaded events.
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks`. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
