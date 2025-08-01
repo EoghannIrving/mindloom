@@ -15,7 +15,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Retrieve saved tasks through the `/tasks` API endpoint.
 - Mark tasks complete via the `/daily-tasks` web page.
 - Edit all task fields via the `/manage-tasks` page.
-- If `data/morning_plan.txt` exists, `/daily-tasks` shows only tasks referenced
+- If `data/morning_plan.yaml` exists, `/daily-tasks` shows only tasks referenced
   by the latest morning plan.
 - Task matching ignores punctuation so titles like `Check garden hose.` still
   match the plan text.
@@ -123,7 +123,7 @@ Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks. Use `/manage-tasks` to edit all task fields.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.txt` and takes you to `/daily-tasks`. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks`. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
 Generate a daily plan using incomplete tasks and today's energy entry. You can
@@ -132,7 +132,7 @@ query parameter (`light`, `medium` or `full`):
 ```bash
 curl -X POST 'http://localhost:8000/plan?intensity=full'
 ```
-The response is stored in `data/morning_plan.txt` and used to filter
+The response is stored in `data/morning_plan.yaml` and used to filter
 `/daily-tasks`.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
 before generating the plan. Task selection is performed with the
