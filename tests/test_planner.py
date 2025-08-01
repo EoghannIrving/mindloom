@@ -58,3 +58,11 @@ def test_parse_plan_reasons_bullet_char():
     reasons = parse_plan_reasons(text)
     assert reasons["write code"] == "finish feature"
     assert reasons["exercise"] == "stay healthy"
+
+
+def test_parse_plan_reasons_multiline_reason():
+    """parse_plan_reasons should support reasons on the next line."""
+    text = "1. Write code\n- finish feature\n2. Exercise\n- stay healthy"
+    reasons = parse_plan_reasons(text)
+    assert reasons["write code"] == "finish feature"
+    assert reasons["exercise"] == "stay healthy"
