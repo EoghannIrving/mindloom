@@ -105,3 +105,20 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
         last_was_number = is_number
         previous_blank = False
     return reasons
+
+
+def filter_tasks_by_energy(tasks: List[Dict], energy: int | None) -> List[Dict]:
+    """Return tasks whose ``energy_cost`` is within the available ``energy``."""
+    if energy is None:
+        return tasks
+    filtered: List[Dict] = []
+    for task in tasks:
+        cost = task.get("energy_cost")
+        try:
+            cost_val = int(cost)
+        except (TypeError, ValueError):
+            filtered.append(task)
+            continue
+        if cost_val <= energy:
+            filtered.append(task)
+    return filtered

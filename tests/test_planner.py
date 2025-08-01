@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from planner import save_plan, read_plan, filter_tasks_by_plan, parse_plan_reasons
+from planner import filter_tasks_by_energy
 
 
 def test_save_and_read_plan(tmp_path: Path):
@@ -83,3 +84,14 @@ def test_parse_plan_reasons_unbulleted_lines():
     reasons = parse_plan_reasons(text)
     assert reasons["add feature a"] == ""
     assert reasons["task b"] == "Explanation for B"
+
+
+def test_filter_tasks_by_energy():
+    """Tasks exceeding available energy should be removed."""
+    tasks = [
+        {"title": "Hard", "energy_cost": 4},
+        {"title": "Easy", "energy_cost": 2},
+    ]
+    filtered = filter_tasks_by_energy(tasks, 2)
+    assert len(filtered) == 1
+    assert filtered[0]["title"] == "Easy"
