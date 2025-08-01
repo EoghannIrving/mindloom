@@ -47,10 +47,10 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
     """Return a mapping of cleaned task titles to GPT-provided reasons."""
     reasons: Dict[str, str] = {}
     pattern = re.compile(
-        r"^\s*(?:\d+[.)]?|[-*\u2022])\s*(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$"
+        r"^\s*(?:\d+[.)]?|[-*\u2022])\s*(.+?)(?:(?:\s+[-\u2013\u2014]|:)\s*(.+))?$"
     )
     bullet_only = re.compile(r"^\s*[-*\u2022]\s*(.+)")
-    split_pattern = re.compile(r"^(.+?)(?:\s*[-:\u2013\u2014]\s*(.+))?$")
+    split_pattern = re.compile(r"^(.+?)(?:(?:\s+[-\u2013\u2014]|:)\s*(.+))?$")
     last_title: str | None = None
     last_was_number = False
     previous_blank = False
