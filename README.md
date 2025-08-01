@@ -24,7 +24,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Generate a daily plan via the `/plan` API endpoint.
 - Expand goals into tasks via the `/goal-breakdown` API endpoint.
 - Record daily energy via the `/energy` API or `record_energy.py`.
-- Load calendar events from `.ics` files into `data/calendar_cache.json`.
+- Load calendar events from `.ics` files or Google Calendar into `data/calendar_cache.json`.
 - Containerized setup using Docker and docker-compose.
 - **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
 
@@ -90,7 +90,8 @@ Supported keys:
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, `python-multipart`, `jinja2`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
 3. Copy `example.env` to `.env` and set `OPENAI_API_KEY` for ChatGPT access. `VAULT_PATH` defaults to `/vault/Projects` when that folder exists, otherwise `vault/Projects` relative to the project root. Paths containing `~` are expanded to your home directory.
    `CALENDAR_ICS_PATH` points to your exported calendar file and `TIME_ZONE` sets
-   the IANA time zone used when parsing events.
+   the IANA time zone used when parsing events. Set `GOOGLE_CALENDAR_ID` and
+   `GOOGLE_CREDENTIALS_PATH` to read events directly from Google Calendar.
 4. Ensure the vault directory exists and contains markdown project files.
 5. Create a `data/logs` directory to persist logs:
    ```bash
