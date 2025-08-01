@@ -1,6 +1,9 @@
 """FastAPI router for interacting with the OpenAI API."""
 
 from datetime import date
+from typing import List
+
+from calendar_integration import load_events
 from fastapi import APIRouter, Body, Query
 
 from openai_client import ask_chatgpt
@@ -45,6 +48,11 @@ async def plan_endpoint(intensity: str = Query("medium")):
     selector_response = await ask_chatgpt(selector_prompt)
     tasks = filter_tasks_by_plan(tasks, selector_response)
 
+    events = load_events(date.today(), date.today())
+    busy_blocks: List[str] = [
+        f"{ev.start.strftime('%H:%M')}-{ev.end.strftime('%H:%M')}" for ev in events
+    ]
+
     today = date.today().isoformat()
     today_entry = next(
         (e for e in reversed(entries) if e.get("date") == today),
@@ -54,6 +62,7 @@ async def plan_endpoint(intensity: str = Query("medium")):
         "tasks": tasks,
         "energy": today_entry.get("energy", 0),
         "time_blocks": today_entry.get("time_blocks", 0),
+        "calendar": busy_blocks,
     }
     template = PROJECT_ROOT / "prompts" / "morning_planner.txt"
     prompt = render_prompt(str(template), variables)
