@@ -60,6 +60,13 @@ def parse_plan_reasons(plan_text: str) -> Dict[str, str]:
         is_number = line.lstrip()[0].isdigit()
         title = match.group(1).strip()
         reason = (match.group(2) or "").strip()
+        # handle cases like "Task (meta: value)" where the colon splits the regex
+        if title.count("(") > title.count(")") and ")" in reason:
+            split = reason.index(")")
+            title = f"{title} {reason[: split + 1]}".strip()
+            reason = reason[split + 1 :].strip()
+        # remove trailing parenthetical metadata e.g. "(effort: high)"
+        title = re.sub(r"\([^\)]*\)\s*$", "", title).strip()
         if not is_number and last_title and not reason:
             if not reasons.get(last_title):
                 reasons[last_title] = title
