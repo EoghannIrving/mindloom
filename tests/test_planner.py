@@ -75,3 +75,11 @@ def test_parse_plan_reasons_parenthetical_metadata():
     )
     reasons = parse_plan_reasons(text)
     assert reasons["flexible recurrence nudges"] == "Work on flexible recurrence"
+
+
+def test_parse_plan_reasons_unbulleted_lines():
+    """Lines without bullets should treat the next line as the reason."""
+    text = "Add feature A\n\nTask B.\nExplanation for B"
+    reasons = parse_plan_reasons(text)
+    assert reasons["add feature a"] == ""
+    assert reasons["task b"] == "Explanation for B"
