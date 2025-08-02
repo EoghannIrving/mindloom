@@ -57,6 +57,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",  # Ignore unknown keys like system-provided "timezone"
     )
 
     def model_post_init(self, __context):  # type: ignore[override]
