@@ -30,14 +30,16 @@ def test_plan_endpoint_intensity(monkeypatch: pytest.MonkeyPatch):
 
     responses = iter(["- Task A", "Plan"])
 
-    async def fake_ask(prompt: str, model: str = "gpt-3.5-turbo"):
+    async def fake_ask(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500):
         return next(responses)
 
     captured = []
 
-    async def fake_ask_capture(prompt: str, model: str = "gpt-3.5-turbo"):
+    async def fake_ask_capture(
+        prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500
+    ):
         captured.append(prompt)
-        return await fake_ask(prompt, model)
+        return await fake_ask(prompt, model, max_tokens)
 
     monkeypatch.setattr(openai_route, "ask_chatgpt", fake_ask_capture)
 
