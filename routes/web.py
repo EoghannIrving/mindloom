@@ -14,6 +14,7 @@ from config import config, PROJECT_ROOT
 from prompt_renderer import render_prompt
 from tasks import read_tasks, upcoming_tasks
 from energy import read_entries
+from calendar_integration import load_events
 
 
 router = APIRouter()
@@ -65,8 +66,14 @@ def render_prompt_endpoint(data: dict = Body(...)):
 
     entries = read_entries()
     if is_morning:
-        today = date.today().isoformat()
-        latest = next((e for e in reversed(entries) if e.get("date") == today), {})
+        today = date.today()
+        iso_today = today.isoformat()
+        latest = next((e for e in reversed(entries) if e.get("date") == iso_today), {})
+        events = load_events(today, today)
+        busy_blocks = [
+            f"{ev.start.strftime('%H:%M')}-{ev.end.strftime('%H:%M')}" for ev in events
+        ]
+        variables.setdefault("calendar", busy_blocks)
     else:
         latest = entries[-1] if entries else {}
 
