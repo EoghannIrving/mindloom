@@ -28,6 +28,7 @@ ICS_PATHS = [
     for p in os.getenv(
         "CALENDAR_ICS_PATH", str(PROJECT_ROOT / "data/calendar.ics")
     ).split(os.pathsep)
+    if p
 ]
 TIME_ZONE = os.getenv("TIME_ZONE", getattr(config, "TIME_ZONE", "UTC"))
 GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
@@ -59,15 +60,26 @@ def _read_ics_events() -> List[Event]:
     events: List[Event] = []
     for path in ICS_PATHS:
         if not path.exists():
-            logger.info("ICS file %s does not exist", path)
+            logger.info("ICS path %s does not exist", path)
             continue
-        logger.info("Parsing %s", path)
-        text = path.read_text(encoding="utf-8")
-        cal = Calendar(text)
-        for item in cal.events:
-            start = item.begin.to(TIME_ZONE).datetime
-            end = item.end.to(TIME_ZONE).datetime
-            events.append(Event(item.name or "", start, end))
+
+        file_paths: List[Path]
+        if path.is_dir():
+            file_paths = sorted(p for p in path.glob("*.ics") if p.is_file())
+            if not file_paths:
+                logger.info("ICS directory %s has no .ics files", path)
+                continue
+        else:
+            file_paths = [path]
+
+        for file_path in file_paths:
+            logger.info("Parsing %s", file_path)
+            text = file_path.read_text(encoding="utf-8")
+            cal = Calendar(text)
+            for item in cal.events:
+                start = item.begin.to(TIME_ZONE).datetime
+                end = item.end.to(TIME_ZONE).datetime
+                events.append(Event(item.name or "", start, end))
     return events
 
 

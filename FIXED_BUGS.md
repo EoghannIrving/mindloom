@@ -10,4 +10,5 @@
 8. **Vault directory** - `parse_projects.parse_all_projects` now creates the vault path and returns an empty list when it doesn't exist.
 9. **Custom task path** - `tasks.write_tasks` ensures the destination directory is created before writing.
 10. **Morning planner tasks** - `index.html` no longer sends the full task list when rendering `morning_planner.txt`, so the backend injects only overdue or soon-due items.
-11. **Unknown environment variables** - `config.py` now ignores extraneous keys like `timezone` to avoid `ValidationError` during startup.
+11. **Calendar directory crash** - `_read_ics_events` now skips empty paths and reads `.ics` files from directories.
+
