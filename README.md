@@ -27,8 +27,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Request a single task suggestion via the `/suggest-task` endpoint when
   [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
   configured.
-- Load calendar events from `.ics` files or Google Calendar into `data/calendar_cache.json`.
-- View cached events on the `/calendar` page.
+- Automatically pull calendar events from linked `.ics` files or Google Calendar when visiting the `/calendar` page, caching them in `data/calendar_cache.json`.
 - Containerized setup using Docker and docker-compose.
 - **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
 
