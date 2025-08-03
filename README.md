@@ -132,15 +132,18 @@ You can also query ChatGPT from the command line by posting a JSON payload with 
 
 Generate a daily plan using incomplete tasks and today's energy entry. You can
 optionally control how many tasks are recommended by passing an `intensity`
-query parameter (`light`, `medium` or `full`):
+query parameter (`light`, `medium` or `full`) and choose which prompt to run
+with a `template` query parameter (`morning_planner` or
+`plan_intensity_selector`).
 ```bash
-curl -X POST 'http://localhost:8000/plan?intensity=full'
+curl -X POST 'http://localhost:8000/plan?intensity=full&template=morning_planner'
 ```
 The response is stored in `data/morning_plan.yaml` and used to filter
 `/daily-tasks`.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
-before generating the plan. Task selection is performed with the
-`prompts/plan_intensity_selector.txt` template based on the chosen intensity.
+before generating the prompt. Using `template=plan_intensity_selector`
+returns a task selection based on the chosen intensity, while
+`template=morning_planner` produces a complete plan.
 
 Break down a high-level goal into actionable tasks:
 ```bash
