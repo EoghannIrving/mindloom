@@ -128,5 +128,16 @@ def upcoming_tasks(
     today: date | None = None,
 ) -> List[Dict]:
     """Return incomplete tasks overdue or due soon."""
-    tasks = [t for t in read_tasks(path) if t.get("status") != "complete"]
-    return due_within(tasks, days=days, today=today)
+    today = today or date.today()
+    logger.info(
+        "Fetching upcoming tasks from %s within %d days (today=%s)",
+        path,
+        days,
+        today,
+    )
+    all_tasks = read_tasks(path)
+    tasks = [t for t in all_tasks if t.get("status") != "complete"]
+    logger.debug("Found %d incomplete tasks", len(tasks))
+    results = due_within(tasks, days=days, today=today)
+    logger.debug("%d tasks due within %d days", len(results), days)
+    return results
