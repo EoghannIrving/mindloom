@@ -3,18 +3,34 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+import logging
 import re
 import string
 import yaml
-from config import config, PROJECT_ROOT
+from config import PROJECT_ROOT, config
+
+LOG_FILE = Path(config.LOG_DIR) / "planner.log"
+LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
 
 PUNCT_TABLE = str.maketrans("", "", string.punctuation)
 
 
 def _clean(text: str) -> str:
     """Lowercase and remove punctuation from ``text``."""
-    return text.translate(PUNCT_TABLE).lower()
+    logger.debug("Cleaning text: %s", text)
+    cleaned = text.translate(PUNCT_TABLE).lower()
+    logger.debug("Cleaned text: %s", cleaned)
+    return cleaned
 
 
 PLAN_PATH = Path(getattr(config, "PLAN_PATH", PROJECT_ROOT / "data/morning_plan.yaml"))
@@ -23,36 +39,53 @@ PLAN_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 def read_plan(path: Path = PLAN_PATH) -> List[Dict]:
     """Return the saved morning plan tasks if it exists."""
+    logger.info("Reading plan from %s", path)
     if not path.exists():
+        logger.info("%s does not exist", path)
         return []
     with open(path, "r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
-    return data.get("tasks", [])
+    tasks = data.get("tasks", [])
+    logger.debug("Loaded %d tasks", len(tasks))
+    return tasks
 
 
 def save_plan(plan: List[Dict], path: Path = PLAN_PATH) -> None:
     """Persist the generated morning plan."""
+    logger.info("Saving plan with %d tasks to %s", len(plan), path)
     Path(path).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         yaml.dump({"tasks": plan}, handle, sort_keys=False, allow_unicode=True)
+    logger.debug("Plan saved successfully")
 
 
 def filter_tasks_by_plan(tasks: List[Dict], plan: Any | None = None) -> List[Dict]:
     """Return only tasks whose titles appear in the plan."""
+    logger.info(
+        "Filtering %d tasks using %s",
+        len(tasks),
+        "provided plan" if plan else "no plan",
+    )
     if not plan:
         return tasks
     # support old string plan format
     if isinstance(plan, str):
+        logger.debug("Plan string: %s", plan)
         plan_clean = _clean(plan)
-        return [t for t in tasks if _clean(str(t.get("title", ""))) in plan_clean]
+        filtered = [t for t in tasks if _clean(str(t.get("title", ""))) in plan_clean]
+        logger.debug("Filtered down to %d tasks", len(filtered))
+        return filtered
 
     plan_list = plan.get("tasks") if isinstance(plan, dict) else plan
     titles = {_clean(str(p.get("title", ""))) for p in plan_list or []}
-    return [t for t in tasks if _clean(str(t.get("title", ""))) in titles]
+    filtered = [t for t in tasks if _clean(str(t.get("title", ""))) in titles]
+    logger.debug("Filtered down to %d tasks", len(filtered))
+    return filtered
 
 
 def parse_plan_reasons(plan: Any) -> Dict[str, str]:
     """Return a mapping of cleaned task titles to GPT-provided reasons."""
+    logger.info("Parsing plan reasons from %s", type(plan).__name__)
     # old text-based format
     if isinstance(plan, str):
         reasons: Dict[str, str] = {}
@@ -112,18 +145,23 @@ def parse_plan_reasons(plan: Any) -> Dict[str, str]:
             reasons[last_title] = reason
             last_was_number = is_number
             previous_blank = False
+        logger.debug("Parsed %d reasons", len(reasons))
         return reasons
 
     plan_list = plan.get("tasks") if isinstance(plan, dict) else plan
-    return {
+    reasons = {
         _clean(str(item.get("title", ""))): str(item.get("reason", ""))
         for item in plan_list or []
     }
+    logger.debug("Parsed %d reasons", len(reasons))
+    return reasons
 
 
 def filter_tasks_by_energy(tasks: List[Dict], energy: int | None) -> List[Dict]:
     """Return tasks whose ``energy_cost`` is within the available ``energy``."""
+    logger.info("Filtering %d tasks by energy=%s", len(tasks), energy)
     if energy is None:
+        logger.debug("No energy limit provided")
         return tasks
     filtered: List[Dict] = []
     for task in tasks:
@@ -135,4 +173,5 @@ def filter_tasks_by_energy(tasks: List[Dict], energy: int | None) -> List[Dict]:
             continue
         if cost_val <= energy:
             filtered.append(task)
+    logger.debug("Filtered down to %d tasks", len(filtered))
     return filtered
