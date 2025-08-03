@@ -2,7 +2,8 @@
 
 from datetime import date
 from pathlib import Path
-from typing import List
+from typing import List, Literal
+from pydantic import BaseModel
 import logging
 
 from calendar_integration import load_events
@@ -12,7 +13,7 @@ from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import upcoming_tasks
 from energy import read_entries
-from planner import save_plan, filter_tasks_by_energy, filter_tasks_by_plan
+from planner import save_plan, filter_tasks_by_energy
 from config import PROJECT_ROOT, config
 
 router = APIRouter()
@@ -43,10 +44,19 @@ async def ask_endpoint(data: dict = Body(...)):
     return {"response": response}
 
 
-@router.post("/plan")
-async def plan_endpoint(intensity: str = Query("medium")):
-    """Generate a daily plan using incomplete tasks and today's energy log."""
-    logger.info("POST /plan intensity=%s", intensity)
+class PlanResponse(BaseModel):
+    plan: str
+
+
+@router.post("/plan", response_model=PlanResponse)
+async def plan_endpoint(
+    intensity: str = Query("medium"),
+    template: Literal["plan_intensity_selector", "morning_planner"] = Query(
+        "morning_planner"
+    ),
+) -> PlanResponse:
+    """Generate a plan or task selection based on the chosen template."""
+    logger.info("POST /plan intensity=%s template=%s", intensity, template)
     intensity = intensity.lower()
     if intensity not in {"light", "medium", "full"}:
         logger.warning("Invalid intensity %s, defaulting to medium", intensity)
@@ -66,15 +76,15 @@ async def plan_endpoint(intensity: str = Query("medium")):
     else:
         logger.info("No energy entry found; skipping energy filter")
 
-    selector_template = PROJECT_ROOT / "prompts" / "plan_intensity_selector.txt"
-    selector_prompt = render_prompt(
-        str(selector_template), {"tasks": tasks, "intensity": intensity}
-    )
-    logger.debug("Selector prompt: %s", selector_prompt)
-    selector_response = await ask_chatgpt(selector_prompt)
-    logger.info("Selector response: %s", selector_response)
-    tasks = filter_tasks_by_plan(tasks, selector_response)
-    logger.info("Tasks after plan filter: %d", len(tasks))
+    if template == "plan_intensity_selector":
+        selector_template = PROJECT_ROOT / "prompts" / "plan_intensity_selector.txt"
+        prompt = render_prompt(
+            str(selector_template), {"tasks": tasks, "intensity": intensity}
+        )
+        logger.debug("Selector prompt: %s", prompt)
+        response = await ask_chatgpt(prompt)
+        logger.info("Generated selector response: %s", response)
+        return PlanResponse(plan=response)
 
     events = load_events(date.today(), date.today())
     logger.info("Loaded %d calendar events", len(events))
@@ -96,14 +106,14 @@ async def plan_endpoint(intensity: str = Query("medium")):
         "calendar": busy_blocks,
     }
     logger.debug("Prompt variables: %s", variables)
-    template = PROJECT_ROOT / "prompts" / "morning_planner.txt"
-    prompt = render_prompt(str(template), variables)
+    template_path = PROJECT_ROOT / "prompts" / "morning_planner.txt"
+    prompt = render_prompt(str(template_path), variables)
     logger.debug("Final plan prompt: %s", prompt)
     plan = await ask_chatgpt(prompt)
     logger.info("Generated plan: %s", plan)
     save_plan(plan)
     logger.info("Plan saved")
-    return {"plan": plan}
+    return PlanResponse(plan=plan)
 
 
 @router.post("/goal-breakdown")
