@@ -1,72 +1,133 @@
 {% extends "base.html" %}
 {% block title %}Mindloom{% endblock %}
 {% block content %}
-  <div class="max-w-xl mx-auto space-y-4">
-    <h1 class="text-2xl font-bold mb-4">Mindloom Interface</h1>
-    <section class="space-y-2">
-      <h2 class="text-xl font-semibold">Parse Projects</h2>
-      <div class="flex gap-2">
-        <button id="parseBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Parse</button>
-        <button id="tasksBtn" class="px-3 py-1 bg-green-500 text-white rounded">Save Tasks</button>
-        <button id="writeTasksBtn" class="px-3 py-1 bg-purple-500 text-white rounded">Write Tasks</button>
+  <div class="max-w-5xl mx-auto space-y-6">
+    <section
+      class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
+      <div class="space-y-2">
+        <h1 class="text-3xl font-bold">Pick my next task</h1>
+        <p class="text-lg text-indigo-100">
+          Quickly focus on what matters most. Choose your planning focus and let Mindloom surface the next best step.
+        </p>
       </div>
-      <pre id="parseResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-      <pre id="tasksResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-      <pre id="writeTasksResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-    </section>
-    <section class="space-y-2">
-      <h2 class="text-xl font-semibold">Record Energy</h2>
-      <div class="flex gap-2">
-        <select id="energy" class="border p-1 flex-1">
-          <option value="1">🪫 Drained</option>
-          <option value="2">😴 Low</option>
-          <option value="3">🙂 OK</option>
-          <option value="4">⚡ Energized</option>
-          <option value="5">💥 Turbo</option>
-        </select>
-        <select id="mood" class="border p-1 flex-1">
-          <option value="Sad">😔 Sad</option>
-          <option value="Meh">😐 Meh</option>
-          <option value="Okay">😊 Okay</option>
-          <option value="Joyful">😍 Joyful</option>
-        </select>
-        <input id="timeBlocks" type="number" step="1" placeholder="Time blocks free"
-          class="border p-1 flex-1" />
-        <button id="recordBtn" class="px-3 py-1 bg-blue-500 text-white rounded">Record</button>
-      </div>
-      <pre id="recordResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-    </section>
-    <section class="space-y-2">
-      <h2 class="text-xl font-semibold">Data</h2>
-      <div class="flex gap-2">
-        <button id="loadProjects" class="px-3 py-1 bg-blue-500 text-white rounded">Load Projects</button>
-        <button id="loadEnergy" class="px-3 py-1 bg-blue-500 text-white rounded">Load Energy</button>
-      </div>
-      <pre id="projects" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-      <pre id="energyData" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-    </section>
-    <section class="space-y-2">
-      <h2 class="text-xl font-semibold">Prompts</h2>
-      <div class="flex gap-2">
-        <select id="promptSelect" class="border p-1 flex-1">
-          {% for p in prompt_files %}
-          <option value="{{ p }}">{{ p }}</option>
-          {% endfor %}
-        </select>
-        <textarea id="promptVars" placeholder="{\"energy\":5}" class="border p-1 flex-1"></textarea>
-        <button id="renderPrompt" class="px-3 py-1 bg-blue-500 text-white rounded">Render</button>
-        <button id="askBtn" class="px-3 py-1 bg-purple-500 text-white rounded">Ask</button>
-      </div>
-      <div class="flex items-center gap-2">
-        <label for="plannerMode" class="text-sm font-medium text-gray-700">Focus</label>
-        <select id="plannerMode" class="border p-1 flex-1">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+        <label for="plannerMode" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Focus</label>
+        <select id="plannerMode"
+          class="flex-1 rounded-lg border-0 bg-white/10 text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+          <option value="next_task" selected>Next task</option>
           <option value="plan">Daily plan</option>
-          <option value="next_task">Next task</option>
         </select>
+        <button id="focusAskBtn"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 text-lg font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+          Ask Mindloom
+        </button>
       </div>
-      <pre id="promptResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
-      <pre id="askResult" class="bg-gray-100 p-2 rounded whitespace-pre-wrap overflow-auto"></pre>
+      <pre id="askResult"
+        class="bg-indigo-900/40 border border-white/20 rounded-2xl p-4 text-sm font-mono whitespace-pre-wrap overflow-auto"></pre>
     </section>
+
+    <div class="space-y-4">
+      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>Prompts &amp; Templates</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-3 text-sm text-gray-600">
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <select id="promptSelect"
+              class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              {% for p in prompt_files %}
+              <option value="{{ p }}">{{ p }}</option>
+              {% endfor %}
+            </select>
+            <textarea id="promptVars" placeholder='{"energy":5}'
+              class="flex-1 min-h-[48px] rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"></textarea>
+          </div>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button id="renderPrompt"
+              class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Render</button>
+            <button id="askBtn"
+              class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 transition hover:bg-purple-100">Send to Mindloom</button>
+          </div>
+          <pre id="promptResult"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+        </div>
+      </details>
+
+      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>Parse Projects</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-3 text-sm text-gray-600">
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button id="parseBtn"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Parse</button>
+            <button id="tasksBtn"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Save Tasks</button>
+            <button id="writeTasksBtn"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Write Tasks</button>
+          </div>
+          <pre id="parseResult"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+          <pre id="tasksResult"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+          <pre id="writeTasksResult"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+        </div>
+      </details>
+
+      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>Record Energy</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-3 text-sm text-gray-600">
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <select id="energy"
+              class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <option value="1">🪫 Drained</option>
+              <option value="2">😴 Low</option>
+              <option value="3">🙂 OK</option>
+              <option value="4">⚡ Energized</option>
+              <option value="5">💥 Turbo</option>
+            </select>
+            <select id="mood"
+              class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <option value="Sad">😔 Sad</option>
+              <option value="Meh">😐 Meh</option>
+              <option value="Okay">😊 Okay</option>
+              <option value="Joyful">😍 Joyful</option>
+            </select>
+            <input id="timeBlocks" type="number" step="1" placeholder="Time blocks free"
+              class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+            <button id="recordBtn"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Record</button>
+          </div>
+          <pre id="recordResult"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+        </div>
+      </details>
+
+      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>Data</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-3 text-sm text-gray-600">
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <button id="loadProjects"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Load Projects</button>
+            <button id="loadEnergy"
+              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Load Energy</button>
+          </div>
+          <pre id="projects"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+          <pre id="energyData"
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+        </div>
+      </details>
+    </div>
   </div>
 
 <script>
@@ -118,6 +179,39 @@ document.getElementById('loadEnergy').onclick = async () => {
   const data = await res.json();
   document.getElementById('energyData').textContent = JSON.stringify(data, null, 2);
 };
+
+const plannerModeSelect = document.getElementById('plannerMode');
+const focusAskBtn = document.getElementById('focusAskBtn');
+
+async function requestPlan(mode) {
+  const effectiveMode = mode || 'next_task';
+  const res = await fetch(`/plan?mode=${encodeURIComponent(effectiveMode)}`, { method: 'POST' });
+  const data = await res.json();
+  const askResultEl = document.getElementById('askResult');
+  if (effectiveMode === 'next_task') {
+    if (data.next_task) {
+      askResultEl.textContent = JSON.stringify(data.next_task, null, 2);
+    } else if (data.plan) {
+      askResultEl.textContent = data.plan;
+    } else {
+      askResultEl.textContent = JSON.stringify(data, null, 2);
+    }
+    return;
+  }
+  if (data.plan) {
+    askResultEl.textContent = data.plan;
+  } else {
+    askResultEl.textContent = JSON.stringify(data, null, 2);
+  }
+  window.location.href = '/daily-tasks';
+}
+
+if (focusAskBtn) {
+  focusAskBtn.onclick = async () => {
+    const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
+    await requestPlan(mode);
+  };
+}
 
 async function renderPromptAction() {
   const select = document.getElementById('promptSelect');
@@ -173,7 +267,6 @@ async function renderPromptAction() {
 document.getElementById('renderPrompt').onclick = renderPromptAction;
 
 const promptSelect = document.getElementById('promptSelect');
-const plannerModeSelect = document.getElementById('plannerMode');
 promptSelect.onchange = () => {
   if (promptSelect.value.endsWith('morning_planner.txt')) {
     renderPromptAction();
@@ -183,26 +276,8 @@ promptSelect.onchange = () => {
 document.getElementById('askBtn').onclick = async () => {
   const select = document.getElementById('promptSelect');
   if (select.value.endsWith('morning_planner.txt')) {
-    const mode = plannerModeSelect ? plannerModeSelect.value : 'plan';
-    const res = await fetch(`/plan?mode=${encodeURIComponent(mode)}`, { method: 'POST' });
-    const data = await res.json();
-    const askResultEl = document.getElementById('askResult');
-    if (mode === 'next_task') {
-      if (data.next_task) {
-        askResultEl.textContent = JSON.stringify(data.next_task, null, 2);
-      } else if (data.plan) {
-        askResultEl.textContent = data.plan;
-      } else {
-        askResultEl.textContent = JSON.stringify(data, null, 2);
-      }
-      return;
-    }
-    if (data.plan) {
-      askResultEl.textContent = data.plan;
-    } else {
-      askResultEl.textContent = JSON.stringify(data, null, 2);
-    }
-    window.location.href = '/daily-tasks';
+    const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
+    await requestPlan(mode);
     return;
   }
 
