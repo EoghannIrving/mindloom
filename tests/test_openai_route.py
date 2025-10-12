@@ -85,3 +85,46 @@ def test_plan_endpoint_morning_planner(monkeypatch: pytest.MonkeyPatch):
     assert resp.status_code == 200
     assert resp.json()["plan"] == "Plan"
     assert "YAML" in captured[0]
+
+
+def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
+    today = date.today().isoformat()
+    tasks = [
+        {"id": 1, "title": "High Effort", "due": today, "energy_cost": 4},
+        {"id": 2, "title": "Gentle Start", "due": today, "energy_cost": 1},
+    ]
+
+    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=7: tasks)
+
+    recorded = {}
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: int):
+        recorded.update(
+            {
+                "date": today,
+                "energy": energy,
+                "mood": mood,
+                "time_blocks": time_blocks,
+            }
+        )
+        return recorded.copy()
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+
+    monkeypatch.setattr(
+        openai_route, "read_entries", lambda: [recorded.copy()] if recorded else []
+    )
+    monkeypatch.setattr(
+        openai_route, "filter_tasks_by_energy", openai_route.filter_tasks_by_energy
+    )
+
+    client = TestClient(app)
+    payload = {"energy": 3, "mood": "Sad", "time_blocks": 6}
+    resp = client.post("/plan?mode=next_task", json=payload)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["plan"] == "Gentle Start"
+    assert data["next_task"]["title"] == "Gentle Start"
+    assert recorded["energy"] == payload["energy"]
+    assert recorded["mood"] == payload["mood"]
