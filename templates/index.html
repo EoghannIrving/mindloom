@@ -23,7 +23,8 @@
         </button>
       </div>
       <pre id="askResult"
-        class="bg-indigo-900/40 border border-white/20 rounded-2xl p-4 text-sm font-mono whitespace-pre-wrap overflow-auto"></pre>
+        class="bg-indigo-900/40 border border-white/20 rounded-2xl p-4 text-sm font-mono whitespace-pre-wrap overflow-auto min-h-48 text-indigo-200 data-placeholder"
+        data-placeholder-class="text-indigo-200" data-active-class="text-white">Results will appear here…</pre>
     </section>
 
     <div class="space-y-4">
@@ -50,7 +51,8 @@
               class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 transition hover:bg-purple-100">Send to Mindloom</button>
           </div>
           <pre id="promptResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
         </div>
       </details>
 
@@ -69,11 +71,14 @@
               class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Write Tasks</button>
           </div>
           <pre id="parseResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
           <pre id="tasksResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
           <pre id="writeTasksResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
         </div>
       </details>
 
@@ -105,7 +110,8 @@
               class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Record</button>
           </div>
           <pre id="recordResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
         </div>
       </details>
 
@@ -122,34 +128,60 @@
               class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Load Energy</button>
           </div>
           <pre id="projects"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
           <pre id="energyData"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap overflow-auto"></pre>
+            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
         </div>
       </details>
     </div>
   </div>
 
 <script>
+function setPreContent(target, text) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  if (!el) {
+    return;
+  }
+  el.textContent = text;
+  if (el.classList.contains('data-placeholder')) {
+    const placeholderClass = el.dataset.placeholderClass;
+    if (placeholderClass) {
+      el.classList.remove(placeholderClass);
+    }
+    const activeClass = el.dataset.activeClass;
+    if (activeClass) {
+      el.classList.add(activeClass);
+    }
+    el.classList.remove('data-placeholder');
+  }
+}
+
+function isPlaceholder(target) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  return !!el && el.classList.contains('data-placeholder');
+}
+
 const parseBtn = document.getElementById('parseBtn');
 parseBtn.onclick = async () => {
   const res = await fetch('/parse-projects', {method: 'POST'});
   const data = await res.json();
-  document.getElementById('parseResult').textContent = JSON.stringify(data, null, 2);
+  setPreContent('parseResult', JSON.stringify(data, null, 2));
 };
 
 const tasksBtn = document.getElementById('tasksBtn');
 tasksBtn.onclick = async () => {
   const res = await fetch('/save-tasks', {method: 'POST'});
   const data = await res.json();
-  document.getElementById('tasksResult').textContent = JSON.stringify(data, null, 2);
+  setPreContent('tasksResult', JSON.stringify(data, null, 2));
 };
 
 const writeTasksBtn = document.getElementById('writeTasksBtn');
 writeTasksBtn.onclick = async () => {
   const res = await fetch('/write-tasks', {method: 'POST'});
   const data = await res.json();
-  document.getElementById('writeTasksResult').textContent = JSON.stringify(data, null, 2);
+  setPreContent('writeTasksResult', JSON.stringify(data, null, 2));
 };
 
 const recordBtn = document.getElementById('recordBtn');
@@ -165,19 +197,19 @@ recordBtn.onclick = async () => {
     body: JSON.stringify(payload)
   });
   const data = await res.json();
-  document.getElementById('recordResult').textContent = JSON.stringify(data, null, 2);
+  setPreContent('recordResult', JSON.stringify(data, null, 2));
 };
 
 document.getElementById('loadProjects').onclick = async () => {
   const res = await fetch('/projects');
   const data = await res.json();
-  document.getElementById('projects').textContent = JSON.stringify(data, null, 2);
+  setPreContent('projects', JSON.stringify(data, null, 2));
 };
 
 document.getElementById('loadEnergy').onclick = async () => {
   const res = await fetch('/energy');
   const data = await res.json();
-  document.getElementById('energyData').textContent = JSON.stringify(data, null, 2);
+  setPreContent('energyData', JSON.stringify(data, null, 2));
 };
 
 const plannerModeSelect = document.getElementById('plannerMode');
@@ -190,18 +222,18 @@ async function requestPlan(mode) {
   const askResultEl = document.getElementById('askResult');
   if (effectiveMode === 'next_task') {
     if (data.next_task) {
-      askResultEl.textContent = JSON.stringify(data.next_task, null, 2);
+      setPreContent(askResultEl, JSON.stringify(data.next_task, null, 2));
     } else if (data.plan) {
-      askResultEl.textContent = data.plan;
+      setPreContent(askResultEl, data.plan);
     } else {
-      askResultEl.textContent = JSON.stringify(data, null, 2);
+      setPreContent(askResultEl, JSON.stringify(data, null, 2));
     }
     return;
   }
   if (data.plan) {
-    askResultEl.textContent = data.plan;
+    setPreContent(askResultEl, data.plan);
   } else {
-    askResultEl.textContent = JSON.stringify(data, null, 2);
+    setPreContent(askResultEl, JSON.stringify(data, null, 2));
   }
   window.location.href = '/daily-tasks';
 }
@@ -261,7 +293,11 @@ async function renderPromptAction() {
     body: JSON.stringify(payload)
   });
   const data = await res.json();
-  document.getElementById('promptResult').textContent = data.result;
+  if (data.result) {
+    setPreContent('promptResult', data.result);
+  } else {
+    setPreContent('promptResult', JSON.stringify(data, null, 2));
+  }
 }
 
 document.getElementById('renderPrompt').onclick = renderPromptAction;
@@ -281,7 +317,12 @@ document.getElementById('askBtn').onclick = async () => {
     return;
   }
 
-  const prompt = document.getElementById('promptResult').textContent.trim();
+  const promptResultEl = document.getElementById('promptResult');
+  if (isPlaceholder(promptResultEl)) {
+    alert('Render a prompt first');
+    return;
+  }
+  const prompt = promptResultEl.textContent.trim();
   if (!prompt) {
     alert('Render a prompt first');
     return;
@@ -293,9 +334,9 @@ document.getElementById('askBtn').onclick = async () => {
   });
   const data = await res.json();
   if (data.response) {
-    document.getElementById('askResult').textContent = data.response;
+    setPreContent('askResult', data.response);
   } else {
-    document.getElementById('askResult').textContent = JSON.stringify(data, null, 2);
+    setPreContent('askResult', JSON.stringify(data, null, 2));
   }
 };
 </script>
