@@ -138,6 +138,7 @@
     </div>
   </div>
 
+
 <script>
 function setPreContent(target, text) {
   const el = typeof target === 'string' ? document.getElementById(target) : target;
@@ -163,54 +164,150 @@ function isPlaceholder(target) {
   return !!el && el.classList.contains('data-placeholder');
 }
 
+function displayInlineError(target, baseMessage, error) {
+  const details = error && error.message ? ` Details: ${error.message}` : '';
+  setPreContent(target, `⚠️ ${baseMessage}. ${details}`.trim());
+}
+
+function performActionWithFeedback(button, {loadingText = 'Loading…', preId, errorMessage, action}) {
+  if (!button) {
+    return () => {};
+  }
+  return async (...args) => {
+    if (button.disabled) {
+      return;
+    }
+    const originalHtml = button.innerHTML;
+    const originalAriaBusy = button.getAttribute('aria-busy');
+    button.disabled = true;
+    button.classList.add('cursor-not-allowed', 'opacity-70', 'animate-pulse');
+    button.setAttribute('aria-busy', 'true');
+    button.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="h-2.5 w-2.5 rounded-full border-2 border-current border-t-transparent animate-spin"></span>${loadingText}</span>`;
+    try {
+      return await action(...args);
+    } catch (error) {
+      console.error(errorMessage, error);
+      if (preId) {
+        displayInlineError(preId, errorMessage, error);
+      }
+      return null;
+    } finally {
+      button.disabled = false;
+      button.innerHTML = originalHtml;
+      button.classList.remove('cursor-not-allowed', 'opacity-70', 'animate-pulse');
+      if (originalAriaBusy !== null) {
+        button.setAttribute('aria-busy', originalAriaBusy);
+      } else {
+        button.removeAttribute('aria-busy');
+      }
+    }
+  };
+}
+
+function ensureOkResponse(response) {
+  if (!response.ok) {
+    throw new Error(`Server responded with status ${response.status}`);
+  }
+}
+
 const parseBtn = document.getElementById('parseBtn');
-parseBtn.onclick = async () => {
-  const res = await fetch('/parse-projects', {method: 'POST'});
-  const data = await res.json();
-  setPreContent('parseResult', JSON.stringify(data, null, 2));
-};
+if (parseBtn) {
+  parseBtn.onclick = performActionWithFeedback(parseBtn, {
+    loadingText: 'Parsing…',
+    preId: 'parseResult',
+    errorMessage: 'Unable to parse projects',
+    action: async () => {
+      const res = await fetch('/parse-projects', { method: 'POST' });
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('parseResult', JSON.stringify(data, null, 2));
+    }
+  });
+}
 
 const tasksBtn = document.getElementById('tasksBtn');
-tasksBtn.onclick = async () => {
-  const res = await fetch('/save-tasks', {method: 'POST'});
-  const data = await res.json();
-  setPreContent('tasksResult', JSON.stringify(data, null, 2));
-};
+if (tasksBtn) {
+  tasksBtn.onclick = performActionWithFeedback(tasksBtn, {
+    loadingText: 'Saving…',
+    preId: 'tasksResult',
+    errorMessage: 'Unable to save tasks',
+    action: async () => {
+      const res = await fetch('/save-tasks', { method: 'POST' });
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('tasksResult', JSON.stringify(data, null, 2));
+    }
+  });
+}
 
 const writeTasksBtn = document.getElementById('writeTasksBtn');
-writeTasksBtn.onclick = async () => {
-  const res = await fetch('/write-tasks', {method: 'POST'});
-  const data = await res.json();
-  setPreContent('writeTasksResult', JSON.stringify(data, null, 2));
-};
+if (writeTasksBtn) {
+  writeTasksBtn.onclick = performActionWithFeedback(writeTasksBtn, {
+    loadingText: 'Writing…',
+    preId: 'writeTasksResult',
+    errorMessage: 'Unable to write tasks',
+    action: async () => {
+      const res = await fetch('/write-tasks', { method: 'POST' });
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('writeTasksResult', JSON.stringify(data, null, 2));
+    }
+  });
+}
 
 const recordBtn = document.getElementById('recordBtn');
-recordBtn.onclick = async () => {
-  const payload = {
-    energy: parseInt(document.getElementById('energy').value),
-    mood: document.getElementById('mood').value,
-    time_blocks: parseInt(document.getElementById('timeBlocks').value || '0')
-  };
-  const res = await fetch('/energy', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload)
+if (recordBtn) {
+  recordBtn.onclick = performActionWithFeedback(recordBtn, {
+    loadingText: 'Recording…',
+    preId: 'recordResult',
+    errorMessage: 'Unable to record energy',
+    action: async () => {
+      const payload = {
+        energy: parseInt(document.getElementById('energy').value),
+        mood: document.getElementById('mood').value,
+        time_blocks: parseInt(document.getElementById('timeBlocks').value || '0')
+      };
+      const res = await fetch('/energy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('recordResult', JSON.stringify(data, null, 2));
+    }
   });
-  const data = await res.json();
-  setPreContent('recordResult', JSON.stringify(data, null, 2));
-};
+}
 
-document.getElementById('loadProjects').onclick = async () => {
-  const res = await fetch('/projects');
-  const data = await res.json();
-  setPreContent('projects', JSON.stringify(data, null, 2));
-};
+const loadProjectsBtn = document.getElementById('loadProjects');
+if (loadProjectsBtn) {
+  loadProjectsBtn.onclick = performActionWithFeedback(loadProjectsBtn, {
+    loadingText: 'Loading…',
+    preId: 'projects',
+    errorMessage: 'Unable to load projects',
+    action: async () => {
+      const res = await fetch('/projects');
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('projects', JSON.stringify(data, null, 2));
+    }
+  });
+}
 
-document.getElementById('loadEnergy').onclick = async () => {
-  const res = await fetch('/energy');
-  const data = await res.json();
-  setPreContent('energyData', JSON.stringify(data, null, 2));
-};
+const loadEnergyBtn = document.getElementById('loadEnergy');
+if (loadEnergyBtn) {
+  loadEnergyBtn.onclick = performActionWithFeedback(loadEnergyBtn, {
+    loadingText: 'Loading…',
+    preId: 'energyData',
+    errorMessage: 'Unable to load energy data',
+    action: async () => {
+      const res = await fetch('/energy');
+      ensureOkResponse(res);
+      const data = await res.json();
+      setPreContent('energyData', JSON.stringify(data, null, 2));
+    }
+  });
+}
 
 const plannerModeSelect = document.getElementById('plannerMode');
 const focusAskBtn = document.getElementById('focusAskBtn');
@@ -218,6 +315,7 @@ const focusAskBtn = document.getElementById('focusAskBtn');
 async function requestPlan(mode) {
   const effectiveMode = mode || 'next_task';
   const res = await fetch(`/plan?mode=${encodeURIComponent(effectiveMode)}`, { method: 'POST' });
+  ensureOkResponse(res);
   const data = await res.json();
   const askResultEl = document.getElementById('askResult');
   if (effectiveMode === 'next_task') {
@@ -239,10 +337,15 @@ async function requestPlan(mode) {
 }
 
 if (focusAskBtn) {
-  focusAskBtn.onclick = async () => {
-    const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
-    await requestPlan(mode);
-  };
+  focusAskBtn.onclick = performActionWithFeedback(focusAskBtn, {
+    loadingText: 'Asking…',
+    preId: 'askResult',
+    errorMessage: 'Unable to load plan',
+    action: async () => {
+      const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
+      await requestPlan(mode);
+    }
+  });
 }
 
 async function renderPromptAction() {
@@ -255,44 +358,50 @@ async function renderPromptAction() {
     alert('Invalid JSON in variables');
     return;
   }
+  const warnings = [];
   try {
     const tasksRes = await fetch('/tasks');
-    if (tasksRes.ok) {
-      const tasksData = await tasksRes.json();
-      if (!select.value.endsWith('morning_planner.txt')) {
-        variables.tasks = tasksData;
-      }
+    ensureOkResponse(tasksRes);
+    const tasksData = await tasksRes.json();
+    if (!select.value.endsWith('morning_planner.txt')) {
+      variables.tasks = tasksData;
     }
   } catch (e) {
-    console.error('Failed to load tasks', e);
+    warnings.push(`⚠️ Unable to load tasks data. ${e.message || ''}`.trim());
   }
   try {
     const energyRes = await fetch('/energy');
-    if (energyRes.ok) {
-      const energyData = await energyRes.json();
-      const latest = energyData[energyData.length - 1];
-      if (latest) {
-        if (!('time_blocks' in variables)) {
-          variables.time_blocks = latest.time_blocks;
-        }
-        if (!('energy' in variables)) {
-          variables.energy = latest.energy;
-        }
-        if (!('mood' in variables)) {
-          variables.mood = latest.mood;
-        }
+    ensureOkResponse(energyRes);
+    const energyData = await energyRes.json();
+    const latest = energyData[energyData.length - 1];
+    if (latest) {
+      if (!('time_blocks' in variables)) {
+        variables.time_blocks = latest.time_blocks;
+      }
+      if (!('energy' in variables)) {
+        variables.energy = latest.energy;
+      }
+      if (!('mood' in variables)) {
+        variables.mood = latest.mood;
       }
     }
   } catch (e) {
-    console.error('Failed to load energy data', e);
+    warnings.push(`⚠️ Unable to load energy data. ${e.message || ''}`.trim());
   }
   const payload = { template: select.value, variables };
   const res = await fetch('/render-prompt', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+  ensureOkResponse(res);
   const data = await res.json();
+  const resultContent = data.result ? data.result : JSON.stringify(data, null, 2);
+  if (warnings.length) {
+    const combined = [...warnings, '', resultContent].join('\n');
+    setPreContent('promptResult', combined.replace(/\n/g, String.fromCharCode(10)));
+    return;
+  }
   if (data.result) {
     setPreContent('promptResult', data.result);
   } else {
@@ -300,44 +409,67 @@ async function renderPromptAction() {
   }
 }
 
-document.getElementById('renderPrompt').onclick = renderPromptAction;
+const renderPromptBtn = document.getElementById('renderPrompt');
+if (renderPromptBtn) {
+  renderPromptBtn.onclick = performActionWithFeedback(renderPromptBtn, {
+    loadingText: 'Rendering…',
+    preId: 'promptResult',
+    errorMessage: 'Unable to render prompt',
+    action: renderPromptAction
+  });
+}
 
 const promptSelect = document.getElementById('promptSelect');
-promptSelect.onchange = () => {
-  if (promptSelect.value.endsWith('morning_planner.txt')) {
-    renderPromptAction();
-  }
-};
+if (promptSelect) {
+  promptSelect.onchange = () => {
+    if (promptSelect.value.endsWith('morning_planner.txt')) {
+      renderPromptAction().catch((error) => {
+        console.error('Unable to auto-render prompt', error);
+        displayInlineError('promptResult', 'Unable to render prompt', error);
+      });
+    }
+  };
+}
 
-document.getElementById('askBtn').onclick = async () => {
-  const select = document.getElementById('promptSelect');
-  if (select.value.endsWith('morning_planner.txt')) {
-    const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
-    await requestPlan(mode);
-    return;
-  }
+const askBtn = document.getElementById('askBtn');
+if (askBtn) {
+  askBtn.onclick = performActionWithFeedback(askBtn, {
+    loadingText: 'Sending…',
+    preId: 'askResult',
+    errorMessage: 'Unable to process request',
+    action: async () => {
+      const select = document.getElementById('promptSelect');
+      if (select.value.endsWith('morning_planner.txt')) {
+        const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
+        await requestPlan(mode);
+        return;
+      }
 
-  const promptResultEl = document.getElementById('promptResult');
-  if (isPlaceholder(promptResultEl)) {
-    alert('Render a prompt first');
-    return;
-  }
-  const prompt = promptResultEl.textContent.trim();
-  if (!prompt) {
-    alert('Render a prompt first');
-    return;
-  }
-  const res = await fetch('/ask', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt })
+      const promptResultEl = document.getElementById('promptResult');
+      if (isPlaceholder(promptResultEl)) {
+        alert('Render a prompt first');
+        return;
+      }
+      const prompt = promptResultEl.textContent.trim();
+      if (!prompt) {
+        alert('Render a prompt first');
+        return;
+      }
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      ensureOkResponse(res);
+      const data = await res.json();
+      if (data.response) {
+        setPreContent('askResult', data.response);
+      } else {
+        setPreContent('askResult', JSON.stringify(data, null, 2));
+      }
+    }
   });
-  const data = await res.json();
-  if (data.response) {
-    setPreContent('askResult', data.response);
-  } else {
-    setPreContent('askResult', JSON.stringify(data, null, 2));
-  }
-};
+}
 </script>
+
 {% endblock %}
