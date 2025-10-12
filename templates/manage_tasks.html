@@ -5,40 +5,73 @@
     <h1 class="text-2xl font-bold mb-4">Edit Tasks</h1>
     <form method="post" class="space-y-4">
       {% for t in tasks %}
-      <div class="border p-2 rounded space-y-1">
+      <div class="border p-3 rounded space-y-4">
         <input type="hidden" name="project-{{t.id}}" value="{{ t.project or '' }}">
         <input type="hidden" name="type-{{t.id}}" value="{{ t.type or '' }}">
-        <div class="flex flex-wrap gap-2 items-center">
-          <input type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-1 flex-grow min-w-[12rem]">
-          <input type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-1 w-36">
-          <select name="status-{{t.id}}" class="border p-1 w-28">
-              {% for opt in ["active", "complete"] %}
-                <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-gray-700">General Information</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+              <label for="title-{{t.id}}" class="text-sm font-medium text-gray-700">Title</label>
+              <input id="title-{{t.id}}" type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-2 rounded" placeholder="Task title">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="due-{{t.id}}" class="text-sm font-medium text-gray-700">Due date</label>
+              <input id="due-{{t.id}}" type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-2 rounded">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="status-{{t.id}}" class="text-sm font-medium text-gray-700">Status</label>
+              <select id="status-{{t.id}}" name="status-{{t.id}}" class="border p-2 rounded">
+                  {% for opt in ["active", "complete"] %}
+                    <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
+              <input id="area-{{t.id}}" type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-2 rounded" placeholder="Choose area">
+            </div>
           </div>
-        <div class="flex flex-wrap gap-2 items-center">
-          <input type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-1 flex-grow min-w-[8rem]">
-          <select name="effort-{{t.id}}" class="border p-1 w-24">
-              {% for opt in ["low", "medium", "high"] %}
-                <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
-          <input type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-1 w-20">
-          <select name="executive_trigger-{{t.id}}" class="border p-1 w-24">
-              {% for opt in ["low", "medium", "high"] %}
-                <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
-          <select name="recurrence-{{t.id}}" class="border p-1 w-24">
-              <option value="" {% if not t.recurrence %}selected{% endif %}></option>
-              {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
-                <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
-          <input type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-1 w-36">
+        </fieldset>
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-gray-700">Effort &amp; Recurrence</legend>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+              <label for="effort-{{t.id}}" class="text-sm font-medium text-gray-700">Effort</label>
+              <select id="effort-{{t.id}}" name="effort-{{t.id}}" class="border p-2 rounded">
+                  {% for opt in ["low", "medium", "high"] %}
+                    <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="energy_cost-{{t.id}}" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+              <input id="energy_cost-{{t.id}}" type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-2 rounded">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="executive_trigger-{{t.id}}" class="text-sm font-medium text-gray-700">Executive trigger</label>
+              <select id="executive_trigger-{{t.id}}" name="executive_trigger-{{t.id}}" class="border p-2 rounded">
+                  {% for opt in ["low", "medium", "high"] %}
+                    <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
+              <select id="recurrence-{{t.id}}" name="recurrence-{{t.id}}" class="border p-2 rounded">
+                  <option value="" {% if not t.recurrence %}selected{% endif %}></option>
+                  {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
+                    <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>
+              <input id="last_completed-{{t.id}}" type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-2 rounded">
+            </div>
           </div>
-        </div>
+        </fieldset>
+      </div>
       {% endfor %}
       <div class="text-right sticky bottom-0 bg-white py-2">
         <button class="px-3 py-1 bg-blue-500 text-white rounded">Save</button>
