@@ -314,10 +314,48 @@ const focusAskBtn = document.getElementById('focusAskBtn');
 
 async function requestPlan(mode) {
   const effectiveMode = mode || 'next_task';
-  const res = await fetch(`/plan?mode=${encodeURIComponent(effectiveMode)}`, { method: 'POST' });
+  const energyEl = document.getElementById('energy');
+  const moodEl = document.getElementById('mood');
+  const timeBlocksEl = document.getElementById('timeBlocks');
+  const askResultEl = document.getElementById('askResult');
+
+  let requestBody = null;
+  if (effectiveMode === 'next_task') {
+    const energyValue = energyEl ? energyEl.value : '';
+    const moodValue = moodEl ? moodEl.value : '';
+    const timeBlocksValue = timeBlocksEl ? timeBlocksEl.value : '';
+
+    if (!energyValue || !moodValue || timeBlocksValue === '') {
+      const message = '⚠️ Please select your energy, mood, and available time blocks before asking for the next task.';
+      setPreContent(askResultEl, message);
+      return;
+    }
+
+    const parsedEnergy = Number.parseInt(energyValue, 10);
+    const parsedTimeBlocks = Number.parseInt(timeBlocksValue, 10);
+
+    if (Number.isNaN(parsedEnergy) || Number.isNaN(parsedTimeBlocks)) {
+      const message = '⚠️ Energy and time blocks must be valid numbers to request the next task.';
+      setPreContent(askResultEl, message);
+      return;
+    }
+
+    requestBody = {
+      energy: parsedEnergy,
+      mood: moodValue,
+      time_blocks: parsedTimeBlocks,
+    };
+  }
+
+  const fetchOptions = { method: 'POST' };
+  if (requestBody) {
+    fetchOptions.headers = { 'Content-Type': 'application/json' };
+    fetchOptions.body = JSON.stringify(requestBody);
+  }
+
+  const res = await fetch(`/plan?mode=${encodeURIComponent(effectiveMode)}`, fetchOptions);
   ensureOkResponse(res);
   const data = await res.json();
-  const askResultEl = document.getElementById('askResult');
   if (effectiveMode === 'next_task') {
     if (data.next_task) {
       setPreContent(askResultEl, JSON.stringify(data.next_task, null, 2));

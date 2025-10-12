@@ -7,7 +7,7 @@ from pydantic import BaseModel
 import logging
 
 from calendar_integration import load_events
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 
 from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
@@ -136,19 +136,36 @@ async def plan_endpoint(
         logger.warning("Invalid intensity %s, defaulting to medium", intensity)
         intensity = "medium"
 
+    payload_values = (
+        payload.energy if payload else None,
+        payload.mood if payload else None,
+        payload.time_blocks if payload else None,
+    )
+    has_full_payload = payload is not None and all(
+        value is not None for value in payload_values
+    )
+    has_partial_payload = payload is not None and any(
+        value is not None for value in payload_values
+    )
+
+    if selected_mode == "next_task" and not has_full_payload:
+        logger.warning(
+            "Missing energy payload for next_task mode: %s",
+            payload.model_dump() if payload else None,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Energy, mood, and time_blocks are required for next_task mode.",
+        )
+
     recorded_entry: Optional[Dict[str, Any]] = None
-    if payload and all(
-        value is not None
-        for value in (payload.energy, payload.mood, payload.time_blocks)
-    ):
+    if has_full_payload and payload:
         recorded_entry = record_entry(payload.energy, payload.mood, payload.time_blocks)
         logger.info("Persisted energy entry via API: %s", recorded_entry)
-    elif payload and any(
-        value is not None
-        for value in (payload.energy, payload.mood, payload.time_blocks)
-    ):
+    elif has_partial_payload:
         logger.warning(
-            "Partial energy payload provided; skipping record_entry call: %s", payload
+            "Partial energy payload provided; skipping record_entry call: %s",
+            payload.model_dump(),
         )
 
     tasks = upcoming_tasks(days=0) if selected_mode == "next_task" else upcoming_tasks()

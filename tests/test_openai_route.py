@@ -94,9 +94,15 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
         {"id": 2, "title": "Gentle Start", "due": today, "energy_cost": 1},
     ]
 
-    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=7: tasks)
-
     recorded = {}
+
+    def fake_upcoming_tasks(days=7):
+        assert (
+            recorded
+        ), "Energy entry should be recorded before selecting the next task"
+        return tasks
+
+    monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
 
     def fake_record_entry(energy: int, mood: str, time_blocks: int):
         recorded.update(
@@ -128,3 +134,61 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
     assert data["next_task"]["title"] == "Gentle Start"
     assert recorded["energy"] == payload["energy"]
     assert recorded["mood"] == payload["mood"]
+
+
+def test_plan_endpoint_next_task_requires_complete_payload(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=0: [])
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+
+    record_calls = []
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: int):
+        record_calls.append((energy, mood, time_blocks))
+        return {
+            "date": date.today().isoformat(),
+            "energy": energy,
+            "mood": mood,
+            "time_blocks": time_blocks,
+        }
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+
+    client = TestClient(app)
+    resp = client.post("/plan?mode=next_task", json={"energy": 3, "mood": "Sad"})
+
+    assert resp.status_code == 400
+    assert (
+        resp.json()["detail"]
+        == "Energy, mood, and time_blocks are required for next_task mode."
+    )
+    assert record_calls == []
+
+
+def test_plan_endpoint_next_task_requires_payload_body(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=0: [])
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+
+    record_calls = []
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: int):
+        record_calls.append((energy, mood, time_blocks))
+        return {
+            "date": date.today().isoformat(),
+            "energy": energy,
+            "mood": mood,
+            "time_blocks": time_blocks,
+        }
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+
+    client = TestClient(app)
+    resp = client.post("/plan?mode=next_task")
+
+    assert resp.status_code == 400
+    assert (
+        resp.json()["detail"]
+        == "Energy, mood, and time_blocks are required for next_task mode."
+    )
+    assert record_calls == []
