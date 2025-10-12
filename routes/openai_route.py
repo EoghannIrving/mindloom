@@ -2,7 +2,7 @@
 
 from datetime import date
 from pathlib import Path
-from typing import List, Literal
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel
 import logging
 
@@ -12,7 +12,7 @@ from fastapi import APIRouter, Body, Query
 from openai_client import ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import upcoming_tasks
-from energy import read_entries
+from energy import read_entries, record_entry
 from planner import save_plan, filter_tasks_by_energy
 from config import PROJECT_ROOT, config
 
@@ -29,6 +29,52 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+MOOD_ENERGY_TARGETS = {
+    "sad": 1,
+    "meh": 2,
+    "okay": 3,
+    "joyful": 4,
+}
+
+
+def _due_date_value(task: Dict[str, Any]) -> date:
+    date_str = task.get("next_due") or task.get("due")
+    if not date_str:
+        return date.max
+    try:
+        return date.fromisoformat(str(date_str))
+    except ValueError:
+        return date.max
+
+
+def _energy_cost(task: Dict[str, Any]) -> Optional[int]:
+    try:
+        cost = task.get("energy_cost")
+        return int(cost)
+    except (TypeError, ValueError):
+        return None
+
+
+def _select_next_task(
+    tasks: List[Dict[str, Any]], mood: Optional[str], energy_level: Optional[int]
+) -> Optional[Dict[str, Any]]:
+    if not tasks:
+        return None
+
+    mood_key = (mood or "").lower()
+    mood_target = MOOD_ENERGY_TARGETS.get(mood_key)
+    target_energy = energy_level if energy_level is not None else mood_target
+    if target_energy is None:
+        target_energy = 3
+
+    def sort_key(task: Dict[str, Any]):
+        due = _due_date_value(task)
+        cost = _energy_cost(task)
+        penalty = abs(cost - target_energy) if cost is not None else target_energy
+        return (due, penalty, cost or target_energy)
+
+    return sorted(tasks, key=sort_key)[0]
+
 
 @router.post("/ask")
 async def ask_endpoint(data: dict = Body(...)):
@@ -44,8 +90,15 @@ async def ask_endpoint(data: dict = Body(...)):
     return {"response": response}
 
 
+class PlanRequest(BaseModel):
+    energy: Optional[int] = None
+    mood: Optional[str] = None
+    time_blocks: Optional[int] = None
+
+
 class PlanResponse(BaseModel):
     plan: str
+    next_task: Optional[Dict[str, Any]] = None
 
 
 @router.post("/plan", response_model=PlanResponse)
@@ -54,20 +107,58 @@ async def plan_endpoint(
     template: Literal["plan_intensity_selector", "morning_planner"] = Query(
         "morning_planner"
     ),
+    mode: Literal["plan", "next_task"] = Query(
+        "plan", description="Select 'next_task' to fetch a single recommendation"
+    ),
+    focus: Optional[Literal["plan", "next_task"]] = Query(
+        None,
+        description="Alias for the mode parameter, kept for backward compatibility",
+    ),
+    payload: Optional[PlanRequest] = Body(
+        None,
+        description="Optional energy, mood and time block data to persist before planning",
+    ),
 ) -> PlanResponse:
     """Generate a plan or task selection based on the chosen template."""
-    logger.info("POST /plan intensity=%s template=%s", intensity, template)
+    selected_mode = focus or mode or "plan"
+    if selected_mode not in {"plan", "next_task"}:
+        logger.warning("Invalid mode %s, defaulting to plan", selected_mode)
+        selected_mode = "plan"
+
+    logger.info(
+        "POST /plan intensity=%s template=%s mode=%s",
+        intensity,
+        template,
+        selected_mode,
+    )
     intensity = intensity.lower()
     if intensity not in {"light", "medium", "full"}:
         logger.warning("Invalid intensity %s, defaulting to medium", intensity)
         intensity = "medium"
 
-    tasks = upcoming_tasks()
+    recorded_entry: Optional[Dict[str, Any]] = None
+    if payload and all(
+        value is not None
+        for value in (payload.energy, payload.mood, payload.time_blocks)
+    ):
+        recorded_entry = record_entry(payload.energy, payload.mood, payload.time_blocks)
+        logger.info("Persisted energy entry via API: %s", recorded_entry)
+    elif payload and any(
+        value is not None
+        for value in (payload.energy, payload.mood, payload.time_blocks)
+    ):
+        logger.warning(
+            "Partial energy payload provided; skipping record_entry call: %s", payload
+        )
+
+    tasks = upcoming_tasks(days=0) if selected_mode == "next_task" else upcoming_tasks()
     logger.info("Loaded %d upcoming tasks", len(tasks))
 
     entries = read_entries()
     logger.info("Loaded %d energy entries", len(entries))
-    latest = entries[-1] if entries else {}
+    if recorded_entry and recorded_entry not in entries:
+        entries = [*entries, recorded_entry]
+    latest = recorded_entry or (entries[-1] if entries else {})
     energy_level = latest.get("energy")
     if energy_level is not None:
         logger.info("Filtering tasks by energy=%s", energy_level)
@@ -75,6 +166,12 @@ async def plan_endpoint(
         logger.info("Tasks after energy filter: %d", len(tasks))
     else:
         logger.info("No energy entry found; skipping energy filter")
+
+    if selected_mode == "next_task":
+        next_task = _select_next_task(tasks, latest.get("mood"), energy_level)
+        plan_text = next_task.get("title", "") if next_task else ""
+        logger.info("Selected next task: %s", next_task)
+        return PlanResponse(plan=plan_text, next_task=next_task)
 
     if template == "plan_intensity_selector":
         selector_template = PROJECT_ROOT / "prompts" / "plan_intensity_selector.txt"
