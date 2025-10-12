@@ -7,9 +7,10 @@
       <ul class="space-y-1">
         {% for t in tasks %}
         <li>
+          {% set completed = t.status == 'complete' %}
           <label class="flex items-center">
-            <input type="checkbox" name="task_id" value="{{ t.id }}" class="mr-2" {% if t.status == 'complete' %}checked{% endif %}>
-            <span>{{ t.title }}</span>
+            <input type="checkbox" name="task_id" value="{{ t.id }}" class="mr-2" {% if completed %}checked{% endif %}>
+            <span class="{{ 'line-through text-gray-500' if completed else '' }}">{{ t.title }}</span>
           </label>
           {% if t.reason %}
           <p class="ml-6 text-sm text-gray-600">{{ t.reason }}</p>
