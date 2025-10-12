@@ -127,19 +127,25 @@ Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks, `/manage-tasks` to edit them and `/calendar` to view loaded events.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks`. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks` unless you switch the **Focus** selector to **Next task**. In that mode the planner stays on the page and shows the recommended task. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
 Generate a daily plan using incomplete tasks and today's energy entry. You can
 optionally control how many tasks are recommended by passing an `intensity`
 query parameter (`light`, `medium` or `full`) and choose which prompt to run
 with a `template` query parameter (`morning_planner` or
-`plan_intensity_selector`).
+`plan_intensity_selector`). Use the `mode` (or backwards-compatible `focus`)
+query parameter to request either a full plan or just the next task.
 ```bash
 curl -X POST 'http://localhost:8000/plan?intensity=full&template=morning_planner'
 ```
-The response is stored in `data/morning_plan.yaml` and used to filter
-`/daily-tasks`.
+Requesting a single recommendation returns the task payload instead of
+redirecting the UI:
+```bash
+curl -X POST 'http://localhost:8000/plan?mode=next_task'
+```
+When `mode=plan`, the response is stored in `data/morning_plan.yaml` and used
+to filter `/daily-tasks`.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
 before generating the prompt. Using `template=plan_intensity_selector`
 returns a task selection based on the chosen intensity, while

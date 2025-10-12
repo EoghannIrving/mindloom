@@ -57,6 +57,13 @@
         <button id="renderPrompt" class="px-3 py-1 bg-blue-500 text-white rounded">Render</button>
         <button id="askBtn" class="px-3 py-1 bg-purple-500 text-white rounded">Ask</button>
       </div>
+      <div class="flex items-center gap-2">
+        <label for="plannerMode" class="text-sm font-medium text-gray-700">Focus</label>
+        <select id="plannerMode" class="border p-1 flex-1">
+          <option value="plan">Daily plan</option>
+          <option value="next_task">Next task</option>
+        </select>
+      </div>
       <pre id="promptResult" class="bg-gray-100 p-2 rounded"></pre>
       <pre id="askResult" class="bg-gray-100 p-2 rounded"></pre>
     </section>
@@ -166,6 +173,7 @@ async function renderPromptAction() {
 document.getElementById('renderPrompt').onclick = renderPromptAction;
 
 const promptSelect = document.getElementById('promptSelect');
+const plannerModeSelect = document.getElementById('plannerMode');
 promptSelect.onchange = () => {
   if (promptSelect.value.endsWith('morning_planner.txt')) {
     renderPromptAction();
@@ -175,12 +183,24 @@ promptSelect.onchange = () => {
 document.getElementById('askBtn').onclick = async () => {
   const select = document.getElementById('promptSelect');
   if (select.value.endsWith('morning_planner.txt')) {
-    const res = await fetch('/plan', { method: 'POST' });
+    const mode = plannerModeSelect ? plannerModeSelect.value : 'plan';
+    const res = await fetch(`/plan?mode=${encodeURIComponent(mode)}`, { method: 'POST' });
     const data = await res.json();
+    const askResultEl = document.getElementById('askResult');
+    if (mode === 'next_task') {
+      if (data.next_task) {
+        askResultEl.textContent = JSON.stringify(data.next_task, null, 2);
+      } else if (data.plan) {
+        askResultEl.textContent = data.plan;
+      } else {
+        askResultEl.textContent = JSON.stringify(data);
+      }
+      return;
+    }
     if (data.plan) {
-      document.getElementById('askResult').textContent = data.plan;
+      askResultEl.textContent = data.plan;
     } else {
-      document.getElementById('askResult').textContent = JSON.stringify(data);
+      askResultEl.textContent = JSON.stringify(data);
     }
     window.location.href = '/daily-tasks';
     return;
