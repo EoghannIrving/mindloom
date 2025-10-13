@@ -6,7 +6,6 @@
     <form method="post" class="space-y-4">
       {% for t in tasks %}
       <div class="border p-3 rounded space-y-4">
-        <input type="hidden" name="type-{{t.id}}" value="{{ t.type or '' }}">
         <fieldset class="space-y-3">
           <legend class="text-sm font-semibold text-gray-700">General Information</legend>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -33,6 +32,10 @@
             <div class="flex flex-col gap-1">
               <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
               <input id="area-{{t.id}}" type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-2 rounded" placeholder="Choose area">
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="type-{{t.id}}" class="text-sm font-medium text-gray-700">Type</label>
+              <input id="type-{{t.id}}" type="text" name="type-{{t.id}}" value="{{ t.type or '' }}" list="task-types" class="border p-2 rounded" placeholder="Enter or choose type">
             </div>
           </div>
         </fieldset>
@@ -87,6 +90,11 @@
       <datalist id="projects">
         {% for p in project_options %}
           <option value="{{ p }}">
+        {% endfor %}
+      </datalist>
+      <datalist id="task-types">
+        {% for tp in type_options %}
+          <option value="{{ tp }}">
         {% endfor %}
       </datalist>
     </form>
