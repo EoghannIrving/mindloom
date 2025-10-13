@@ -53,79 +53,97 @@
     </form>
     <form method="post" class="space-y-4">
       {% for t in tasks %}
-      <div class="border p-3 rounded space-y-4">
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-gray-700">General Information</legend>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="flex flex-col gap-1">
-              <label for="title-{{t.id}}" class="text-sm font-medium text-gray-700">Title</label>
-              <input id="title-{{t.id}}" type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-2 rounded" placeholder="Task title">
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="due-{{t.id}}" class="text-sm font-medium text-gray-700">Due date</label>
-              <input id="due-{{t.id}}" type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-2 rounded">
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="status-{{t.id}}" class="text-sm font-medium text-gray-700">Status</label>
-              <select id="status-{{t.id}}" name="status-{{t.id}}" class="border p-2 rounded">
-                  {% for opt in ["active", "complete"] %}
-                    <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
-                  {% endfor %}
-                </select>
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="project-{{t.id}}" class="text-sm font-medium text-gray-700">Project</label>
-              <input id="project-{{t.id}}" type="text" name="project-{{t.id}}" value="{{ t.project or '' }}" list="projects" class="border p-2 rounded" placeholder="Choose project">
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
-              <input id="area-{{t.id}}" type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-2 rounded" placeholder="Choose area">
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="type-{{t.id}}" class="text-sm font-medium text-gray-700">Type</label>
-              <input id="type-{{t.id}}" type="text" name="type-{{t.id}}" value="{{ t.type or '' }}" list="task-types" class="border p-2 rounded" placeholder="Enter or choose type">
-            </div>
+      {% set status_styles = {
+        'complete': 'bg-green-100 text-green-800',
+        'active': 'bg-blue-100 text-blue-800',
+        'blocked': 'bg-red-100 text-red-800',
+        'waiting': 'bg-amber-100 text-amber-800'
+      } %}
+      <details class="bg-white border rounded-lg divide-y divide-gray-200" data-task-details {% if loop.first %}open{% endif %}>
+        <summary class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between bg-slate-100 px-3 py-2 rounded-t cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-controls="task-body-{{ t.id }}" aria-expanded="{{ 'true' if loop.first else 'false' }}">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:gap-3 text-sm text-slate-600">
+            <span class="text-sm font-semibold text-slate-900">{{ t.title or 'Untitled task' }}</span>
+            <span class="sm:inline hidden text-slate-400">•</span>
+            <span>{{ t.project or 'No project' }}</span>
+            <span class="sm:inline hidden text-slate-400">•</span>
+            <span>{{ t.due or 'No due date' }}</span>
           </div>
-        </fieldset>
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-gray-700">Effort &amp; Recurrence</legend>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="flex flex-col gap-1">
-              <label for="effort-{{t.id}}" class="text-sm font-medium text-gray-700">Effort</label>
-              <select id="effort-{{t.id}}" name="effort-{{t.id}}" class="border p-2 rounded">
-                  {% for opt in ["low", "medium", "high"] %}
-                    <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
-                  {% endfor %}
-                </select>
+          <span class="text-xs font-semibold px-2 py-1 rounded-full {{ status_styles.get(t.status, 'bg-gray-100 text-gray-700') }}">{{ (t.status or 'unknown')|title }}</span>
+        </summary>
+        <div id="task-body-{{ t.id }}" class="space-y-4 p-4">
+          <fieldset class="space-y-3">
+            <legend class="text-sm font-semibold text-gray-700">General Information</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex flex-col gap-1">
+                <label for="title-{{t.id}}" class="text-sm font-medium text-gray-700">Title</label>
+                <input id="title-{{t.id}}" type="text" name="title-{{t.id}}" value="{{ t.title or '' }}" class="border p-2 rounded" placeholder="Task title">
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="due-{{t.id}}" class="text-sm font-medium text-gray-700">Due date</label>
+                <input id="due-{{t.id}}" type="date" name="due-{{t.id}}" value="{{ t.due or '' }}" class="border p-2 rounded">
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="status-{{t.id}}" class="text-sm font-medium text-gray-700">Status</label>
+                <select id="status-{{t.id}}" name="status-{{t.id}}" class="border p-2 rounded">
+                    {% for opt in ["active", "complete"] %}
+                      <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="project-{{t.id}}" class="text-sm font-medium text-gray-700">Project</label>
+                <input id="project-{{t.id}}" type="text" name="project-{{t.id}}" value="{{ t.project or '' }}" list="projects" class="border p-2 rounded" placeholder="Choose project">
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
+                <input id="area-{{t.id}}" type="text" name="area-{{t.id}}" value="{{ t.area or '' }}" list="areas" class="border p-2 rounded" placeholder="Choose area">
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="type-{{t.id}}" class="text-sm font-medium text-gray-700">Type</label>
+                <input id="type-{{t.id}}" type="text" name="type-{{t.id}}" value="{{ t.type or '' }}" list="task-types" class="border p-2 rounded" placeholder="Enter or choose type">
+              </div>
             </div>
-            <div class="flex flex-col gap-1">
-              <label for="energy_cost-{{t.id}}" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
-              <input id="energy_cost-{{t.id}}" type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-2 rounded">
+          </fieldset>
+          <fieldset class="space-y-3">
+            <legend class="text-sm font-semibold text-gray-700">Effort &amp; Recurrence</legend>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="flex flex-col gap-1">
+                <label for="effort-{{t.id}}" class="text-sm font-medium text-gray-700">Effort</label>
+                <select id="effort-{{t.id}}" name="effort-{{t.id}}" class="border p-2 rounded">
+                    {% for opt in ["low", "medium", "high"] %}
+                      <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="energy_cost-{{t.id}}" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+                <input id="energy_cost-{{t.id}}" type="number" name="energy_cost-{{t.id}}" value="{{ t.energy_cost or '' }}" min="1" max="5" class="border p-2 rounded">
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="executive_trigger-{{t.id}}" class="text-sm font-medium text-gray-700">Executive trigger</label>
+                <select id="executive_trigger-{{t.id}}" name="executive_trigger-{{t.id}}" class="border p-2 rounded">
+                    {% for opt in ["low", "medium", "high"] %}
+                      <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
+                <select id="recurrence-{{t.id}}" name="recurrence-{{t.id}}" class="border p-2 rounded">
+                    <option value="" {% if not t.recurrence %}selected{% endif %}></option>
+                    {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
+                      <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>
+                <input id="last_completed-{{t.id}}" type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-2 rounded">
+              </div>
             </div>
-            <div class="flex flex-col gap-1">
-              <label for="executive_trigger-{{t.id}}" class="text-sm font-medium text-gray-700">Executive trigger</label>
-              <select id="executive_trigger-{{t.id}}" name="executive_trigger-{{t.id}}" class="border p-2 rounded">
-                  {% for opt in ["low", "medium", "high"] %}
-                    <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
-                  {% endfor %}
-                </select>
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
-              <select id="recurrence-{{t.id}}" name="recurrence-{{t.id}}" class="border p-2 rounded">
-                  <option value="" {% if not t.recurrence %}selected{% endif %}></option>
-                  {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
-                    <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
-                  {% endfor %}
-                </select>
-            </div>
-            <div class="flex flex-col gap-1">
-              <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>
-              <input id="last_completed-{{t.id}}" type="date" name="last_completed-{{t.id}}" value="{{ t.last_completed or '' }}" class="border p-2 rounded">
-            </div>
-          </div>
-        </fieldset>
-      </div>
+          </fieldset>
+        </div>
+      </details>
       {% endfor %}
       <div class="text-right sticky bottom-0 bg-white py-2">
         <button class="px-3 py-1 bg-blue-500 text-white rounded">Save</button>
@@ -146,5 +164,30 @@
         {% endfor %}
       </datalist>
     </form>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-task-details]').forEach((detailsEl) => {
+          const summary = detailsEl.querySelector('summary[aria-controls]');
+          if (!summary) return;
+          const controlsId = summary.getAttribute('aria-controls');
+          const controlled = controlsId ? document.getElementById(controlsId) : null;
+          if (!summary.id && controlsId) {
+            summary.id = `summary-${controlsId}`;
+          }
+          if (controlled) {
+            controlled.setAttribute('role', 'region');
+            controlled.setAttribute('aria-labelledby', summary.id);
+            controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
+          }
+          summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
+          detailsEl.addEventListener('toggle', () => {
+            summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
+            if (controlled) {
+              controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
+            }
+          });
+        });
+      });
+    </script>
   </div>
 {% endblock %}
