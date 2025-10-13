@@ -58,17 +58,55 @@ def manage_tasks_page(request: Request):
     """Display editable list of all tasks."""
     logger.info("GET /manage-tasks")
     tasks = read_tasks()
+
+    query = request.query_params.get("q", "").strip()
+    selected_status = request.query_params.get("status", "").strip()
+    selected_project = request.query_params.get("project", "").strip()
+    selected_area = request.query_params.get("area", "").strip()
+    selected_type = request.query_params.get("type", "").strip()
+
+    def _matches(task: dict) -> bool:
+        if query:
+            haystacks = [
+                str(task.get("title", "")),
+                str(task.get("notes", "")),
+                str(task.get("project", "")),
+                str(task.get("area", "")),
+                str(task.get("type", "")),
+            ]
+            if not any(query.lower() in haystack.lower() for haystack in haystacks):
+                return False
+        if selected_status and str(task.get("status", "")) != selected_status:
+            return False
+        if selected_project and str(task.get("project", "")) != selected_project:
+            return False
+        if selected_area and str(task.get("area", "")) != selected_area:
+            return False
+        if selected_type and str(task.get("type", "")) != selected_type:
+            return False
+        return True
+
+    filtered_tasks = [task for task in tasks if _matches(task)]
+
     projects = sorted({t.get("project") for t in tasks if t.get("project")})
     areas = sorted({t.get("area") for t in tasks if t.get("area")})
     task_types = sorted({t.get("type") for t in tasks if t.get("type")})
+    statuses = sorted({t.get("status") for t in tasks if t.get("status")})
+
     return templates.TemplateResponse(
         "manage_tasks.html",
         {
             "request": request,
-            "tasks": tasks,
+            "tasks": filtered_tasks,
             "project_options": projects,
             "area_options": areas,
             "type_options": task_types,
+            "status_options": statuses,
+            "search_query": query,
+            "selected_status": selected_status,
+            "selected_project": selected_project,
+            "selected_area": selected_area,
+            "selected_type": selected_type,
         },
     )
 
