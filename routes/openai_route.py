@@ -168,7 +168,15 @@ async def plan_endpoint(
             payload.model_dump(),
         )
 
-    tasks = upcoming_tasks(days=0) if selected_mode == "next_task" else upcoming_tasks()
+    if selected_mode == "next_task":
+        tasks = upcoming_tasks(days=0)
+        if not tasks:
+            logger.info(
+                "No tasks due today; expanding next_task search window to default range"
+            )
+            tasks = upcoming_tasks()
+    else:
+        tasks = upcoming_tasks()
     logger.info("Loaded %d upcoming tasks", len(tasks))
 
     entries = read_entries()
