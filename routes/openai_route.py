@@ -179,6 +179,8 @@ async def plan_endpoint(
         tasks = upcoming_tasks()
     logger.info("Loaded %d upcoming tasks", len(tasks))
 
+    unfiltered_tasks = list(tasks)
+
     entries = read_entries()
     logger.info("Loaded %d energy entries", len(entries))
     if recorded_entry and recorded_entry not in entries:
@@ -187,7 +189,14 @@ async def plan_endpoint(
     energy_level = latest.get("energy")
     if energy_level is not None:
         logger.info("Filtering tasks by energy=%s", energy_level)
-        tasks = filter_tasks_by_energy(tasks, int(energy_level))
+        filtered_tasks = filter_tasks_by_energy(tasks, int(energy_level))
+        if not filtered_tasks and unfiltered_tasks:
+            logger.info(
+                "Energy filter removed all tasks; falling back to unfiltered task list"
+            )
+            tasks = unfiltered_tasks
+        else:
+            tasks = filtered_tasks
         logger.info("Tasks after energy filter: %d", len(tasks))
     else:
         logger.info("No energy entry found; skipping energy filter")
