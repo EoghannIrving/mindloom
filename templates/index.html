@@ -58,6 +58,120 @@
 
       <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
         <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>New Project</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-4 text-sm text-gray-600">
+          <p class="text-xs text-gray-500">
+            Create a markdown project in your vault with optional checklist items. Title, slug, status, area and effort are
+            required.
+          </p>
+          <form id="newProjectForm" class="space-y-4" novalidate>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="projectTitle" class="text-sm font-medium text-gray-700">Title</label>
+                <input id="projectTitle" name="projectTitle" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Project title" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectSlug" class="text-sm font-medium text-gray-700">Slug / file path</label>
+                <input id="projectSlug" name="projectSlug" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="projects/new-idea" />
+                <span class="text-xs text-gray-500">The `.md` extension is added automatically if omitted.</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div class="flex flex-col gap-1">
+                <label for="projectStatus" class="text-sm font-medium text-gray-700">Status</label>
+                <select id="projectStatus" name="projectStatus" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="complete">complete</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectArea" class="text-sm font-medium text-gray-700">Area</label>
+                <input id="projectArea" name="projectArea" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Life area" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectEffort" class="text-sm font-medium text-gray-700">Effort</label>
+                <select id="projectEffort" name="projectEffort" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="low">low</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div class="flex flex-col gap-1">
+                <label for="projectDue" class="text-sm font-medium text-gray-700">Due date</label>
+                <input id="projectDue" name="projectDue" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
+                <select id="projectRecurrence" name="projectRecurrence"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value=""></option>
+                  <option value="daily">daily</option>
+                  <option value="weekly">weekly</option>
+                  <option value="monthly">monthly</option>
+                  <option value="yearly">yearly</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectLastCompleted" class="text-sm font-medium text-gray-700">Last completed</label>
+                <input id="projectLastCompleted" name="projectLastCompleted" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="projectExecutiveTrigger" class="text-sm font-medium text-gray-700">Executive trigger</label>
+                <select id="projectExecutiveTrigger" name="projectExecutiveTrigger"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value=""></option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectLastReviewed" class="text-sm font-medium text-gray-700">Last reviewed</label>
+                <input id="projectLastReviewed" name="projectLastReviewed" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="projectChecklist" class="text-sm font-medium text-gray-700">Initial checklist</label>
+              <textarea id="projectChecklist" name="projectChecklist" rows="3"
+                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="One task per line"></textarea>
+              <span class="text-xs text-gray-500">Checklist items become tasks in the new file.</span>
+            </div>
+            <div id="newProjectFeedback" class="hidden text-sm"></div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <button type="reset"
+                class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200">
+                Clear
+              </button>
+              <button id="createProjectBtn" type="submit"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+                Create project
+              </button>
+            </div>
+          </form>
+        </div>
+      </details>
+
+      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
           <span>Parse Projects</span>
           <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
         </summary>
@@ -140,74 +254,174 @@
 
 
 <script>
-function setPreContent(target, text) {
-  const el = typeof target === 'string' ? document.getElementById(target) : target;
-  if (!el) {
-    return;
+const projectTitleInput = document.getElementById('projectTitle');
+const projectSlugInput = document.getElementById('projectSlug');
+const projectStatusSelect = document.getElementById('projectStatus');
+const projectAreaInput = document.getElementById('projectArea');
+const projectEffortSelect = document.getElementById('projectEffort');
+const projectDueInput = document.getElementById('projectDue');
+const projectRecurrenceSelect = document.getElementById('projectRecurrence');
+const projectLastCompletedInput = document.getElementById('projectLastCompleted');
+const projectExecutiveTriggerSelect = document.getElementById('projectExecutiveTrigger');
+const projectLastReviewedInput = document.getElementById('projectLastReviewed');
+const projectChecklistInput = document.getElementById('projectChecklist');
+const projectForm = document.getElementById('newProjectForm');
+const projectFeedbackEl = document.getElementById('newProjectFeedback');
+const createProjectBtn = document.getElementById('createProjectBtn');
+
+const requiredProjectFields = [
+  { element: projectTitleInput, message: 'Project title is required.' },
+  { element: projectSlugInput, message: 'Provide a slug or relative file path.' },
+  { element: projectStatusSelect, message: 'Select the project status.' },
+  { element: projectAreaInput, message: 'Add a life area for the project.' },
+  { element: projectEffortSelect, message: 'Choose an effort level.' },
+];
+
+requiredProjectFields.forEach(({ element }) => {
+  if (element) {
+    attachFieldValidation(element);
   }
-  el.textContent = text;
-  if (el.classList.contains('data-placeholder')) {
-    const placeholderClass = el.dataset.placeholderClass;
-    if (placeholderClass) {
-      el.classList.remove(placeholderClass);
-    }
-    const activeClass = el.dataset.activeClass;
-    if (activeClass) {
-      el.classList.add(activeClass);
-    }
-    el.classList.remove('data-placeholder');
+});
+
+let projectSlugManuallyEdited = false;
+
+function sanitizeSlug(value) {
+  if (!value) {
+    return '';
   }
+  return value
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9/]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
-function isPlaceholder(target) {
-  const el = typeof target === 'string' ? document.getElementById(target) : target;
-  return !!el && el.classList.contains('data-placeholder');
-}
-
-function displayInlineError(target, baseMessage, error) {
-  const details = error && error.message ? ` Details: ${error.message}` : '';
-  setPreContent(target, `⚠️ ${baseMessage}. ${details}`.trim());
-}
-
-function performActionWithFeedback(button, {loadingText = 'Loading…', preId, errorMessage, action}) {
-  if (!button) {
-    return () => {};
-  }
-  return async (...args) => {
-    if (button.disabled) {
-      return;
+if (projectTitleInput && projectSlugInput) {
+  projectTitleInput.addEventListener('input', () => {
+    if (!projectSlugManuallyEdited) {
+      projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
     }
-    const originalHtml = button.innerHTML;
-    const originalAriaBusy = button.getAttribute('aria-busy');
-    button.disabled = true;
-    button.classList.add('cursor-not-allowed', 'opacity-70', 'animate-pulse');
-    button.setAttribute('aria-busy', 'true');
-    button.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="h-2.5 w-2.5 rounded-full border-2 border-current border-t-transparent animate-spin"></span>${loadingText}</span>`;
-    try {
-      return await action(...args);
-    } catch (error) {
-      console.error(errorMessage, error);
-      if (preId) {
-        displayInlineError(preId, errorMessage, error);
+  });
+
+  projectSlugInput.addEventListener('focus', () => {
+    projectSlugManuallyEdited = true;
+  });
+
+  projectSlugInput.addEventListener('input', () => {
+    const sanitized = sanitizeSlug(projectSlugInput.value);
+    projectSlugInput.value = sanitized;
+    projectSlugManuallyEdited = sanitized.length > 0;
+  });
+
+  projectSlugInput.addEventListener('blur', () => {
+    if (!projectSlugInput.value) {
+      projectSlugManuallyEdited = false;
+      projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
+    }
+  });
+}
+
+if (projectForm && createProjectBtn) {
+  const submitProject = performActionWithFeedback(createProjectBtn, {
+    loadingText: 'Creating…',
+    errorMessage: 'Unable to create project',
+    action: async () => {
+      clearFeedback(projectFeedbackEl);
+      const ok = validateRequiredFields(requiredProjectFields, {
+        feedbackEl: projectFeedbackEl,
+        summaryMessage: 'Please complete the required project fields before creating the file.',
+      });
+      if (!ok) {
+        return null;
       }
-      return null;
-    } finally {
-      button.disabled = false;
-      button.innerHTML = originalHtml;
-      button.classList.remove('cursor-not-allowed', 'opacity-70', 'animate-pulse');
-      if (originalAriaBusy !== null) {
-        button.setAttribute('aria-busy', originalAriaBusy);
-      } else {
-        button.removeAttribute('aria-busy');
-      }
-    }
-  };
-}
 
-function ensureOkResponse(response) {
-  if (!response.ok) {
-    throw new Error(`Server responded with status ${response.status}`);
-  }
+      const slugValue = sanitizeSlug(projectSlugInput.value);
+      if (!slugValue) {
+        setFieldValidity(projectSlugInput, false);
+        updateFeedback(projectFeedbackEl, 'Slug cannot be empty after sanitization.', 'error');
+        return null;
+      }
+
+      const payload = {
+        title: projectTitleInput.value.trim(),
+        slug: slugValue.endsWith('.md') ? slugValue : `${slugValue}.md`,
+        status: projectStatusSelect.value,
+        area: projectAreaInput.value.trim(),
+        effort: projectEffortSelect.value,
+      };
+
+      const optionalFields = [
+        { element: projectDueInput, key: 'due' },
+        { element: projectRecurrenceSelect, key: 'recurrence' },
+        { element: projectLastCompletedInput, key: 'last_completed' },
+        { element: projectExecutiveTriggerSelect, key: 'executive_trigger' },
+        { element: projectLastReviewedInput, key: 'last_reviewed' },
+      ];
+      optionalFields.forEach(({ element, key }) => {
+        if (!element) {
+          return;
+        }
+        const value = (element.value || '').trim();
+        if (value) {
+          payload[key] = value;
+        }
+      });
+
+      if (projectChecklistInput && projectChecklistInput.value.trim()) {
+        const tasks = projectChecklistInput.value
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+          .map((title) => ({ title }));
+        if (tasks.length) {
+          payload.tasks = tasks;
+        }
+      }
+
+      const res = await fetch('/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      ensureOkResponse(res);
+      const data = await res.json();
+      updateFeedback(
+        projectFeedbackEl,
+        `Created “${data.title || payload.title}” at ${data.path || payload.slug}.`,
+        'success',
+      );
+      projectForm.reset();
+      projectSlugManuallyEdited = false;
+      if (projectSlugInput) {
+        projectSlugInput.value = '';
+      }
+      if (projectTitleInput) {
+        projectTitleInput.focus();
+      }
+      return data;
+    },
+  });
+
+  projectForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitProject();
+  });
+
+  projectForm.addEventListener('reset', () => {
+    clearFeedback(projectFeedbackEl);
+    projectSlugManuallyEdited = false;
+    if (projectSlugInput) {
+      projectSlugInput.value = '';
+    }
+    setTimeout(() => {
+      if (projectTitleInput && projectSlugInput && projectTitleInput.value) {
+        projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
+      }
+    }, 0);
+  });
 }
 
 const parseBtn = document.getElementById('parseBtn');
