@@ -5,6 +5,233 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Mindloom{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    (function () {
+      const feedbackVariants = {
+        info: [
+          'rounded-lg',
+          'border',
+          'border-indigo-200',
+          'bg-indigo-50',
+          'text-indigo-700',
+          'px-3',
+          'py-2',
+        ],
+        success: [
+          'rounded-lg',
+          'border',
+          'border-emerald-200',
+          'bg-emerald-50',
+          'text-emerald-700',
+          'px-3',
+          'py-2',
+        ],
+        error: [
+          'rounded-lg',
+          'border',
+          'border-rose-200',
+          'bg-rose-50',
+          'text-rose-700',
+          'px-3',
+          'py-2',
+        ],
+      };
+
+      const invalidFieldClasses = ['border-rose-400', 'ring-2', 'ring-rose-200', 'bg-rose-50'];
+
+      function resolveElement(target) {
+        if (!target) {
+          return null;
+        }
+        if (typeof target === 'string') {
+          return document.getElementById(target);
+        }
+        return target;
+      }
+
+      function setPreContent(target, text) {
+        const el = resolveElement(target);
+        if (!el) {
+          return;
+        }
+        el.textContent = text;
+        if (el.classList.contains('data-placeholder')) {
+          const placeholderClass = el.dataset.placeholderClass;
+          if (placeholderClass) {
+            el.classList.remove(placeholderClass);
+          }
+          const activeClass = el.dataset.activeClass;
+          if (activeClass) {
+            el.classList.add(activeClass);
+          }
+          el.classList.remove('data-placeholder');
+        }
+      }
+
+      function isPlaceholder(target) {
+        const el = resolveElement(target);
+        return !!el && el.classList.contains('data-placeholder');
+      }
+
+      function resetFeedbackClasses(el) {
+        Object.values(feedbackVariants).forEach((classes) => {
+          classes.forEach((cls) => el.classList.remove(cls));
+        });
+      }
+
+      function updateFeedback(target, message, variant = 'info') {
+        const el = resolveElement(target);
+        if (!el) {
+          return;
+        }
+        el.classList.remove('hidden');
+        el.textContent = message;
+        resetFeedbackClasses(el);
+        const classes = feedbackVariants[variant] || feedbackVariants.info;
+        el.classList.add(...classes);
+        el.setAttribute('role', variant === 'error' ? 'alert' : 'status');
+      }
+
+      function clearFeedback(target) {
+        const el = resolveElement(target);
+        if (!el) {
+          return;
+        }
+        resetFeedbackClasses(el);
+        el.textContent = '';
+        el.classList.add('hidden');
+        el.removeAttribute('role');
+      }
+
+      function setFieldValidity(field, isValid) {
+        if (!field) {
+          return;
+        }
+        const el = resolveElement(field);
+        if (!el) {
+          return;
+        }
+        if (isValid) {
+          el.removeAttribute('aria-invalid');
+          invalidFieldClasses.forEach((cls) => el.classList.remove(cls));
+        } else {
+          el.setAttribute('aria-invalid', 'true');
+          invalidFieldClasses.forEach((cls) => el.classList.add(cls));
+        }
+      }
+
+      function attachFieldValidation(field) {
+        const el = resolveElement(field);
+        if (!el) {
+          return;
+        }
+        ['input', 'change', 'blur'].forEach((eventName) => {
+          el.addEventListener(eventName, () => {
+            setFieldValidity(el, true);
+          });
+        });
+      }
+
+      function validateRequiredFields(fields, options = {}) {
+        const { feedbackEl, summaryMessage } = options;
+        let isValid = true;
+        fields.forEach((fieldConfig) => {
+          const { element, message } = fieldConfig;
+          const el = resolveElement(element);
+          if (!el) {
+            return;
+          }
+          const value = (el.value ?? '').toString().trim();
+          if (!value) {
+            isValid = false;
+            setFieldValidity(el, false);
+            if (message) {
+              el.setAttribute('title', message);
+            }
+          } else {
+            setFieldValidity(el, true);
+            if (message) {
+              el.removeAttribute('title');
+            }
+          }
+        });
+        if (!isValid && feedbackEl) {
+          updateFeedback(
+            feedbackEl,
+            summaryMessage || 'Please fill in the required fields before continuing.',
+            'error',
+          );
+        }
+        return isValid;
+      }
+
+      function displayInlineError(target, baseMessage, error) {
+        const details = error && error.message ? ` Details: ${error.message}` : '';
+        const message = `⚠️ ${baseMessage}.${details ? ` ${details}` : ''}`.trim();
+        const el = resolveElement(target);
+        if (!el) {
+          return;
+        }
+        if (el.tagName && el.tagName.toLowerCase() === 'pre') {
+          setPreContent(el, message);
+          return;
+        }
+        updateFeedback(el, message, 'error');
+      }
+
+      function performActionWithFeedback(button, { loadingText = 'Loading…', preId, errorMessage, action }) {
+        if (!button) {
+          return async () => {};
+        }
+        return async (...args) => {
+          if (button.disabled) {
+            return null;
+          }
+          const originalHtml = button.innerHTML;
+          const originalAriaBusy = button.getAttribute('aria-busy');
+          button.disabled = true;
+          button.classList.add('cursor-not-allowed', 'opacity-70', 'animate-pulse');
+          button.setAttribute('aria-busy', 'true');
+          button.innerHTML = `<span class="flex items-center justify-center gap-2"><span class="h-2.5 w-2.5 rounded-full border-2 border-current border-t-transparent animate-spin"></span>${loadingText}</span>`;
+          try {
+            return await action(...args);
+          } catch (error) {
+            console.error(errorMessage, error);
+            if (preId) {
+              displayInlineError(preId, errorMessage, error);
+            }
+            return null;
+          } finally {
+            button.disabled = false;
+            button.innerHTML = originalHtml;
+            button.classList.remove('cursor-not-allowed', 'opacity-70', 'animate-pulse');
+            if (originalAriaBusy !== null) {
+              button.setAttribute('aria-busy', originalAriaBusy);
+            } else {
+              button.removeAttribute('aria-busy');
+            }
+          }
+        };
+      }
+
+      function ensureOkResponse(response) {
+        if (!response || !response.ok) {
+          throw new Error(`Server responded with status ${response ? response.status : 'unknown'}`);
+        }
+      }
+
+      window.setPreContent = setPreContent;
+      window.isPlaceholder = isPlaceholder;
+      window.displayInlineError = displayInlineError;
+      window.performActionWithFeedback = performActionWithFeedback;
+      window.ensureOkResponse = ensureOkResponse;
+      window.updateFeedback = updateFeedback;
+      window.clearFeedback = clearFeedback;
+      window.validateRequiredFields = validateRequiredFields;
+      window.attachFieldValidation = attachFieldValidation;
+      window.setFieldValidity = setFieldValidity;
+    })();
+  </script>
 </head>
 <body class="p-4">
   <nav class="bg-gray-800 text-white px-4 py-2 mb-6">

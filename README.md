@@ -15,6 +15,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Retrieve saved tasks through the `/tasks` API endpoint.
 - Mark tasks complete via the `/daily-tasks` web page.
 - Edit all task fields via the `/manage-tasks` page.
+- Create new vault projects and individual tasks directly from the web interface.
 - If `data/morning_plan.yaml` exists, `/daily-tasks` shows only tasks referenced
   by the latest morning plan.
 - Task matching ignores punctuation so titles like `Check garden hose.` still
@@ -127,6 +128,11 @@ Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
 Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks, `/manage-tasks` to edit them and `/calendar` to view loaded events.
+
+### Add projects and tasks from the UI
+
+- The **New Project** accordion on the home page accepts a title, slug, metadata (status, area, effort and optional dates) and an initial checklist. Submitting the form posts to `/projects` and reports success inline.
+- The **Manage Tasks → New Task** form lets you enter a title, pick the target project or area, tweak status/effort metadata and send the task to `/tasks`. After a successful submission the list automatically refreshes so the new entry is visible immediately.
 The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks` unless you switch the **Focus** selector to **Next task**. In that mode the planner stays on the page and shows the recommended task. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
