@@ -52,6 +52,27 @@ def test_parse_plan_reasons():
     assert reasons["exercise"] == "stay healthy"
 
 
+def test_plan_with_mixed_entries():
+    """Plans with dicts using task/name keys and bare strings should work."""
+    tasks = [
+        {"title": "Write code"},
+        {"title": "Exercise"},
+        {"title": "Meditate"},
+    ]
+    plan = [
+        {"task": "Write code", "reason": "finish feature"},
+        "Exercise",
+        {"name": "Meditate", "reason": "calm mind"},
+    ]
+    filtered = filter_tasks_by_plan(tasks, plan)
+    assert {t["title"] for t in filtered} == {"Write code", "Exercise", "Meditate"}
+
+    reasons = parse_plan_reasons(plan)
+    assert reasons["write code"] == "finish feature"
+    assert reasons["exercise"] == ""
+    assert reasons["meditate"] == "calm mind"
+
+
 def test_filter_tasks_by_energy():
     """Tasks exceeding available energy should be removed."""
     tasks = [
