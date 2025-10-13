@@ -1,5 +1,5 @@
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
@@ -139,7 +139,9 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
 def test_plan_endpoint_next_task_requires_complete_payload(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=0: [])
+    monkeypatch.setattr(
+        openai_route, "upcoming_tasks", lambda days=7: []
+    )
     monkeypatch.setattr(openai_route, "read_entries", lambda: [])
 
     record_calls = []
@@ -167,7 +169,9 @@ def test_plan_endpoint_next_task_requires_complete_payload(
 
 
 def test_plan_endpoint_next_task_requires_payload_body(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=0: [])
+    monkeypatch.setattr(
+        openai_route, "upcoming_tasks", lambda days=7: []
+    )
     monkeypatch.setattr(openai_route, "read_entries", lambda: [])
 
     record_calls = []
@@ -192,3 +196,52 @@ def test_plan_endpoint_next_task_requires_payload_body(monkeypatch: pytest.Monke
         == "Energy, mood, and time_blocks are required for next_task mode."
     )
     assert record_calls == []
+
+
+def test_plan_endpoint_next_task_falls_back_to_future_tasks(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    today = date.today()
+    future_due = (today + timedelta(days=2)).isoformat()
+    tasks = [
+        {"id": 3, "title": "Future Task", "due": future_due, "energy_cost": 2}
+    ]
+
+    calls = []
+
+    def fake_upcoming_tasks(days: int = 7):
+        calls.append(days)
+        if days == 0:
+            return []
+        return tasks
+
+    monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
+
+    recorded = {}
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: int):
+        recorded.update(
+            {
+                "date": today.isoformat(),
+                "energy": energy,
+                "mood": mood,
+                "time_blocks": time_blocks,
+            }
+        )
+        return recorded.copy()
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+    monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
+
+    client = TestClient(app)
+    payload = {"energy": 2, "mood": "Okay", "time_blocks": 3}
+    resp = client.post("/plan?mode=next_task", json=payload)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["plan"] == "Future Task"
+    assert data["next_task"]["title"] == "Future Task"
+    assert calls == [0, 7]
+    assert recorded["energy"] == payload["energy"]
+    assert recorded["mood"] == payload["mood"]
