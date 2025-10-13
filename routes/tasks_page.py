@@ -5,15 +5,19 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 from pathlib import Path
-from typing import List
-from fastapi import APIRouter, Request, Form
+from typing import List, Optional
+
+from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from tasks import read_tasks, write_tasks, mark_tasks_complete
 from planner import read_plan, filter_tasks_by_plan, parse_plan_reasons, _clean
+from parse_projects import write_tasks_to_projects
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
@@ -28,6 +32,107 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+
+
+ENERGY_MAPPING = {"low": 1, "medium": 3, "high": 5}
+
+
+class TaskCreateRequest(BaseModel):
+    """Schema for creating a task entry."""
+
+    title: str = Field(..., min_length=1)
+    project: Optional[str] = None
+    area: Optional[str] = None
+    type: Optional[str] = Field(default="task", description="Task category")
+    effort: Optional[str] = Field(default="low", description="Estimated effort")
+    energy_cost: Optional[int] = None
+    executive_trigger: Optional[str] = None
+    recurrence: Optional[str] = None
+    due: Optional[date] = None
+    last_completed: Optional[date] = None
+    status: Optional[str] = Field(default="active", description="Task status")
+    notes: Optional[str] = None
+
+
+def _strip_runtime_fields(task: dict) -> dict:
+    """Remove transient recurrence metadata before persisting."""
+
+    return {k: v for k, v in task.items() if k not in {"next_due", "due_today"}}
+
+
+@router.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(payload: TaskCreateRequest):
+    """Create a task, assigning the next available identifier."""
+
+    logger.info("POST /tasks title=%s project=%s", payload.title, payload.project)
+
+    existing_tasks = read_tasks()
+    persisted_tasks: List[dict] = []
+    max_id = 0
+    for item in existing_tasks:
+        clean = _strip_runtime_fields(dict(item))
+        persisted_tasks.append(clean)
+        try:
+            candidate = int(clean.get("id", 0))
+        except (TypeError, ValueError):
+            candidate = 0
+        max_id = max(max_id, candidate)
+
+    new_id = max_id + 1
+    task_data = payload.model_dump(exclude_unset=True)
+
+    for field in ("due", "last_completed"):
+        value = task_data.get(field)
+        if isinstance(value, date):
+            task_data[field] = value.isoformat()
+        elif value in (None, ""):
+            task_data.pop(field, None)
+
+    task = {k: v for k, v in task_data.items() if v is not None}
+
+    effort_value = task.get("effort") or "low"
+    if isinstance(effort_value, str):
+        effort_key = effort_value.lower()
+    else:
+        effort_key = str(effort_value).lower()
+        effort_value = str(effort_value)
+    task["effort"] = effort_value
+
+    energy_value = task.get("energy_cost")
+    if energy_value is None:
+        task["energy_cost"] = ENERGY_MAPPING.get(effort_key, ENERGY_MAPPING["low"])
+    else:
+        try:
+            task["energy_cost"] = int(energy_value)
+        except (TypeError, ValueError):
+            task["energy_cost"] = ENERGY_MAPPING.get(effort_key, ENERGY_MAPPING["low"])
+
+    if not task.get("type"):
+        task["type"] = "task"
+    if not task.get("status"):
+        task["status"] = "active"
+
+    if not task.get("recurrence"):
+        task.pop("recurrence", None)
+
+    if not task.get("notes"):
+        task.pop("notes", None)
+
+    if not task.get("project"):
+        task.pop("project", None)
+
+    if not task.get("area"):
+        task.pop("area", None)
+
+    task["id"] = new_id
+
+    persisted_tasks.append(task)
+    write_tasks(persisted_tasks)
+
+    if task.get("project"):
+        write_tasks_to_projects(persisted_tasks)
+
+    return task
 
 
 @router.get("/daily-tasks", response_class=HTMLResponse)
