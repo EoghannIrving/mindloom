@@ -6,7 +6,6 @@
     <form method="post" class="space-y-4">
       {% for t in tasks %}
       <div class="border p-3 rounded space-y-4">
-        <input type="hidden" name="project-{{t.id}}" value="{{ t.project or '' }}">
         <input type="hidden" name="type-{{t.id}}" value="{{ t.type or '' }}">
         <fieldset class="space-y-3">
           <legend class="text-sm font-semibold text-gray-700">General Information</legend>
@@ -26,6 +25,10 @@
                     <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
                   {% endfor %}
                 </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="project-{{t.id}}" class="text-sm font-medium text-gray-700">Project</label>
+              <input id="project-{{t.id}}" type="text" name="project-{{t.id}}" value="{{ t.project or '' }}" list="projects" class="border p-2 rounded" placeholder="Choose project">
             </div>
             <div class="flex flex-col gap-1">
               <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
@@ -79,6 +82,11 @@
       <datalist id="areas">
         {% for a in area_options %}
           <option value="{{ a }}">
+        {% endfor %}
+      </datalist>
+      <datalist id="projects">
+        {% for p in project_options %}
+          <option value="{{ p }}">
         {% endfor %}
       </datalist>
     </form>
