@@ -51,7 +51,21 @@
         <button type="submit" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">Apply filters</button>
       </div>
     </form>
-    <form method="post" class="space-y-4">
+    <form method="post" class="space-y-4" id="manage-tasks-form">
+      <div class="sticky top-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-b px-4 py-3 flex justify-end gap-3">
+        <a
+          href="{{ url_for('tasks_page') }}"
+          class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+        >
+          Back to daily tasks
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+        >
+          Save changes
+        </button>
+      </div>
       {% for t in tasks %}
       {% set status_styles = {
         'complete': 'bg-green-100 text-green-800',
@@ -145,8 +159,19 @@
         </div>
       </details>
       {% endfor %}
-      <div class="text-right sticky bottom-0 bg-white py-2">
-        <button class="px-3 py-1 bg-blue-500 text-white rounded">Save</button>
+      <div class="sticky bottom-0 inset-x-0 z-20 bg-white/95 backdrop-blur border-t px-4 py-3 flex justify-end gap-3">
+        <a
+          href="{{ url_for('tasks_page') }}"
+          class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+        >
+          Cancel
+        </a>
+        <button
+          type="submit"
+          class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+        >
+          Save changes
+        </button>
       </div>
       <datalist id="areas">
         {% for a in area_options %}
