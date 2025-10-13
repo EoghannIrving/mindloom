@@ -60,6 +60,7 @@ def manage_tasks_page(request: Request):
     tasks = read_tasks()
     projects = sorted({t.get("project") for t in tasks if t.get("project")})
     areas = sorted({t.get("area") for t in tasks if t.get("area")})
+    task_types = sorted({t.get("type") for t in tasks if t.get("type")})
     return templates.TemplateResponse(
         "manage_tasks.html",
         {
@@ -67,6 +68,7 @@ def manage_tasks_page(request: Request):
             "tasks": tasks,
             "project_options": projects,
             "area_options": areas,
+            "type_options": task_types,
         },
     )
 
