@@ -117,6 +117,13 @@ async def save_tasks(request: Request):
     logger.info("POST /manage-tasks")
     form = await request.form()
     tasks = read_tasks()
+    submitted_ids: set[str] = set()
+    for key in form.keys():
+        if "-" not in key:
+            continue
+        _, task_id = key.rsplit("-", 1)
+        if task_id:
+            submitted_ids.add(task_id)
     fields = [
         "title",
         "project",
@@ -148,6 +155,10 @@ async def save_tasks(request: Request):
 
     for task in tasks:
         tid = str(task.get("id"))
+        if tid not in submitted_ids:
+            task.pop("next_due", None)
+            task.pop("due_today", None)
+            continue
         for field in fields:
             key = f"{field}-{tid}"
             _update_field(task, field, form.get(key))
