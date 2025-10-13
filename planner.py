@@ -33,6 +33,18 @@ def _clean(text: str) -> str:
     return cleaned
 
 
+def _plan_title(entry: Any) -> str:
+    """Return the best available textual representation of a plan entry."""
+    if isinstance(entry, dict):
+        for key in ("title", "task", "name"):
+            value = entry.get(key)
+            if value:
+                return str(value)
+    if isinstance(entry, str):
+        return entry
+    return str(entry)
+
+
 PLAN_PATH = Path(getattr(config, "PLAN_PATH", PROJECT_ROOT / "data/morning_plan.yaml"))
 PLAN_PATH.parent.mkdir(parents=True, exist_ok=True)
 
@@ -77,7 +89,7 @@ def filter_tasks_by_plan(tasks: List[Dict], plan: Any | None = None) -> List[Dic
         return filtered
 
     plan_list = plan.get("tasks") if isinstance(plan, dict) else plan
-    titles = {_clean(str(p.get("title", ""))) for p in plan_list or []}
+    titles = {_clean(_plan_title(p)) for p in plan_list or []}
     filtered = [t for t in tasks if _clean(str(t.get("title", ""))) in titles]
     logger.debug("Filtered down to %d tasks", len(filtered))
     return filtered
@@ -149,10 +161,13 @@ def parse_plan_reasons(plan: Any) -> Dict[str, str]:
         return reasons
 
     plan_list = plan.get("tasks") if isinstance(plan, dict) else plan
-    reasons = {
-        _clean(str(item.get("title", ""))): str(item.get("reason", ""))
-        for item in plan_list or []
-    }
+    reasons: Dict[str, str] = {}
+    for item in plan_list or []:
+        title = _clean(_plan_title(item))
+        reason = ""
+        if isinstance(item, dict):
+            reason = str(item.get("reason", ""))
+        reasons[title] = reason
     logger.debug("Parsed %d reasons", len(reasons))
     return reasons
 
