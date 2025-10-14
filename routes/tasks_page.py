@@ -158,6 +158,62 @@ def complete_tasks(task_id: List[int] = Form([])):
     return RedirectResponse("/daily-tasks", status_code=303)
 
 
+def _parse_due_date(value: str | date | None) -> date | None:
+    """Convert stored due date strings to ``date`` objects when possible."""
+
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _annotate_task(task: dict, today: date) -> dict:
+    """Attach sorting helpers and due date flags to a task."""
+
+    due_date = _parse_due_date(task.get("due"))
+    task["due_date_normalized"] = due_date.isoformat() if due_date else None
+    task["is_overdue"] = bool(due_date and due_date < today)
+    task["is_due_today"] = bool(due_date and due_date == today)
+    task["_due_sort_key"] = due_date or date.max
+    return task
+
+
+def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
+    """Sort tasks according to the requested mode."""
+
+    if mode == "due_asc":
+        return sorted(
+            tasks,
+            key=lambda task: (
+                task.get("_due_sort_key", date.max),
+                str(task.get("title", "")),
+            ),
+        )
+    if mode == "overdue_first":
+        return sorted(
+            tasks,
+            key=lambda task: (
+                0 if task.get("is_overdue") else 1,
+                task.get("_due_sort_key", date.max),
+                str(task.get("title", "")),
+            ),
+        )
+    if mode == "status":
+        return sorted(
+            tasks,
+            key=lambda task: (
+                str(task.get("status", "")),
+                task.get("_due_sort_key", date.max),
+                str(task.get("title", "")),
+            ),
+        )
+    return tasks
+
+
 @router.get("/manage-tasks", response_class=HTMLResponse)
 def manage_tasks_page(request: Request):
     """Display editable list of all tasks."""
@@ -169,6 +225,8 @@ def manage_tasks_page(request: Request):
     selected_project = request.query_params.get("project", "").strip()
     selected_area = request.query_params.get("area", "").strip()
     selected_type = request.query_params.get("type", "").strip()
+    sort_mode = request.query_params.get("sort", "").strip()
+    today = date.today()
 
     def _matches(task: dict) -> bool:
         if query:
@@ -191,27 +249,38 @@ def manage_tasks_page(request: Request):
             return False
         return True
 
-    filtered_tasks = [task for task in tasks if _matches(task)]
+    filtered_tasks = [
+        _annotate_task(dict(task), today) for task in tasks if _matches(task)
+    ]
+    sorted_tasks = _sort_tasks(filtered_tasks, sort_mode)
 
     projects = sorted({t.get("project") for t in tasks if t.get("project")})
     areas = sorted({t.get("area") for t in tasks if t.get("area")})
     task_types = sorted({t.get("type") for t in tasks if t.get("type")})
     statuses = sorted({t.get("status") for t in tasks if t.get("status")})
+    sort_options = [
+        ("", "Default order"),
+        ("due_asc", "Due date (oldest first)"),
+        ("overdue_first", "Overdue first"),
+        ("status", "Status"),
+    ]
 
     return templates.TemplateResponse(
         "manage_tasks.html",
         {
             "request": request,
-            "tasks": filtered_tasks,
+            "tasks": sorted_tasks,
             "project_options": projects,
             "area_options": areas,
             "type_options": task_types,
             "status_options": statuses,
+            "sort_options": sort_options,
             "search_query": query,
             "selected_status": selected_status,
             "selected_project": selected_project,
             "selected_area": selected_area,
             "selected_type": selected_type,
+            "selected_sort": sort_mode,
         },
     )
 

@@ -11,7 +11,7 @@
         </p>
       </div>
       <form method="get" class="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur space-y-4">
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
           <div class="flex flex-col gap-1 md:col-span-2">
             <label for="task-search" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Search</label>
             <input
@@ -72,6 +72,18 @@
               <option value="" class="text-gray-900">All</option>
               {% for opt in type_options %}
                 <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_type == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="sort-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Sort</label>
+            <select
+              id="sort-filter"
+              name="sort"
+              class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+            >
+              {% for value, label in sort_options %}
+                <option value="{{ value }}" style="color: #111827;" class="text-gray-900" {% if selected_sort == value %}selected{% endif %}>{{ label }}</option>
               {% endfor %}
             </select>
           </div>
@@ -309,6 +321,11 @@
             <span class="rounded-full px-2 py-1 {{ status_styles.get(t.status, 'bg-gray-100 text-gray-700') }}">
               {{ (t.status or 'unknown')|title }}
             </span>
+            {% if t.is_overdue %}
+              <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-700">Overdue</span>
+            {% elif t.is_due_today %}
+              <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">Due today</span>
+            {% endif %}
             {% if t.area %}
               <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.area }}</span>
             {% endif %}
