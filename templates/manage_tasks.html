@@ -298,11 +298,11 @@
         'blocked': 'bg-red-100 text-red-800',
         'waiting': 'bg-amber-100 text-amber-800'
       } %}
-      <details class="group bg-white/90 transition" data-task-details {% if loop.first %}open{% endif %}>
+      <details class="group bg-white/90 transition" data-task-details>
         <summary
           class="grid cursor-pointer gap-3 px-4 py-3 text-sm text-slate-600 transition hover:bg-indigo-50/40 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
           aria-controls="task-body-{{ t.id }}"
-          aria-expanded="{{ 'true' if loop.first else 'false' }}"
+          aria-expanded="false"
         >
           <div class="space-y-2">
             <span class="text-sm font-semibold text-slate-900">{{ t.title or 'Untitled task' }}</span>
@@ -528,15 +528,17 @@
           if (controlled) {
             controlled.setAttribute('role', 'region');
             controlled.setAttribute('aria-labelledby', summary.id);
-            controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
           }
-          summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
-          detailsEl.addEventListener('toggle', () => {
+
+          const syncState = () => {
             summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
             if (controlled) {
               controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
             }
-          });
+          };
+
+          detailsEl.addEventListener('toggle', syncState);
+          syncState();
         });
 
         const newTaskForm = document.getElementById('newTaskForm');
