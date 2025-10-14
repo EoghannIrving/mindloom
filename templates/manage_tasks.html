@@ -283,21 +283,7 @@
       <input type="hidden" name="area" value="{{ selected_area or '' }}" />
       <input type="hidden" name="type" value="{{ selected_type or '' }}" />
       <input type="hidden" name="sort" value="{{ selected_sort or '' }}" />
-      <div class="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur flex justify-end gap-3 rounded-t-3xl">
-        <a
-          href="{{ url_for('tasks_page') }}"
-          class="inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-200"
-        >
-          Back to daily tasks
-        </a>
-        <button
-          type="submit"
-          class="inline-flex items-center rounded-xl bg-amber-300 px-5 py-2 text-sm font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
-        >
-          Save changes
-        </button>
-      </div>
-      <div class="divide-y divide-gray-200" data-task-list>
+      <div class="divide-y divide-gray-200 pt-3" data-task-list>
       {% for t in tasks %}
       {% set status_styles = {
         'complete': 'bg-green-100 text-green-800',
