@@ -343,6 +343,7 @@ async def save_tasks(request: Request):
         task.pop("next_due", None)
         task.pop("due_today", None)
     write_tasks(tasks)
+    write_tasks_to_projects(tasks)
 
     filters = {
         name: form.get(name)
