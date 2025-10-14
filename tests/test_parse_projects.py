@@ -148,6 +148,38 @@ def test_save_tasks_yaml(tmp_path: Path):
     assert data[0]["title"] == "First"
     assert data[0]["type"] == "task"
     assert data[0]["project"] == "demo.md"
+    assert data[0]["source"] == "markdown"
+
+
+def test_save_tasks_yaml_preserves_standalone_tasks(tmp_path: Path):
+    """Standalone tasks without a project should persist across saves."""
+    projects = [
+        {
+            "title": "demo",
+            "path": "demo.md",
+            "area": "life",
+            "effort": "low",
+            "status": "active",
+            "tasks": ["- [ ] Generated"],
+        }
+    ]
+    tasks_file = tmp_path / "tasks.yaml"
+    from tasks import read_tasks, write_tasks
+
+    manual_task = {
+        "id": 10,
+        "title": "Standalone",
+        "type": "task",
+        "status": "active",
+    }
+    write_tasks([manual_task], tasks_file)
+
+    parse_projects.save_tasks_yaml(projects, tasks_file)
+    data = read_tasks(tasks_file)
+
+    assert any(task["title"] == "Standalone" for task in data)
+    project_tasks = [task for task in data if task.get("source") == "markdown"]
+    assert project_tasks[0]["id"] == manual_task["id"] + 1
 
 
 def test_parse_task_line_with_metadata():

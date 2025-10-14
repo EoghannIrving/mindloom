@@ -9,7 +9,7 @@ from typing import List, Dict
 import yaml
 
 from config import config
-from tasks import write_tasks
+from tasks import read_tasks_raw, write_tasks
 
 TASKS_FILE = Path(config.TASKS_PATH)
 
@@ -119,11 +119,11 @@ def _parse_task_line(line):
     return title, completed, metadata.get("due"), metadata.get("recur")
 
 
-def projects_to_tasks(projects):
+def projects_to_tasks(projects, start_id: int = 1):
     """Convert parsed project data to task entries using the task schema."""
     mapping = {"low": 1, "medium": 3, "high": 5}
     tasks = []
-    idx = 1
+    idx = start_id
     for proj in projects:
         for line in proj.get("tasks", []):
             title, completed, line_due, line_recurrence = _parse_task_line(line)
@@ -142,6 +142,7 @@ def projects_to_tasks(projects):
                 "status": "complete" if completed else proj.get("status", "active"),
                 "last_completed": proj.get("last_completed") if completed else None,
                 "executive_trigger": proj.get("executive_trigger"),
+                "source": "markdown",
             }
             tasks.append(task)
             idx += 1
@@ -150,9 +151,23 @@ def projects_to_tasks(projects):
 
 def save_tasks_yaml(projects, path=TASKS_FILE):
     """Write project tasks to a YAML file using the tasks schema."""
-    tasks = projects_to_tasks(projects)
-    write_tasks(tasks, path)
-    return tasks
+    existing_tasks = read_tasks_raw(path)
+
+    def is_markdown_task(task: Dict) -> bool:
+        project = task.get("project")
+        if not project:
+            return False
+        source = task.get("source")
+        if source is None:
+            return True
+        return source == "markdown"
+
+    preserved = [task for task in existing_tasks if not is_markdown_task(task)]
+    next_id = max((task.get("id", 0) for task in preserved), default=0) + 1
+    project_tasks = projects_to_tasks(projects, start_id=next_id)
+    combined = preserved + project_tasks
+    write_tasks(combined, path)
+    return combined
 
 
 META_KEYS = {
