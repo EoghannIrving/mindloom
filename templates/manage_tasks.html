@@ -276,6 +276,12 @@
     </section>
     </aside>
     <form method="post" id="manage-tasks-form" class="flex flex-col rounded-3xl border border-gray-200 bg-white/80 shadow-sm">
+      <input type="hidden" name="q" value="{{ search_query or '' }}" />
+      <input type="hidden" name="status" value="{{ selected_status or '' }}" />
+      <input type="hidden" name="project" value="{{ selected_project or '' }}" />
+      <input type="hidden" name="area" value="{{ selected_area or '' }}" />
+      <input type="hidden" name="type" value="{{ selected_type or '' }}" />
+      <input type="hidden" name="sort" value="{{ selected_sort or '' }}" />
       <div class="sticky top-0 z-20 border-b border-gray-200 bg-white/95 px-4 py-2 backdrop-blur flex justify-end gap-3 rounded-t-3xl">
         <a
           href="{{ url_for('tasks_page') }}"
