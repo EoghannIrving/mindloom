@@ -211,7 +211,9 @@ def _task_to_line(task: Dict) -> str:
     return line
 
 
-def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
+def write_tasks_to_projects(
+    tasks, root=PROJECTS_DIR, cleared_projects: Optional[set[str]] = None
+):
     """Update markdown checklists based on tasks.yaml."""
     root = Path(root).expanduser()
     grouped: Dict[str, List[Dict]] = {}
@@ -219,6 +221,10 @@ def write_tasks_to_projects(tasks, root=PROJECTS_DIR):
         proj = task.get("project")
         if proj:
             grouped.setdefault(str(proj), []).append(task)
+
+    if cleared_projects:
+        for proj in cleared_projects:
+            grouped.setdefault(str(proj), [])
 
     count = 0
     for rel_path, items in grouped.items():
