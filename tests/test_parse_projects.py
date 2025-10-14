@@ -182,6 +182,37 @@ def test_save_tasks_yaml_preserves_standalone_tasks(tmp_path: Path):
     assert project_tasks[0]["id"] == manual_task["id"] + 1
 
 
+def test_save_tasks_yaml_handles_non_numeric_ids(tmp_path: Path):
+    """Non-numeric task identifiers should not break id generation."""
+    projects = [
+        {
+            "title": "demo",
+            "path": "demo.md",
+            "area": "life",
+            "effort": "low",
+            "status": "active",
+            "tasks": ["- [ ] Generated"],
+        }
+    ]
+    tasks_file = tmp_path / "tasks.yaml"
+    from tasks import read_tasks, write_tasks
+
+    manual_task = {
+        "id": "custom-1",
+        "title": "Standalone",
+        "type": "task",
+        "status": "active",
+    }
+    write_tasks([manual_task], tasks_file)
+
+    parse_projects.save_tasks_yaml(projects, tasks_file)
+    data = read_tasks(tasks_file)
+
+    generated = [task for task in data if task.get("source") == "markdown"]
+    assert generated
+    assert generated[0]["id"] == 1
+
+
 def test_parse_task_line_with_metadata():
     """Inline due dates and recurrence should be parsed from each line."""
     line = "- [ ] Demo | due:2025-01-01 | recur:weekly"
