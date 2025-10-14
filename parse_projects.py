@@ -5,7 +5,7 @@
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 import yaml
 
 from config import config
@@ -163,7 +163,24 @@ def save_tasks_yaml(projects, path=TASKS_FILE):
         return source == "markdown"
 
     preserved = [task for task in existing_tasks if not is_markdown_task(task)]
-    next_id = max((task.get("id", 0) for task in preserved), default=0) + 1
+
+    def _numeric_id(task: Dict) -> Optional[int]:
+        value = task.get("id")
+        if isinstance(value, int):
+            return value
+        if isinstance(value, str):
+            try:
+                return int(value)
+            except ValueError:
+                return None
+        return None
+
+    numeric_ids = [
+        task_id
+        for task_id in (_numeric_id(task) for task in preserved)
+        if task_id is not None
+    ]
+    next_id = max(numeric_ids, default=0) + 1
     project_tasks = projects_to_tasks(projects, start_id=next_id)
     combined = preserved + project_tasks
     write_tasks(combined, path)
