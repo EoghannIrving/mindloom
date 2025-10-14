@@ -226,7 +226,7 @@ def manage_tasks_page(request: Request):
     selected_project = request.query_params.get("project", "").strip()
     selected_area = request.query_params.get("area", "").strip()
     selected_type = request.query_params.get("type", "").strip()
-    sort_mode = request.query_params.get("sort", "").strip()
+    sort_mode = (request.query_params.get("sort") or "").strip() or "due_asc"
     today = date.today()
 
     def _matches(task: dict) -> bool:
@@ -240,7 +240,11 @@ def manage_tasks_page(request: Request):
             ]
             if not any(query.lower() in haystack.lower() for haystack in haystacks):
                 return False
-        if selected_status and str(task.get("status", "")) != selected_status:
+        task_status = str(task.get("status", "")).strip()
+        if selected_status:
+            if task_status != selected_status:
+                return False
+        elif task_status.lower() == "complete":
             return False
         if selected_project and str(task.get("project", "")) != selected_project:
             return False
@@ -260,7 +264,6 @@ def manage_tasks_page(request: Request):
     task_types = sorted({t.get("type") for t in tasks if t.get("type")})
     statuses = sorted({t.get("status") for t in tasks if t.get("status")})
     sort_options = [
-        ("", "Default order"),
         ("due_asc", "Due date (oldest first)"),
         ("overdue_first", "Overdue first"),
         ("status", "Status"),
