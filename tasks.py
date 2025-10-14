@@ -64,15 +64,23 @@ def apply_recurrence(tasks: List[Dict], today: date | None = None) -> List[Dict]
     return tasks
 
 
-def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
-    """Return all task entries from the YAML file."""
-    logger.info("Reading tasks from %s", path)
+def read_tasks_raw(path: Path = TASKS_FILE, *, log: bool = True) -> List[Dict]:
+    """Return task entries from YAML without recurrence annotations."""
+    if log:
+        logger.info("Reading tasks (raw) from %s", path)
     if not path.exists():
         logger.info("%s does not exist", path)
         return []
     with open(path, "r", encoding="utf-8") as handle:
         tasks = yaml.safe_load(handle) or []
-    logger.debug("Loaded %d tasks", len(tasks))
+    logger.debug("Loaded %d raw tasks", len(tasks))
+    return tasks
+
+
+def read_tasks(path: Path = TASKS_FILE) -> List[Dict]:
+    """Return all task entries from the YAML file."""
+    logger.info("Reading tasks from %s", path)
+    tasks = read_tasks_raw(path, log=False)
     return apply_recurrence(tasks)
 
 
