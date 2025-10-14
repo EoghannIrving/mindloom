@@ -8,6 +8,7 @@ import logging
 from datetime import date
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -339,4 +340,14 @@ async def save_tasks(request: Request):
         task.pop("next_due", None)
         task.pop("due_today", None)
     write_tasks(tasks)
-    return RedirectResponse("/manage-tasks", status_code=303)
+
+    filters = {
+        name: form.get(name)
+        for name in ("q", "status", "project", "area", "type", "sort")
+    }
+    query = {key: value for key, value in filters.items() if value}
+    redirect_url = request.url_for("manage_tasks_page")
+    if query:
+        redirect_url = f"{redirect_url}?{urlencode(query)}"
+
+    return RedirectResponse(redirect_url, status_code=303)
