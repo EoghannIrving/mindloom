@@ -296,12 +296,16 @@ async def save_tasks(request: Request):
     form = await request.form()
     tasks = read_tasks()
     submitted_ids: set[str] = set()
+    deleted_ids: set[str] = set()
     for key in form.keys():
         if "-" not in key:
             continue
-        _, task_id = key.rsplit("-", 1)
-        if task_id:
-            submitted_ids.add(task_id)
+        field, task_id = key.rsplit("-", 1)
+        if not task_id:
+            continue
+        submitted_ids.add(task_id)
+        if field == "delete" and form.get(key) == "1":
+            deleted_ids.add(task_id)
     fields = [
         "title",
         "project",
@@ -331,19 +335,29 @@ async def save_tasks(request: Request):
             else:
                 task[field] = ""
 
+    remaining_tasks: list[dict] = []
+    cleared_projects: set[str] = set()
+
     for task in tasks:
         tid = str(task.get("id"))
+        if tid in deleted_ids:
+            project = task.get("project")
+            if project:
+                cleared_projects.add(str(project))
+            continue
         if tid not in submitted_ids:
             task.pop("next_due", None)
             task.pop("due_today", None)
+            remaining_tasks.append(task)
             continue
         for field in fields:
             key = f"{field}-{tid}"
             _update_field(task, field, form.get(key))
         task.pop("next_due", None)
         task.pop("due_today", None)
-    write_tasks(tasks)
-    write_tasks_to_projects(tasks)
+        remaining_tasks.append(task)
+    write_tasks(remaining_tasks)
+    write_tasks_to_projects(remaining_tasks, cleared_projects=cleared_projects)
 
     filters = {
         name: form.get(name)

@@ -30,9 +30,11 @@ def _setup_task_environment(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
         tasks.write_tasks(data, tasks_file)
 
     def _sync_projects_override(
-        items, root=None
+        items, root=None, cleared_projects=None
     ):  # pragma: no cover - signature parity
-        return parse_projects.write_tasks_to_projects(items, root=vault_root)
+        return parse_projects.write_tasks_to_projects(
+            items, root=vault_root, cleared_projects=cleared_projects
+        )
 
     monkeypatch.setattr(tasks_route, "read_tasks", _read_tasks_override)
     monkeypatch.setattr(tasks_route, "write_tasks", _write_tasks_override)
