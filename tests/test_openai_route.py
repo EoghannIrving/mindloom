@@ -297,6 +297,30 @@ def test_plan_endpoint_next_task_falls_back_to_future_tasks(
     assert recorded["mood"] == payload["mood"]
 
 
+def test_select_next_task_penalizes_high_executive_trigger_when_mood_low():
+    today = date.today().isoformat()
+    tasks = [
+        {
+            "id": 1,
+            "title": "High Friction",
+            "due": today,
+            "energy_cost": 3,
+            "executive_trigger": "high",
+        },
+        {
+            "id": 2,
+            "title": "Low Friction",
+            "due": today,
+            "energy_cost": 3,
+            "executive_trigger": "low",
+        },
+    ]
+
+    selected = openai_route._select_next_task(tasks, mood="sad", energy_level=3)
+    assert selected is not None
+    assert selected["title"] == "Low Friction"
+
+
 def test_ask_endpoint_handles_openai_error(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):

@@ -42,6 +42,19 @@ MOOD_ENERGY_TARGETS = {
     "joyful": 4,
 }
 
+EXECUTIVE_TRIGGER_WEIGHTS = {
+    "low": 0,
+    "medium": 1,
+    "high": 2,
+}
+
+MOOD_EXECUTIVE_TOLERANCE = {
+    "sad": "low",
+    "meh": "medium",
+    "okay": "medium",
+    "joyful": "high",
+}
+
 
 def _due_date_value(task: Dict[str, Any]) -> date:
     date_str = task.get("next_due") or task.get("due")
@@ -61,6 +74,27 @@ def _energy_cost(task: Dict[str, Any]) -> Optional[int]:
         return None
 
 
+def _executive_penalty(task: Dict[str, Any], mood_key: str) -> int:
+    tolerance_label = MOOD_EXECUTIVE_TOLERANCE.get(mood_key)
+    if not tolerance_label:
+        return 0
+
+    tolerance_weight = EXECUTIVE_TRIGGER_WEIGHTS.get(tolerance_label)
+    if tolerance_weight is None:
+        return 0
+
+    trigger_raw = task.get("executive_trigger")
+    if not isinstance(trigger_raw, str):
+        return 0
+
+    trigger_weight = EXECUTIVE_TRIGGER_WEIGHTS.get(trigger_raw.lower())
+    if trigger_weight is None:
+        return 0
+
+    penalty = trigger_weight - tolerance_weight
+    return penalty if penalty > 0 else 0
+
+
 def _select_next_task(
     tasks: List[Dict[str, Any]], mood: Optional[str], energy_level: Optional[int]
 ) -> Optional[Dict[str, Any]]:
@@ -76,8 +110,13 @@ def _select_next_task(
     def sort_key(task: Dict[str, Any]):
         due = _due_date_value(task)
         cost = _energy_cost(task)
-        penalty = abs(cost - target_energy) if cost is not None else target_energy
-        return (due, penalty, cost or target_energy)
+        energy_penalty = (
+            abs(cost - target_energy) if cost is not None else target_energy
+        )
+        exec_penalty = _executive_penalty(task, mood_key)
+        combined_penalty = energy_penalty + exec_penalty
+        fallback_cost = cost if cost is not None else target_energy
+        return (due, combined_penalty, exec_penalty, energy_penalty, fallback_cost)
 
     return sorted(tasks, key=sort_key)[0]
 
