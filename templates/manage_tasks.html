@@ -312,7 +312,11 @@
             </div>
           </div>
           <div class="flex flex-wrap justify-end gap-2 text-xs font-semibold">
-            <span class="rounded-full px-2 py-1 {{ status_styles.get(t.status, 'bg-gray-100 text-gray-700') }}">
+            <span
+              class="rounded-full px-2 py-1 {{ status_styles.get(t.status, 'bg-gray-100 text-gray-700') }}"
+              data-status-pill
+              data-task-id="{{ t.id }}"
+            >
               {{ (t.status or 'unknown')|title }}
             </span>
             {% if t.is_overdue %}
@@ -326,6 +330,14 @@
             {% if t.type %}
               <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.type }}</span>
             {% endif %}
+            <button
+              type="button"
+              class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+              data-complete-button
+              data-task-id="{{ t.id }}"
+            >
+              Complete today
+            </button>
             <button
               type="button"
               class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-rose-700 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
@@ -673,6 +685,50 @@
               const taskDetails = button.closest('[data-task-details]');
               if (taskDetails) {
                 taskDetails.remove();
+              }
+            });
+          });
+
+          const completeButtons = manageTasksForm.querySelectorAll('[data-complete-button]');
+          completeButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const taskId = button.getAttribute('data-task-id');
+              if (!taskId) {
+                return;
+              }
+
+              const today = new Date().toISOString().slice(0, 10);
+              const lastCompletedInput = document.getElementById(`last_completed-${taskId}`);
+              if (lastCompletedInput) {
+                lastCompletedInput.value = today;
+              }
+
+              const statusSelect = document.getElementById(`status-${taskId}`);
+              if (statusSelect) {
+                statusSelect.value = 'complete';
+              }
+
+              const statusPill = manageTasksForm.querySelector(
+                `[data-status-pill][data-task-id="${taskId}"]`
+              );
+              if (statusPill) {
+                statusPill.textContent = 'Complete';
+                const statusClassesToRemove = [
+                  'bg-green-100',
+                  'text-green-800',
+                  'bg-blue-100',
+                  'text-blue-800',
+                  'bg-red-100',
+                  'text-red-800',
+                  'bg-amber-100',
+                  'text-amber-800',
+                  'bg-gray-100',
+                  'text-gray-700',
+                ];
+                statusClassesToRemove.forEach((cls) => statusPill.classList.remove(cls));
+                statusPill.classList.add('bg-green-100', 'text-green-800');
               }
             });
           });
