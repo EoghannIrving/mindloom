@@ -94,7 +94,9 @@ def write_tasks(tasks: List[Dict], path: Path = TASKS_FILE) -> None:
 
 def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     """Set selected task ids to complete and update ``last_completed``."""
-    logger.info("Marking tasks complete: %s", task_ids)
+    logger.info("Marking %d tasks complete", len(task_ids))
+    if task_ids:
+        logger.debug("Task ids to complete: %s", task_ids)
     tasks = read_tasks(path)
     today = date.today().isoformat()
     count = 0

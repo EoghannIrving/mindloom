@@ -67,7 +67,12 @@ def _strip_runtime_fields(task: dict) -> dict:
 def create_task(payload: TaskCreateRequest):
     """Create a task, assigning the next available identifier."""
 
-    logger.info("POST /tasks title=%s project=%s", payload.title, payload.project)
+    logger.info(
+        "POST /tasks payload_received title_length=%s project_provided=%s",
+        len(payload.title),
+        bool(payload.project),
+    )
+    logger.debug("POST /tasks payload: %s", payload.model_dump())
 
     existing_tasks = read_tasks()
     persisted_tasks: List[dict] = []
@@ -156,7 +161,9 @@ def tasks_page(request: Request):
 @router.post("/daily-tasks")
 def complete_tasks(task_id: List[int] = Form([])):
     """Mark selected tasks as complete and persist updates."""
-    logger.info("POST /daily-tasks ids=%s", task_id)
+    logger.info("POST /daily-tasks completed_count=%s", len(task_id))
+    if task_id:
+        logger.debug("POST /daily-tasks ids=%s", task_id)
     mark_tasks_complete([int(i) for i in task_id])
     return RedirectResponse("/daily-tasks", status_code=303)
 

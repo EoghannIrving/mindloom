@@ -55,7 +55,7 @@ def record_entry(
     Only one entry per day is kept. Repeated calls for the same date will
     overwrite the previous values.
     """
-    logger.info("Recording energy=%s mood=%s time_blocks=%s", energy, mood, time_blocks)
+    logger.info("Recording energy entry for date=%s", date.today().isoformat())
     entry = {
         "date": date.today().isoformat(),
         "energy": energy,

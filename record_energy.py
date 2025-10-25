@@ -38,12 +38,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-logger.info(
-    "CLI invoked with energy=%s mood=%s time_blocks=%s",
-    args.energy,
-    args.mood,
-    args.time_blocks,
-)
+logger.info("CLI invoked to record energy entry")
 entry = record_entry(args.energy, args.mood, args.time_blocks)
-logger.info("Recorded entry: %s", entry)
+logger.info("Recorded energy entry for date=%s", entry.get("date"))
+logger.debug("Recorded energy entry details: %s", entry)
 print(f"Recorded: {entry}")
