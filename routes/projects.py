@@ -51,6 +51,42 @@ class ProjectTask(BaseModel):
     executive_trigger: Optional[str] = None
 
 
+def _normalize_slug_path(slug: str, vault_root: Path) -> Path:
+    """Normalize a slug to a relative path under the vault root."""
+
+    slug_path = Path(slug)
+    if slug_path.is_absolute():
+        raise ValueError("slug must be a relative path without traversal")
+
+    parts: List[str] = []
+    for part in slug_path.parts:
+        if part in {"", "."}:
+            continue
+        if part == "..":
+            raise ValueError("slug must be a relative path without traversal")
+        parts.append(part)
+
+    if not parts:
+        raise ValueError("slug must reference a file within the vault")
+
+    vault_parts = [p for p in vault_root.parts if p not in {"", "/"}]
+    # Remove any leading segments that repeat the vault root path.
+    while True:
+        for length in range(len(vault_parts), 0, -1):
+            prefix = vault_parts[-length:]
+            if len(parts) > length and parts[:length] == prefix:
+                parts = parts[length:]
+                break
+        else:
+            break
+
+    normalized = Path(*parts)
+    if normalized.suffix != ".md":
+        normalized = normalized.with_suffix(".md")
+
+    return normalized
+
+
 class ProjectCreateRequest(BaseModel):
     """Payload schema for creating a new markdown project file."""
 
@@ -87,12 +123,11 @@ class ProjectMergeRequest(BaseModel):
     @field_validator("source_slug", "target_slug")
     @classmethod
     def validate_slug(cls, value: str) -> str:  # noqa: D401
-        """Ensure the slug stays within the vault."""
+        """Ensure the slug stays within the vault and normalize it."""
 
-        path = Path(value)
-        if path.is_absolute() or any(part == ".." for part in path.parts):
-            raise ValueError("slug must be a relative path without traversal")
-        return value
+        vault_root = Path(config.VAULT_PATH)
+        normalized = _normalize_slug_path(value, vault_root)
+        return str(normalized)
 
 
 @router.get("/projects")
@@ -238,10 +273,23 @@ def create_project(payload: ProjectCreateRequest):
 def _resolve_slug(slug: str, vault_root: Path) -> Path:
     """Return the filesystem path for a slug within the vault."""
 
-    slug_path = Path(slug)
-    if slug_path.suffix != ".md":
-        slug_path = slug_path.with_suffix(".md")
-    return (vault_root / slug_path).resolve()
+    try:
+        normalized = _normalize_slug_path(slug, vault_root)
+    except ValueError as exc:  # pragma: no cover - defensive, caught by validation
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    candidate = (vault_root / normalized).resolve()
+    try:
+        candidate.relative_to(vault_root)
+    except ValueError as exc:  # pragma: no cover - safety guard
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="slug must resolve within the vault",
+        ) from exc
+    return candidate
 
 
 @router.post("/projects/merge")
