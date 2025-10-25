@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 
 from datetime import date
-from fastapi import APIRouter, Request, Body
+from fastapi import APIRouter, Request, Body, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -50,6 +50,11 @@ def index(request: Request):
 def render_prompt_endpoint(data: dict = Body(...)):
     """Render a prompt template with optional variables."""
     template_name = data.get("template")
+    if not isinstance(template_name, str) or not template_name.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="The 'template' parameter must be a non-empty string.",
+        )
     variables = data.get("variables", {})
 
     # automatically inject tasks and energy data if not provided

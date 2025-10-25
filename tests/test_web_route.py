@@ -33,3 +33,22 @@ def test_render_prompt_morning_injects_calendar(monkeypatch: pytest.MonkeyPatch)
     resp = client.post("/render-prompt", json={"template": "morning_planner.txt"})
     assert resp.status_code == 200
     assert "09:00-10:00" in resp.json()["result"]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"template": ""},
+        {"template": "   "},
+        {"template": None},
+    ],
+)
+def test_render_prompt_requires_template(payload):
+    client = TestClient(app)
+    response = client.post("/render-prompt", json=payload)
+    assert response.status_code == 400
+    assert (
+        response.json()["detail"]
+        == "The 'template' parameter must be a non-empty string."
+    )
