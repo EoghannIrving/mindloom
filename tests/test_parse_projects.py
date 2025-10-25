@@ -219,11 +219,21 @@ def test_save_tasks_yaml_handles_non_numeric_ids(tmp_path: Path):
 def test_parse_task_line_with_metadata():
     """Inline due dates and recurrence should be parsed from each line."""
     line = "- [ ] Demo | due:2025-01-01 | recur:weekly"
-    title, completed, due, recurrence = parse_projects._parse_task_line(line)
+    title, completed, metadata = parse_projects._parse_task_line(line)
     assert title == "Demo"
     assert completed is False
-    assert due == "2025-01-01"
-    assert recurrence == "weekly"
+    assert metadata["due"] == "2025-01-01"
+    assert metadata["recurrence"] == "weekly"
+
+
+def test_parse_task_line_with_energy_metadata():
+    """Energy metadata should be captured from inline segments."""
+    line = "- [ ] Demo | energy:2 | effort:medium"
+    title, completed, metadata = parse_projects._parse_task_line(line)
+    assert title == "Demo"
+    assert completed is False
+    assert metadata["energy_cost"] == "2"
+    assert metadata["effort"] == "medium"
 
 
 def test_line_overrides_frontmatter():
@@ -240,6 +250,22 @@ def test_line_overrides_frontmatter():
     tasks = parse_projects.projects_to_tasks(projects)
     assert tasks[0]["due"] == "2025-01-01"
     assert tasks[0]["recurrence"] == "weekly"
+
+
+def test_line_energy_overrides_defaults():
+    """Per-line energy should override derived effort mapping."""
+    projects = [
+        {
+            "title": "demo",
+            "path": "demo.md",
+            "effort": "high",
+            "tasks": ["- [ ] Task | energy:2 | effort:medium"],
+        }
+    ]
+    tasks = parse_projects.projects_to_tasks(projects)
+    task = tasks[0]
+    assert task["effort"] == "medium"
+    assert task["energy_cost"] == 2
 
 
 def test_write_tasks_to_projects(tmp_path: Path):
