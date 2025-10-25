@@ -1,0 +1,477 @@
+{% extends "base.html" %}
+{% block title %}Projects · Mindloom{% endblock %}
+{% block content %}
+  <div class="max-w-4xl mx-auto space-y-6">
+    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm">
+      <header class="mb-4">
+        <h1 class="text-2xl font-semibold text-gray-800">Project management</h1>
+        <p class="text-sm text-gray-500">
+          Create project files, parse existing notes, and merge duplicate projects.
+        </p>
+      </header>
+      <details class="group rounded-xl border border-gray-200 bg-white/90 p-5 shadow-sm" open>
+        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
+          <span>New Project</span>
+          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div class="mt-4 space-y-4 text-sm text-gray-600">
+          <p class="text-xs text-gray-500">
+            Create a markdown project in your vault with optional checklist items. Title, slug, status, area and effort are
+            required.
+          </p>
+          <form id="newProjectForm" class="space-y-4" novalidate>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="projectTitle" class="text-sm font-medium text-gray-700">Title</label>
+                <input id="projectTitle" name="projectTitle" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Project title" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectSlug" class="text-sm font-medium text-gray-700">Slug / file path</label>
+                <input id="projectSlug" name="projectSlug" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="projects/new-idea" />
+                <span class="text-xs text-gray-500">The `.md` extension is added automatically if omitted.</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div class="flex flex-col gap-1">
+                <label for="projectStatus" class="text-sm font-medium text-gray-700">Status</label>
+                <select id="projectStatus" name="projectStatus" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="active">active</option>
+                  <option value="paused">paused</option>
+                  <option value="complete">complete</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectArea" class="text-sm font-medium text-gray-700">Area</label>
+                <input id="projectArea" name="projectArea" type="text" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Life area" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectEffort" class="text-sm font-medium text-gray-700">Effort</label>
+                <select id="projectEffort" name="projectEffort" required
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value="low">low</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div class="flex flex-col gap-1">
+                <label for="projectDue" class="text-sm font-medium text-gray-700">Due date</label>
+                <input id="projectDue" name="projectDue" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
+                <select id="projectRecurrence" name="projectRecurrence"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value=""></option>
+                  <option value="daily">daily</option>
+                  <option value="weekly">weekly</option>
+                  <option value="monthly">monthly</option>
+                  <option value="yearly">yearly</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectLastCompleted" class="text-sm font-medium text-gray-700">Last completed</label>
+                <input id="projectLastCompleted" name="projectLastCompleted" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="projectExecutiveTrigger" class="text-sm font-medium text-gray-700">Executive trigger</label>
+                <select id="projectExecutiveTrigger" name="projectExecutiveTrigger"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                  <option value=""></option>
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectLastReviewed" class="text-sm font-medium text-gray-700">Last reviewed</label>
+                <input id="projectLastReviewed" name="projectLastReviewed" type="date"
+                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="projectChecklist" class="text-sm font-medium text-gray-700">Initial checklist</label>
+              <textarea id="projectChecklist" name="projectChecklist" rows="3"
+                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="One task per line"></textarea>
+              <span class="text-xs text-gray-500">Checklist items become tasks in the new file.</span>
+            </div>
+            <div id="newProjectFeedback" class="hidden text-sm"></div>
+            <div class="flex flex-wrap justify-end gap-2">
+              <button type="reset"
+                class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200">
+                Clear
+              </button>
+              <button id="createProjectBtn" type="submit"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+                Create project
+              </button>
+            </div>
+          </form>
+        </div>
+      </details>
+    </section>
+
+    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
+      <header>
+        <h2 class="text-xl font-semibold text-gray-800">Project tooling</h2>
+        <p class="text-sm text-gray-500">Parse and export project data from your vault.</p>
+      </header>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button id="parseBtn"
+          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+          Parse
+        </button>
+        <button id="tasksBtn"
+          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+          Save Tasks
+        </button>
+        <button id="writeTasksBtn"
+          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+          Write Tasks
+        </button>
+      </div>
+      <pre id="parseResult"
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+      <pre id="tasksResult"
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+      <pre id="writeTasksResult"
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
+        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+    </section>
+
+    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
+      <header>
+        <h2 class="text-xl font-semibold text-gray-800">Merge projects</h2>
+        <p class="text-sm text-gray-500">
+          Move all tasks and content from one project into another and optionally delete the source file.
+        </p>
+      </header>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label for="mergeSourceProject" class="text-sm font-medium text-gray-700">Source project</label>
+          <select id="mergeSourceProject" name="mergeSourceProject" required
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <option value="">Select source project</option>
+            {% for project in project_options %}
+            <option value="{{ project }}">{{ project }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="mergeTargetProject" class="text-sm font-medium text-gray-700">Target project</label>
+          <select id="mergeTargetProject" name="mergeTargetProject" required
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <option value="">Select target project</option>
+            {% for project in project_options %}
+            <option value="{{ project }}">{{ project }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+        <input id="mergeDeleteSource" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-200" />
+        Delete source project after merge
+      </label>
+      <div id="mergeProjectsFeedback" class="hidden text-sm"></div>
+      <div class="flex justify-end">
+        <button id="mergeProjectsBtn"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
+          Merge projects
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const projectTitleInput = document.getElementById('projectTitle');
+    const projectSlugInput = document.getElementById('projectSlug');
+    const projectStatusSelect = document.getElementById('projectStatus');
+    const projectAreaInput = document.getElementById('projectArea');
+    const projectEffortSelect = document.getElementById('projectEffort');
+    const projectDueInput = document.getElementById('projectDue');
+    const projectRecurrenceSelect = document.getElementById('projectRecurrence');
+    const projectLastCompletedInput = document.getElementById('projectLastCompleted');
+    const projectExecutiveTriggerSelect = document.getElementById('projectExecutiveTrigger');
+    const projectLastReviewedInput = document.getElementById('projectLastReviewed');
+    const projectChecklistInput = document.getElementById('projectChecklist');
+    const projectForm = document.getElementById('newProjectForm');
+    const projectFeedbackEl = document.getElementById('newProjectFeedback');
+    const createProjectBtn = document.getElementById('createProjectBtn');
+
+    const requiredProjectFields = [
+      { element: projectTitleInput, message: 'Project title is required.' },
+      { element: projectSlugInput, message: 'Provide a slug or relative file path.' },
+      { element: projectStatusSelect, message: 'Select the project status.' },
+      { element: projectAreaInput, message: 'Add a life area for the project.' },
+      { element: projectEffortSelect, message: 'Choose an effort level.' },
+    ];
+
+    requiredProjectFields.forEach(({ element }) => {
+      if (element) {
+        attachFieldValidation(element);
+      }
+    });
+
+    let projectSlugManuallyEdited = false;
+
+    function sanitizeSlug(value) {
+      if (!value) {
+        return '';
+      }
+      return value
+        .normalize('NFKD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9/]+/g, '-')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    if (projectTitleInput && projectSlugInput) {
+      projectTitleInput.addEventListener('input', () => {
+        if (!projectSlugManuallyEdited) {
+          projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
+        }
+      });
+
+      projectSlugInput.addEventListener('focus', () => {
+        projectSlugManuallyEdited = true;
+      });
+
+      projectSlugInput.addEventListener('input', () => {
+        const sanitized = sanitizeSlug(projectSlugInput.value);
+        projectSlugInput.value = sanitized;
+        projectSlugManuallyEdited = sanitized.length > 0;
+      });
+
+      projectSlugInput.addEventListener('blur', () => {
+        if (!projectSlugInput.value) {
+          projectSlugManuallyEdited = false;
+          projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
+        }
+      });
+    }
+
+    if (projectForm && createProjectBtn) {
+      const submitProject = performActionWithFeedback(createProjectBtn, {
+        loadingText: 'Creating…',
+        errorMessage: 'Unable to create project',
+        action: async () => {
+          clearFeedback(projectFeedbackEl);
+          const ok = validateRequiredFields(requiredProjectFields, {
+            feedbackEl: projectFeedbackEl,
+            summaryMessage: 'Please complete the required project fields before creating the file.',
+          });
+          if (!ok) {
+            return null;
+          }
+
+          const slugValue = sanitizeSlug(projectSlugInput.value);
+          if (!slugValue) {
+            setFieldValidity(projectSlugInput, false);
+            updateFeedback(projectFeedbackEl, 'Slug cannot be empty after sanitization.', 'error');
+            return null;
+          }
+
+          const payload = {
+            title: projectTitleInput.value.trim(),
+            slug: slugValue.endsWith('.md') ? slugValue : `${slugValue}.md`,
+            status: projectStatusSelect.value,
+            area: projectAreaInput.value.trim(),
+            effort: projectEffortSelect.value,
+          };
+
+          const optionalFields = [
+            { element: projectDueInput, key: 'due' },
+            { element: projectRecurrenceSelect, key: 'recurrence' },
+            { element: projectLastCompletedInput, key: 'last_completed' },
+            { element: projectExecutiveTriggerSelect, key: 'executive_trigger' },
+            { element: projectLastReviewedInput, key: 'last_reviewed' },
+          ];
+          optionalFields.forEach(({ element, key }) => {
+            if (!element) {
+              return;
+            }
+            const value = (element.value || '').trim();
+            if (value) {
+              payload[key] = value;
+            }
+          });
+
+          if (projectChecklistInput && projectChecklistInput.value.trim()) {
+            const tasks = projectChecklistInput.value
+              .split('\n')
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0)
+              .map((title) => ({ title }));
+            if (tasks.length) {
+              payload.tasks = tasks;
+            }
+          }
+
+          const res = await fetch('/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          ensureOkResponse(res);
+          const data = await res.json();
+          updateFeedback(
+            projectFeedbackEl,
+            `Created “${data.title || payload.title}” at ${data.path || payload.slug}.`,
+            'success',
+          );
+          projectForm.reset();
+          projectSlugManuallyEdited = false;
+          if (projectSlugInput) {
+            projectSlugInput.value = '';
+          }
+          if (projectTitleInput) {
+            projectTitleInput.focus();
+          }
+          return data;
+        },
+      });
+
+      projectForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        submitProject();
+      });
+
+      projectForm.addEventListener('reset', () => {
+        clearFeedback(projectFeedbackEl);
+        projectSlugManuallyEdited = false;
+        if (projectSlugInput) {
+          projectSlugInput.value = '';
+        }
+        setTimeout(() => {
+          if (projectTitleInput && projectSlugInput && projectTitleInput.value) {
+            projectSlugInput.value = sanitizeSlug(projectTitleInput.value);
+          }
+        }, 0);
+      });
+    }
+
+    const parseBtn = document.getElementById('parseBtn');
+    if (parseBtn) {
+      parseBtn.onclick = performActionWithFeedback(parseBtn, {
+        loadingText: 'Parsing…',
+        preId: 'parseResult',
+        errorMessage: 'Unable to parse projects',
+        action: async () => {
+          const res = await fetch('/parse-projects', { method: 'POST' });
+          ensureOkResponse(res);
+          const data = await res.json();
+          setPreContent('parseResult', JSON.stringify(data, null, 2));
+        }
+      });
+    }
+
+    const tasksBtn = document.getElementById('tasksBtn');
+    if (tasksBtn) {
+      tasksBtn.onclick = performActionWithFeedback(tasksBtn, {
+        loadingText: 'Saving…',
+        preId: 'tasksResult',
+        errorMessage: 'Unable to save tasks',
+        action: async () => {
+          const res = await fetch('/save-tasks', { method: 'POST' });
+          ensureOkResponse(res);
+          const data = await res.json();
+          setPreContent('tasksResult', JSON.stringify(data, null, 2));
+        }
+      });
+    }
+
+    const writeTasksBtn = document.getElementById('writeTasksBtn');
+    if (writeTasksBtn) {
+      writeTasksBtn.onclick = performActionWithFeedback(writeTasksBtn, {
+        loadingText: 'Writing…',
+        preId: 'writeTasksResult',
+        errorMessage: 'Unable to write tasks',
+        action: async () => {
+          const res = await fetch('/write-tasks', { method: 'POST' });
+          ensureOkResponse(res);
+          const data = await res.json();
+          setPreContent('writeTasksResult', JSON.stringify(data, null, 2));
+        }
+      });
+    }
+
+    const mergeSourceSelect = document.getElementById('mergeSourceProject');
+    const mergeTargetSelect = document.getElementById('mergeTargetProject');
+    const mergeDeleteCheckbox = document.getElementById('mergeDeleteSource');
+    const mergeFeedbackEl = document.getElementById('mergeProjectsFeedback');
+    const mergeBtn = document.getElementById('mergeProjectsBtn');
+
+    [mergeSourceSelect, mergeTargetSelect].forEach((select) => {
+      if (select) {
+        attachFieldValidation(select);
+      }
+    });
+
+    if (mergeBtn) {
+      mergeBtn.onclick = performActionWithFeedback(mergeBtn, {
+        loadingText: 'Merging…',
+        errorMessage: 'Unable to merge projects',
+        action: async () => {
+          clearFeedback(mergeFeedbackEl);
+          const fieldsValid = validateRequiredFields([
+            { element: mergeSourceSelect, message: 'Select a source project.' },
+            { element: mergeTargetSelect, message: 'Select a target project.' },
+          ], {
+            feedbackEl: mergeFeedbackEl,
+            summaryMessage: 'Select both a source and target project before merging.',
+          });
+          if (!fieldsValid) {
+            return null;
+          }
+
+          if (mergeSourceSelect.value === mergeTargetSelect.value) {
+            setFieldValidity(mergeSourceSelect, false);
+            setFieldValidity(mergeTargetSelect, false);
+            updateFeedback(mergeFeedbackEl, 'Source and target must be different projects.', 'error');
+            return null;
+          }
+
+          const payload = {
+            source_slug: mergeSourceSelect.value,
+            target_slug: mergeTargetSelect.value,
+            delete_source: !!(mergeDeleteCheckbox && mergeDeleteCheckbox.checked),
+          };
+
+          const res = await fetch('/projects/merge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          ensureOkResponse(res);
+          const data = await res.json();
+          setFieldValidity(mergeSourceSelect, true);
+          setFieldValidity(mergeTargetSelect, true);
+          updateFeedback(
+            mergeFeedbackEl,
+            `Merged ${data.source} into ${data.target}. Relinked ${data.tasks_relinked || 0} tasks.`,
+            'success',
+          );
+          return data;
+        },
+      });
+    }
+  </script>
+{% endblock %}

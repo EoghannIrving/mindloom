@@ -55,6 +55,36 @@ def test_index_includes_all_active_projects(monkeypatch: pytest.MonkeyPatch):
     assert "Archive" not in html
 
 
+def test_projects_page_includes_management_controls(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    all_tasks = [
+        {
+            "title": "One",
+            "project": "projects/source.md",
+            "area": "Area A",
+            "status": "todo",
+        },
+        {
+            "title": "Two",
+            "project": "projects/target.md",
+            "area": "Area B",
+            "status": "active",
+        },
+    ]
+    monkeypatch.setattr(web, "read_tasks", lambda: all_tasks)
+
+    client = TestClient(app)
+    response = client.get("/projects-page")
+
+    assert response.status_code == 200
+    html = response.text
+    assert 'id="newProjectForm"' in html
+    assert 'id="parseBtn"' in html
+    assert 'id="mergeProjectsBtn"' in html
+    assert 'id="mergeSourceProject"' in html
+
+
 def test_render_prompt_morning_injects_calendar(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(web, "read_tasks", lambda: [])
     monkeypatch.setattr(web, "upcoming_tasks", lambda: [])
