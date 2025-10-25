@@ -6,6 +6,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+import yaml
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -107,3 +108,25 @@ def test_manage_tasks_defaults_to_due_date_sort(monkeypatch: pytest.MonkeyPatch)
 
     match = re.search(r'<option value="due_asc"[^>]*selected', body)
     assert match, "Expected due_asc option to be marked as selected"
+
+
+def test_manage_tasks_includes_projects_from_yaml(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """Projects defined in projects.yaml appear in the filter dropdown."""
+
+    monkeypatch.setattr(tasks_page, "read_tasks", lambda: [])
+
+    project_path = "vault/Projects/new-project.md"
+    projects_file = tmp_path / "projects.yaml"
+    projects_file.write_text(
+        yaml.safe_dump([{"path": project_path}], sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tasks_page.config, "OUTPUT_PATH", projects_file)
+
+    client = TestClient(app)
+    response = client.get("/manage-tasks")
+
+    assert response.status_code == 200
+    assert f'value="{project_path}"' in response.text
