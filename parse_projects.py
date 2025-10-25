@@ -5,7 +5,7 @@
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional, Set, Union
 import yaml
 
 from config import config
@@ -197,17 +197,51 @@ META_KEYS = {
 }
 
 
+TASK_LINE_PATTERN = re.compile(r"^\s*- \[[ xX]\] ")
+META_LABEL_TO_FIELD = {label: field for field, label in META_KEYS.items()}
+
+
 def _task_to_line(task: Dict) -> str:
     """Return the markdown representation of a task."""
     line = "- [x] " if task.get("status") == "complete" else "- [ ] "
     line += task.get("title", "")
-    meta = [
-        f"{label}:{task[field]}"
-        for field, label in META_KEYS.items()
-        if task.get(field)
-    ]
-    if meta:
-        line += " | " + " | ".join(meta)
+    original_segments: Optional[List[str]] = task.get("_segments")
+    segments: List[str] = []
+
+    if original_segments:
+        recognized_in_original: Set[str] = set()
+        for segment in original_segments:
+            cleaned = segment.strip()
+            if not cleaned:
+                continue
+            if ":" in cleaned:
+                key, value = cleaned.split(":", 1)
+                key = key.strip()
+                field = META_LABEL_TO_FIELD.get(key)
+                if field:
+                    field_value = task.get(field)
+                    if field_value:
+                        segments.append(f"{key}:{field_value}")
+                    else:
+                        segments.append(cleaned)
+                    recognized_in_original.add(key)
+                else:
+                    segments.append(cleaned)
+            else:
+                segments.append(cleaned)
+
+        for field, label in META_KEYS.items():
+            if task.get(field) and label not in recognized_in_original:
+                segments.append(f"{label}:{task[field]}")
+    else:
+        segments = [
+            f"{label}:{task[field]}"
+            for field, label in META_KEYS.items()
+            if task.get(field)
+        ]
+
+    if segments:
+        line += " | " + " | ".join(segments)
     return line
 
 
@@ -257,6 +291,114 @@ def write_tasks_to_projects(
         count += 1
 
     return count
+
+
+def _line_to_task_dict(line: str) -> Optional[Dict]:
+    """Convert a markdown checklist line to a task dictionary."""
+
+    match = re.match(r"- \[(?P<box>[ xX])\] (?P<rest>.+)", line.strip())
+    if not match:
+        return None
+
+    completed = match.group("box").lower() == "x"
+    rest = match.group("rest")
+    parts = [p.strip() for p in rest.split("|")]
+    if not parts:
+        return None
+
+    task: Dict[str, Optional[str]] = {
+        "title": parts[0].strip(),
+        "status": "complete" if completed else "active",
+    }
+
+    preserved_segments: List[str] = []
+    for segment in parts[1:]:
+        cleaned = segment.strip()
+        if not cleaned:
+            continue
+        preserved_segments.append(cleaned)
+        if ":" not in cleaned:
+            continue
+        key, value = cleaned.split(":", 1)
+        field = META_LABEL_TO_FIELD.get(key.strip())
+        if field:
+            task[field] = value.strip()
+
+    if preserved_segments:
+        task["_segments"] = preserved_segments
+
+    return task
+
+
+def merge_project_files(
+    source: Path, target: Path, *, delete_source: bool = True
+) -> Dict[str, Union[int, bool]]:
+    """Append tasks from ``source`` project into ``target`` and remove ``source``.
+
+    The target frontmatter and non-task content remain unchanged. Tasks from the
+    source file are appended to the end of the task list in the target file. The
+    source file is removed when ``delete_source`` is true.
+    """
+
+    logger.info("Merging project file %s into %s", source, target)
+    target_content = target.read_text(encoding="utf-8")
+    source_content = source.read_text(encoding="utf-8")
+
+    target_lines = target_content.splitlines()
+    source_lines = source_content.splitlines()
+
+    target_tasks: List[Dict] = []
+    for line in target_lines:
+        if TASK_LINE_PATTERN.match(line):
+            task = _line_to_task_dict(line)
+            if task:
+                target_tasks.append(task)
+
+    source_tasks: List[Dict] = []
+    for line in source_lines:
+        if TASK_LINE_PATTERN.match(line):
+            task = _line_to_task_dict(line)
+            if task:
+                source_tasks.append(task)
+
+    combined_tasks = target_tasks + source_tasks
+
+    result_lines: List[str] = []
+    combined_iter = iter(combined_tasks)
+    replaced = 0
+    for line in target_lines:
+        if TASK_LINE_PATTERN.match(line) and replaced < len(target_tasks):
+            task = next(combined_iter)
+            result_lines.append(_task_to_line(task))
+            replaced += 1
+        else:
+            result_lines.append(line)
+
+    leftover_tasks = list(combined_iter)
+    if leftover_tasks:
+        if result_lines and result_lines[-1].strip():
+            result_lines.append("")
+        for task in leftover_tasks:
+            result_lines.append(_task_to_line(task))
+
+    new_content = "\n".join(result_lines)
+    if not new_content.endswith("\n"):
+        new_content += "\n"
+    target.write_text(new_content, encoding="utf-8")
+    logger.info("Appended %d tasks from %s into %s", len(source_tasks), source, target)
+
+    source_removed = False
+    if delete_source:
+        source.unlink(missing_ok=True)
+        source_removed = not source.exists()
+        logger.info("Removed source project file %s", source)
+
+    return {
+        "source_tasks": len(source_tasks),
+        "target_existing_tasks": len(target_tasks),
+        "target_total_tasks": len(combined_tasks),
+        "source_removed": source_removed,
+    }
 
 
 if __name__ == "__main__":
