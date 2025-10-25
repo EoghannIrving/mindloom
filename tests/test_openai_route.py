@@ -139,6 +139,65 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
     assert recorded["mood"] == payload["mood"]
 
 
+def test_plan_endpoint_next_task_respects_project_filter_on_energy_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    today = date.today().isoformat()
+    tasks = [
+        {
+            "id": 1,
+            "title": "Deep Focus",
+            "due": today,
+            "energy_cost": 5,
+            "project": "Focus",
+        },
+        {
+            "id": 2,
+            "title": "General Task",
+            "due": today,
+            "energy_cost": 1,
+            "project": "Other",
+        },
+    ]
+
+    def fake_upcoming_tasks(days: int = 7):
+        return list(tasks)
+
+    monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
+
+    recorded: Dict[str, Any] = {}
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+        recorded.update(
+            {
+                "date": today,
+                "energy": energy,
+                "mood": mood,
+                "time_blocks": time_blocks,
+            }
+        )
+        return recorded.copy()
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+
+    def fake_filter_tasks_by_energy(task_list, target):
+        return [t for t in task_list if t.get("energy_cost", 0) <= target]
+
+    monkeypatch.setattr(
+        openai_route, "filter_tasks_by_energy", fake_filter_tasks_by_energy
+    )
+
+    client = TestClient(app)
+    payload = {"energy": 1, "mood": "meh", "time_blocks": 3}
+    resp = client.post("/plan?mode=next_task&project_param=Focus", json=payload)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["next_task"]["project"] == "Focus"
+    assert data["next_task"]["title"] == "Deep Focus"
+
+
 def test_plan_endpoint_next_task_uses_effective_energy(
     monkeypatch: pytest.MonkeyPatch,
 ):

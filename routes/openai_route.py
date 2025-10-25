@@ -310,6 +310,7 @@ async def plan_endpoint(
     logger.info("Loaded %d upcoming tasks", len(tasks))
 
     unfiltered_tasks = list(tasks)
+    metadata_filters_active = False
 
     if project_filter_value or area_filter_value:
         logger.info(
@@ -334,11 +335,14 @@ async def plan_endpoint(
         if metadata_filtered_tasks:
             tasks = metadata_filtered_tasks
             logger.info("Tasks after metadata filter: %d", len(tasks))
+            metadata_filters_active = True
         else:
             logger.info(
                 "Task metadata filter removed all tasks; falling back to unfiltered task list"
             )
             tasks = list(unfiltered_tasks)
+
+    metadata_filtered_tasks = list(tasks)
 
     entries = read_entries()
     logger.info("Loaded %d energy entries", len(entries))
@@ -364,10 +368,16 @@ async def plan_endpoint(
         )
     filtered_tasks = filter_tasks_by_energy(tasks, target_energy)
     if not filtered_tasks and unfiltered_tasks:
-        logger.info(
-            "Energy filter removed all tasks; falling back to unfiltered task list",
-        )
-        tasks = unfiltered_tasks
+        if metadata_filters_active:
+            logger.info(
+                "Energy filter removed all tasks; falling back to metadata-filtered task list",
+            )
+            tasks = metadata_filtered_tasks
+        else:
+            logger.info(
+                "Energy filter removed all tasks; falling back to unfiltered task list",
+            )
+            tasks = unfiltered_tasks
     else:
         tasks = filtered_tasks
     logger.info("Tasks after energy filter: %d", len(tasks))
