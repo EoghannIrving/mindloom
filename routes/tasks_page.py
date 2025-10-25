@@ -14,6 +14,8 @@ from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+import yaml
+
 from config import config, PROJECT_ROOT
 from tasks import read_tasks, write_tasks, mark_tasks_complete
 from planner import read_plan, filter_tasks_by_plan, parse_plan_reasons, _clean
@@ -215,6 +217,38 @@ def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
     return tasks
 
 
+def _load_defined_projects(output_path: Path | str | None = None) -> list[str]:
+    """Return project slugs defined in projects.yaml."""
+
+    target = output_path or config.OUTPUT_PATH
+    path = Path(target).expanduser()
+    if not path.exists():
+        return []
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            payload = yaml.safe_load(handle) or []
+    except FileNotFoundError:
+        return []
+    except yaml.YAMLError as exc:  # pragma: no cover - defensive logging
+        logger.warning("Failed to parse %s: %s", path, exc)
+        return []
+    except OSError as exc:  # pragma: no cover - defensive logging
+        logger.warning("Failed to read %s: %s", path, exc)
+        return []
+
+    if not isinstance(payload, list):
+        logger.warning("Unexpected projects format in %s", path)
+        return []
+
+    projects: list[str] = []
+    for entry in payload:
+        if isinstance(entry, dict):
+            candidate = entry.get("path") or entry.get("slug")
+            if candidate:
+                projects.append(str(candidate))
+    return projects
+
+
 @router.get("/manage-tasks", response_class=HTMLResponse)
 def manage_tasks_page(request: Request):
     """Display editable list of all tasks."""
@@ -259,7 +293,11 @@ def manage_tasks_page(request: Request):
     ]
     sorted_tasks = _sort_tasks(filtered_tasks, sort_mode)
 
-    projects = sorted({t.get("project") for t in tasks if t.get("project")})
+    projects_from_tasks = {
+        str(project) for project in (task.get("project") for task in tasks) if project
+    }
+    defined_projects = {str(project) for project in _load_defined_projects() if project}
+    projects = sorted(projects_from_tasks | defined_projects)
     areas = sorted({t.get("area") for t in tasks if t.get("area")})
     task_types = sorted({t.get("type") for t in tasks if t.get("type")})
     statuses = sorted({t.get("status") for t in tasks if t.get("status")})
