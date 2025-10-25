@@ -94,7 +94,8 @@ Supported keys:
    All packages including `python-dotenv`, `pydantic`, `pydantic-settings`, `PyYAML`, `fastapi`, `uvicorn`, `python-multipart`, `jinja2`, and `pytest` are version pinned. If you see import errors like `E0401`, ensure these packages are installed by running the above command.
 3. Copy `example.env` to `.env` and edit the environment variables:
    - `OPENAI_API_KEY` for ChatGPT access.
-   - `CALENDAR_ICS_PATH` path(s) to exported `.ics` files.
+   - `CALENDAR_ICS_PATH` path(s) to exported `.ics` files. Separate multiple
+     entries with the system path separator (`:` on Unix, `;` on Windows).
    - `TIME_ZONE` sets the IANA time zone for event parsing.
    - `ACTIVATION_ENGINE_URL` endpoint for the optional task suggestion service.
 4. *(Optional)* Enable Google Calendar access:
