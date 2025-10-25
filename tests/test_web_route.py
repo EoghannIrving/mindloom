@@ -17,6 +17,44 @@ class DummyEvent:
         self.end = end
 
 
+def test_index_includes_all_active_projects(monkeypatch: pytest.MonkeyPatch):
+    due_soon = [
+        {
+            "title": "Due soon task",
+            "project": "Project Alpha",
+            "area": "Focus",
+            "status": "in-progress",
+        }
+    ]
+    all_tasks = due_soon + [
+        {
+            "title": "Later task",
+            "project": "Project Beta",
+            "area": "Deep Work",
+            "status": "todo",
+        },
+        {
+            "title": "Completed task",
+            "project": "Project Gamma",
+            "area": "Archive",
+            "status": "complete",
+        },
+    ]
+    monkeypatch.setattr(web, "upcoming_tasks", lambda: due_soon)
+    monkeypatch.setattr(web, "read_tasks", lambda: all_tasks)
+
+    client = TestClient(app)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    html = response.text
+    assert "Project Alpha" in html
+    assert "Project Beta" in html
+    assert "Project Gamma" not in html
+    assert "Deep Work" in html
+    assert "Archive" not in html
+
+
 def test_render_prompt_morning_injects_calendar(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(web, "read_tasks", lambda: [])
     monkeypatch.setattr(web, "upcoming_tasks", lambda: [])

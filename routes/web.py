@@ -40,23 +40,25 @@ def index(request: Request):
     prompt_files = [
         p.relative_to(prompts_dir).as_posix() for p in prompts_dir.rglob("*.txt")
     ]
-    tasks = upcoming_tasks()
-    project_options = sorted(
-        {
-            value
-            for task in tasks
-            for value in [str(task.get("project") or "").strip()]
-            if value
-        }
-    )
-    area_options = sorted(
-        {
-            value
-            for task in tasks
-            for value in [str(task.get("area") or "").strip()]
-            if value
-        }
-    )
+    _due_soon_tasks = upcoming_tasks()
+    active_tasks = [
+        task
+        for task in read_tasks()
+        if str(task.get("status", "")).lower() != "complete"
+    ]
+
+    def build_options(tasks, field):
+        return sorted(
+            {
+                value
+                for task in tasks
+                for value in [str(task.get(field) or "").strip()]
+                if value
+            }
+        )
+
+    project_options = build_options(active_tasks, "project")
+    area_options = build_options(active_tasks, "area")
     return templates.TemplateResponse(
         "index.html",
         {
