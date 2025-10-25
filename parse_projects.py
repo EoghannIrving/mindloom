@@ -5,7 +5,7 @@
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 import yaml
 
 from config import config
@@ -205,13 +205,43 @@ def _task_to_line(task: Dict) -> str:
     """Return the markdown representation of a task."""
     line = "- [x] " if task.get("status") == "complete" else "- [ ] "
     line += task.get("title", "")
-    meta = [
-        f"{label}:{task[field]}"
-        for field, label in META_KEYS.items()
-        if task.get(field)
-    ]
-    if meta:
-        line += " | " + " | ".join(meta)
+    original_segments: Optional[List[str]] = task.get("_segments")
+    segments: List[str] = []
+
+    if original_segments:
+        recognized_in_original: Set[str] = set()
+        for segment in original_segments:
+            cleaned = segment.strip()
+            if not cleaned:
+                continue
+            if ":" in cleaned:
+                key, value = cleaned.split(":", 1)
+                key = key.strip()
+                field = META_LABEL_TO_FIELD.get(key)
+                if field:
+                    field_value = task.get(field)
+                    if field_value:
+                        segments.append(f"{key}:{field_value}")
+                    else:
+                        segments.append(cleaned)
+                    recognized_in_original.add(key)
+                else:
+                    segments.append(cleaned)
+            else:
+                segments.append(cleaned)
+
+        for field, label in META_KEYS.items():
+            if task.get(field) and label not in recognized_in_original:
+                segments.append(f"{label}:{task[field]}")
+    else:
+        segments = [
+            f"{label}:{task[field]}"
+            for field, label in META_KEYS.items()
+            if task.get(field)
+        ]
+
+    if segments:
+        line += " | " + " | ".join(segments)
     return line
 
 
@@ -281,13 +311,21 @@ def _line_to_task_dict(line: str) -> Optional[Dict]:
         "status": "complete" if completed else "active",
     }
 
+    preserved_segments: List[str] = []
     for segment in parts[1:]:
-        if ":" not in segment:
+        cleaned = segment.strip()
+        if not cleaned:
             continue
-        key, value = segment.split(":", 1)
+        preserved_segments.append(cleaned)
+        if ":" not in cleaned:
+            continue
+        key, value = cleaned.split(":", 1)
         field = META_LABEL_TO_FIELD.get(key.strip())
         if field:
             task[field] = value.strip()
+
+    if preserved_segments:
+        task["_segments"] = preserved_segments
 
     return task
 

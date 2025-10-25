@@ -270,3 +270,12 @@ def test_write_tasks_to_projects(tmp_path: Path):
     lines = md_file.read_text(encoding="utf-8").splitlines()
     assert lines[0] == "- [x] First"
     assert lines[1] == "- [ ] Second | recur:daily"
+
+
+def test_merge_roundtrip_preserves_unknown_segments():
+    """Checklist lines should retain notes and unknown metadata when merged."""
+    line = "- [ ] Call Bob | remind tomorrow | tags:phone | recur:weekly"
+    task = parse_projects._line_to_task_dict(line)
+    assert task is not None
+    rebuilt = parse_projects._task_to_line(task)
+    assert rebuilt == line
