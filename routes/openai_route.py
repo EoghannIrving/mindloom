@@ -2,14 +2,14 @@
 
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, NoReturn, Optional
 from pydantic import BaseModel
 import logging
 
 from calendar_integration import load_events
 from fastapi import APIRouter, Body, HTTPException, Query
 
-from openai_client import ask_chatgpt
+from openai_client import OpenAIClientError, ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import upcoming_tasks
 from energy import read_entries, record_entry
@@ -28,6 +28,12 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+
+
+def _raise_language_model_error(context: str, exc: Exception, detail: str) -> NoReturn:
+    logger.error("%s OpenAI call failed: %s", context, exc)
+    raise HTTPException(status_code=502, detail=detail) from exc
+
 
 MOOD_ENERGY_TARGETS = {
     "sad": 1,
@@ -85,7 +91,14 @@ async def ask_endpoint(data: dict = Body(...)):
         return {"error": "Prompt is required"}
 
     logger.info("POST /ask prompt_length=%s", len(prompt))
-    response = await ask_chatgpt(prompt)
+    try:
+        response = await ask_chatgpt(prompt)
+    except OpenAIClientError as exc:
+        _raise_language_model_error(
+            "POST /ask",
+            exc,
+            "Failed to fetch response from language model. Please try again later.",
+        )
     logger.info("POST /ask response_length=%s", len(response))
     return {"response": response}
 
@@ -213,7 +226,14 @@ async def plan_endpoint(
             str(selector_template), {"tasks": tasks, "intensity": intensity}
         )
         logger.debug("Selector prompt: %s", prompt)
-        response = await ask_chatgpt(prompt)
+        try:
+            response = await ask_chatgpt(prompt)
+        except OpenAIClientError as exc:
+            _raise_language_model_error(
+                "POST /plan selector",
+                exc,
+                "Failed to generate selector response from language model. Please try again later.",
+            )
         logger.info("Generated selector response: %s", response)
         return PlanResponse(plan=response)
 
@@ -240,7 +260,14 @@ async def plan_endpoint(
     template_path = PROJECT_ROOT / "prompts" / "morning_planner.txt"
     prompt = render_prompt(str(template_path), variables)
     logger.debug("Final plan prompt: %s", prompt)
-    plan = await ask_chatgpt(prompt)
+    try:
+        plan = await ask_chatgpt(prompt)
+    except OpenAIClientError as exc:
+        _raise_language_model_error(
+            "POST /plan",
+            exc,
+            "Failed to generate plan from language model. Please try again later.",
+        )
     logger.info("Generated plan: %s", plan)
     save_plan(plan)
     logger.info("Plan saved")
@@ -258,6 +285,13 @@ async def goal_breakdown_endpoint(data: dict = Body(...)):
     template = PROJECT_ROOT / "prompts" / "task_explainer.txt"
     prompt = render_prompt(str(template), {"goal_text": goal_text})
     logger.debug("Goal breakdown prompt: %s", prompt)
-    result = await ask_chatgpt(prompt)
+    try:
+        result = await ask_chatgpt(prompt)
+    except OpenAIClientError as exc:
+        _raise_language_model_error(
+            "POST /goal-breakdown",
+            exc,
+            "Failed to generate goal breakdown from language model. Please try again later.",
+        )
     logger.info("POST /goal-breakdown response_length=%s", len(result))
     return {"tasks": result}
