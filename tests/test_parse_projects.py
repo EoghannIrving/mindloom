@@ -305,3 +305,12 @@ def test_merge_roundtrip_preserves_unknown_segments():
     assert task is not None
     rebuilt = parse_projects._task_to_line(task)
     assert rebuilt == line
+
+
+def test_task_to_line_avoids_duplicate_synonym_labels():
+    """Rebuilding lines should not duplicate metadata with synonym labels."""
+    line = "- [ ] Stretch | recurrence:weekly | energy_cost:2"
+    task = parse_projects._line_to_task_dict(line)
+    assert task is not None
+    rebuilt = parse_projects._task_to_line(task)
+    assert rebuilt == line

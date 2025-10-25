@@ -251,7 +251,7 @@ def _task_to_line(task: Dict) -> str:
     segments: List[str] = []
 
     if original_segments:
-        recognized_in_original: Set[str] = set()
+        recognized_fields: Set[str] = set()
         for segment in original_segments:
             cleaned = segment.strip()
             if not cleaned:
@@ -261,19 +261,19 @@ def _task_to_line(task: Dict) -> str:
                 key = key.strip()
                 field = META_LABEL_TO_FIELD.get(key)
                 if field:
+                    recognized_fields.add(field)
                     field_value = task.get(field)
                     if field_value:
                         segments.append(f"{key}:{field_value}")
                     else:
                         segments.append(cleaned)
-                    recognized_in_original.add(key)
                 else:
                     segments.append(cleaned)
             else:
                 segments.append(cleaned)
 
         for field, label in META_KEYS.items():
-            if task.get(field) and label not in recognized_in_original:
+            if task.get(field) and field not in recognized_fields:
                 segments.append(f"{label}:{task[field]}")
     else:
         segments = [
