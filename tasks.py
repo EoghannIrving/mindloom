@@ -98,12 +98,18 @@ def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     if task_ids:
         logger.debug("Task ids to complete: %s", task_ids)
     tasks = read_tasks(path)
-    today = date.today().isoformat()
+    today_date = date.today()
+    today = today_date.isoformat()
     count = 0
     for task in tasks:
         if task.get("id") in task_ids:
             task["status"] = "complete"
             task["last_completed"] = today
+            recurrence = str(task.get("recurrence", "")).lower()
+            days = RECURRENCE_DAYS.get(recurrence)
+            if days:
+                next_due_date = today_date + timedelta(days=days)
+                task["due"] = next_due_date.isoformat()
             count += 1
         task.pop("next_due", None)
         task.pop("due_today", None)
