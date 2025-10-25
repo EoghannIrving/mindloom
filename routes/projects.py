@@ -70,15 +70,14 @@ def _normalize_slug_path(slug: str, vault_root: Path) -> Path:
         raise ValueError("slug must reference a file within the vault")
 
     vault_parts = [p for p in vault_root.parts if p not in {"", "/"}]
-    # Remove any leading segments that repeat the vault root path.
-    while True:
-        for length in range(len(vault_parts), 0, -1):
-            prefix = vault_parts[-length:]
-            if len(parts) > length and parts[:length] == prefix:
-                parts = parts[length:]
-                break
-        else:
-            break
+    # Remove any leading segments that repeat the full vault root path.
+    prefix_length = len(vault_parts)
+    while (
+        prefix_length
+        and len(parts) >= prefix_length
+        and parts[:prefix_length] == vault_parts
+    ):
+        parts = parts[prefix_length:]
 
     normalized = Path(*parts)
     if normalized.suffix != ".md":

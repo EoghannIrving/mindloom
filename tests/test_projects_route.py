@@ -221,12 +221,14 @@ def test_merge_projects_accepts_prefixed_slugs(monkeypatch, tmp_path):
     tasks_path = config.TASKS_PATH
     tasks_path.write_text("- project: Projects/source.md\n", encoding="utf-8")
 
+    full_prefix_parts = [part for part in vault_root.parts if part not in {"", "/"}]
+    full_prefix = Path(*full_prefix_parts)
     with TestClient(app) as client:
         response = client.post(
             "/projects/merge",
             json={
-                "source_slug": "Projects/source.md",
-                "target_slug": "Projects/target.md",
+                "source_slug": str(full_prefix / "source.md"),
+                "target_slug": str(full_prefix / "target.md"),
             },
         )
 
@@ -238,6 +240,21 @@ def test_merge_projects_accepts_prefixed_slugs(monkeypatch, tmp_path):
 
     tasks = yaml.safe_load(config.TASKS_PATH.read_text(encoding="utf-8")) or []
     assert all(task.get("project") != "Projects/source.md" for task in tasks)
+
+
+def test_normalize_slug_path_preserves_legitimate_directories(monkeypatch, tmp_path):
+    vault_root = tmp_path / "home" / "user" / "Projects"
+    vault_root.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(config, "VAULT_PATH", vault_root)
+
+    normalized = projects_route._normalize_slug_path("user/report.md", vault_root)
+    assert normalized == Path("user/report.md")
+
+    full_prefix_parts = [part for part in vault_root.parts if part not in {"", "/"}]
+    repeated_prefix_parts = full_prefix_parts + full_prefix_parts
+    repeated_slug = Path(*repeated_prefix_parts, "notes")
+    repeated = projects_route._normalize_slug_path(str(repeated_slug), vault_root)
+    assert repeated == Path("notes.md")
 
 
 def test_merge_projects_missing_source(monkeypatch, tmp_path):
