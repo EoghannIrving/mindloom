@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config import config
 from main import app
+from routes import projects as projects_route
 
 
 def _setup_vault(monkeypatch, tmp_path: Path) -> Path:
@@ -95,3 +96,17 @@ def test_create_project_invalid_slug(monkeypatch, tmp_path):
         response = client.post("/projects", json=payload)
 
     assert response.status_code == 422
+
+
+def test_get_projects_empty_file(monkeypatch, tmp_path):
+    empty_projects_file = tmp_path / "projects.yaml"
+    empty_projects_file.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(config, "OUTPUT_PATH", empty_projects_file)
+    monkeypatch.setattr(projects_route, "PROJECTS_FILE", empty_projects_file)
+
+    with TestClient(app) as client:
+        response = client.get("/projects")
+
+    assert response.status_code == 200
+    assert response.json() == []

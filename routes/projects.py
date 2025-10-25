@@ -100,7 +100,7 @@ def get_projects(
         return {"error": f"{PROJECTS_FILE} not found"}
 
     with open(PROJECTS_FILE, "r", encoding="utf-8") as f:
-        projects = yaml.safe_load(f)
+        projects = yaml.safe_load(f) or []
 
     if status:
         projects = [p for p in projects if p.get("status") == status]
