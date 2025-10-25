@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import importlib
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
+import sys
 
 import pytest
+from zoneinfo import ZoneInfo
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def test_load_events(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -103,15 +109,57 @@ def test_google_calendar(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("CALENDAR_ICS_PATH", "")
     monkeypatch.setenv("GOOGLE_CALENDAR_ID", "demo")
     monkeypatch.setenv("GOOGLE_CREDENTIALS_PATH", "/creds.json")
+    monkeypatch.setenv("TIME_ZONE", "America/New_York")
 
+    import config as cfg
+
+    importlib.reload(cfg)
     import calendar_integration as ci
 
-    def fake_read(start: date, end: date):
-        from datetime import datetime
+    importlib.reload(ci)
 
-        return [ci.Event("GC", datetime(2025, 1, 3), datetime(2025, 1, 3, 1))]
+    items = [
+        {
+            "summary": "Timed Event",
+            "start": {"dateTime": "2025-01-03T15:00:00Z"},
+            "end": {"dateTime": "2025-01-03T16:00:00Z"},
+        },
+        {
+            "summary": "All Day Event",
+            "start": {"date": "2025-01-04"},
+            "end": {"date": "2025-01-05"},
+        },
+    ]
 
-    monkeypatch.setattr(ci, "_read_google_calendar_events", fake_read)
-    events = ci.load_events(date(2025, 1, 3), date(2025, 1, 3))
-    assert len(events) == 1
-    assert events[0].summary == "GC"
+    class DummyCredentials:
+        @classmethod
+        def from_service_account_file(cls, *args, **kwargs):
+            return object()
+
+    class DummyService:
+        def __init__(self, items):
+            self._items = items
+
+        def events(self):
+            return self
+
+        def list(self, **kwargs):
+            return self
+
+        def execute(self):
+            return {"items": self._items}
+
+    monkeypatch.setattr(ci, "Credentials", DummyCredentials)
+    monkeypatch.setattr(ci, "build", lambda *args, **kwargs: DummyService(items))
+
+    events = ci.load_events(date(2025, 1, 3), date(2025, 1, 4))
+    assert [event.summary for event in events] == ["Timed Event", "All Day Event"]
+
+    tz = ZoneInfo("America/New_York")
+    timed = events[0]
+    assert timed.start == datetime(2025, 1, 3, 10, 0, tzinfo=tz)
+    assert timed.end == datetime(2025, 1, 3, 11, 0, tzinfo=tz)
+
+    all_day = events[1]
+    assert all_day.start == datetime(2025, 1, 4, 0, 0, tzinfo=tz)
+    assert all_day.end == datetime(2025, 1, 5, 0, 0, tzinfo=tz)
