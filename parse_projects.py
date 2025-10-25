@@ -36,6 +36,26 @@ VALID_KEYS = {
     "last_reviewed",
 }
 
+META_KEYS = {
+    "due": "due",
+    "recurrence": "recur",
+    "effort": "effort",
+    "energy_cost": "energy",
+    "last_completed": "last",
+    "executive_trigger": "exec",
+}
+
+META_LABEL_TO_FIELD = {label: field for field, label in META_KEYS.items()}
+META_LABEL_TO_FIELD.update(
+    {
+        "recurrence": "recurrence",
+        "energy_cost": "energy_cost",
+        "executive_trigger": "executive_trigger",
+        "last": "last_completed",
+        "last_completed": "last_completed",
+    }
+)
+
 
 def extract_frontmatter(text):
     """Return frontmatter dict and remaining body from a markdown string."""
@@ -103,7 +123,7 @@ def _parse_task_line(line):
     """Return task info parsed from a markdown list item."""
     match = re.match(r"- \[(?P<box>[ xX])\] (?P<rest>.+)", line.strip())
     if not match:
-        return line.strip(), False, None, None
+        return line.strip(), False, {}
 
     completed = match.group("box").lower() == "x"
     rest = match.group("rest")
@@ -112,11 +132,15 @@ def _parse_task_line(line):
     title = parts[0]
     metadata = {}
     for segment in parts[1:]:
-        if ":" in segment:
-            key, value = segment.split(":", 1)
-            metadata[key.strip()] = value.strip()
+        if ":" not in segment:
+            continue
+        key, value = segment.split(":", 1)
+        label = key.strip()
+        field = META_LABEL_TO_FIELD.get(label) or META_LABEL_TO_FIELD.get(label.lower())
+        if field:
+            metadata[field] = value.strip()
 
-    return title, completed, metadata.get("due"), metadata.get("recur")
+    return title, completed, metadata
 
 
 def projects_to_tasks(projects, start_id: int = 1):
@@ -125,8 +149,31 @@ def projects_to_tasks(projects, start_id: int = 1):
     tasks = []
     idx = start_id
     for proj in projects:
+        project_effort = proj.get("effort")
+        project_energy = proj.get("energy_cost")
         for line in proj.get("tasks", []):
-            title, completed, line_due, line_recurrence = _parse_task_line(line)
+            title, completed, metadata = _parse_task_line(line)
+            line_due = metadata.get("due")
+            line_recurrence = metadata.get("recurrence")
+            line_effort = metadata.get("effort")
+            line_energy = metadata.get("energy_cost")
+
+            effort_value = line_effort or project_effort or "low"
+            effort_key = str(effort_value).lower() if effort_value else "low"
+
+            energy_cost = None
+            for candidate in (line_energy, project_energy):
+                if candidate in (None, ""):
+                    continue
+                try:
+                    energy_cost = int(str(candidate))
+                except (TypeError, ValueError):
+                    continue
+                else:
+                    break
+            if energy_cost is None:
+                energy_cost = mapping.get(effort_key, mapping["low"])
+
             task = {
                 "id": idx,
                 "title": title,
@@ -137,13 +184,19 @@ def projects_to_tasks(projects, start_id: int = 1):
                 "recurrence": (
                     line_recurrence if line_recurrence else proj.get("recurrence")
                 ),
-                "effort": proj.get("effort", "low"),
-                "energy_cost": mapping.get(proj.get("effort", "low"), 1),
+                "effort": effort_value,
+                "energy_cost": energy_cost,
                 "status": "complete" if completed else proj.get("status", "active"),
                 "last_completed": proj.get("last_completed") if completed else None,
                 "executive_trigger": proj.get("executive_trigger"),
                 "source": "markdown",
             }
+
+            if metadata.get("last_completed"):
+                task["last_completed"] = metadata["last_completed"]
+            if metadata.get("executive_trigger"):
+                task["executive_trigger"] = metadata["executive_trigger"]
+
             tasks.append(task)
             idx += 1
     return tasks
@@ -187,18 +240,7 @@ def save_tasks_yaml(projects, path=TASKS_FILE):
     return combined
 
 
-META_KEYS = {
-    "due": "due",
-    "recurrence": "recur",
-    "effort": "effort",
-    "energy_cost": "energy",
-    "last_completed": "last",
-    "executive_trigger": "exec",
-}
-
-
 TASK_LINE_PATTERN = re.compile(r"^\s*- \[[ xX]\] ")
-META_LABEL_TO_FIELD = {label: field for field, label in META_KEYS.items()}
 
 
 def _task_to_line(task: Dict) -> str:
