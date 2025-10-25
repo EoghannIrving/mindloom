@@ -538,6 +538,170 @@ if (loadEnergyBtn) {
 const plannerModeSelect = document.getElementById('plannerMode');
 const focusAskBtn = document.getElementById('focusAskBtn');
 
+function formatDueDetail(dateString) {
+  if (!dateString) {
+    return null;
+  }
+
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) {
+    return `Due: ${dateString}`;
+  }
+
+  const dueDate = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diffDays = Math.round((dueDate.getTime() - today.getTime()) / msPerDay);
+
+  let relation = '';
+  if (diffDays === 0) {
+    relation = ' (today)';
+  } else if (diffDays === 1) {
+    relation = ' (tomorrow)';
+  } else if (diffDays > 1) {
+    relation = ` (in ${diffDays} days)`;
+  } else if (diffDays === -1) {
+    relation = ' (1 day overdue)';
+  } else {
+    relation = ` (${Math.abs(diffDays)} days overdue)`;
+  }
+
+  const formatted = dueDate.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  });
+
+  return `Due: ${formatted}${relation}`;
+}
+
+function describeEnergyCost(cost) {
+  if (typeof cost !== 'number') {
+    return null;
+  }
+
+  const labels = {
+    1: 'Very low',
+    2: 'Low',
+    3: 'Moderate',
+    4: 'High',
+    5: 'Very high'
+  };
+
+  return `Energy: ${cost} (${labels[cost] || 'Custom'})`;
+}
+
+function normalizeList(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(', ');
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return null;
+}
+
+function formatTaskSummary(task) {
+  if (!task || typeof task !== 'object') {
+    if (typeof task === 'string') {
+      return task;
+    }
+    return JSON.stringify(task, null, 2);
+  }
+
+  const lines = [];
+  const title = task.title || 'Next task';
+  lines.push(`⭐ ${title}`);
+
+  const description = [task.summary, task.description, task.notes]
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .find((value) => value);
+  if (description) {
+    lines.push('', description);
+  }
+
+  const details = [];
+  const dueDetail = formatDueDetail(task.next_due || task.due);
+  if (dueDetail) {
+    details.push(dueDetail);
+  }
+
+  if (task.project) {
+    details.push(`Project: ${task.project}`);
+  }
+
+  if (task.area) {
+    details.push(`Area: ${task.area}`);
+  }
+
+  if (task.context) {
+    details.push(`Context: ${task.context}`);
+  }
+
+  if (task.location) {
+    details.push(`Location: ${task.location}`);
+  }
+
+  if (task.priority) {
+    details.push(`Priority: ${task.priority}`);
+  }
+
+  if (task.effort) {
+    details.push(`Effort: ${task.effort}`);
+  }
+
+  const energyDetail = describeEnergyCost(task.energy_cost ?? task.energy);
+  if (energyDetail) {
+    details.push(energyDetail);
+  }
+
+  if (typeof task.time_blocks === 'number' && !Number.isNaN(task.time_blocks)) {
+    details.push(`Time blocks: ${task.time_blocks}`);
+  }
+
+  if (task.duration) {
+    details.push(`Duration: ${task.duration}`);
+  }
+
+  if (task.executive_trigger) {
+    details.push(`Executive trigger: ${task.executive_trigger}`);
+  }
+
+  if (task.recurrence) {
+    details.push(`Recurs: ${task.recurrence}`);
+  }
+
+  if (task.last_completed) {
+    details.push(`Last completed: ${task.last_completed}`);
+  }
+
+  const tags = normalizeList(task.tags);
+  if (tags) {
+    details.push(`Tags: ${tags}`);
+  }
+
+  if (task.url) {
+    details.push(`Link: ${task.url}`);
+  }
+
+  if (task.id) {
+    details.push(`Task ID: ${task.id}`);
+  }
+
+  if (details.length) {
+    lines.push('', ...details.map((detail) => `• ${detail}`));
+  }
+
+  return lines.join('\n');
+}
+
 async function requestPlan(mode) {
   const effectiveMode = mode || 'next_task';
   const energyEl = document.getElementById('energy');
@@ -584,7 +748,8 @@ async function requestPlan(mode) {
   const data = await res.json();
   if (effectiveMode === 'next_task') {
     if (data.next_task) {
-      setPreContent(askResultEl, JSON.stringify(data.next_task, null, 2));
+      const summary = formatTaskSummary(data.next_task);
+      setPreContent(askResultEl, summary || JSON.stringify(data.next_task, null, 2));
     } else if (data.plan) {
       setPreContent(askResultEl, data.plan);
     } else {
