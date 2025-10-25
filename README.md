@@ -57,7 +57,7 @@ Recurring tasks populate `next_due` and `due_today` based on the
 
 - **effort** – rough estimate of complexity or time commitment (`low`, `medium`, `high`).
 - **energy_cost** – numeric 1–5 rating of how taxing the task will be for the individual.
-- **executive_trigger** – tasks that are high_friction starts.
+- **executive_trigger** – tasks that are high-friction starts.
 - **project** – path of the project this task originated from.
 
 _A future update will add `activation_difficulty` for high-friction starts._
