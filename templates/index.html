@@ -737,24 +737,30 @@ async function requestPlan(mode) {
     const moodValue = moodEl ? moodEl.value : '';
     const timeBlocksValue = timeBlocksEl ? timeBlocksEl.value : '';
 
-    if (!energyValue || !moodValue || timeBlocksValue === '') {
-      const message = '⚠️ Please select your energy, mood, and available time blocks before asking for the next task.';
+    if (!energyValue || !moodValue) {
+      const message = '⚠️ Please select your energy and mood before asking for the next task.';
       setPreContent(askResultEl, message);
       return;
     }
 
     const parsedEnergy = Number.parseInt(energyValue, 10);
-    const parsedTimeBlocks = Number.parseInt(timeBlocksValue, 10);
-
-    if (Number.isNaN(parsedEnergy) || Number.isNaN(parsedTimeBlocks)) {
-      const message = '⚠️ Energy and time blocks must be valid numbers to request the next task.';
+    if (Number.isNaN(parsedEnergy)) {
+      const message = '⚠️ Energy must be a valid number to request the next task.';
       setPreContent(askResultEl, message);
       return;
     }
 
     requestPayload.energy = parsedEnergy;
     requestPayload.mood = moodValue;
-    requestPayload.time_blocks = parsedTimeBlocks;
+    if (timeBlocksValue !== '') {
+      const parsedTimeBlocks = Number.parseInt(timeBlocksValue, 10);
+      if (Number.isNaN(parsedTimeBlocks)) {
+        const message = '⚠️ Time blocks must be a valid number when provided.';
+        setPreContent(askResultEl, message);
+        return;
+      }
+      requestPayload.time_blocks = parsedTimeBlocks;
+    }
   }
 
   const projectValue = projectFilterSelect ? projectFilterSelect.value : '';

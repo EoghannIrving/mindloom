@@ -242,17 +242,12 @@ async def plan_endpoint(
         logger.warning("Invalid intensity %s, defaulting to medium", intensity)
         intensity = "medium"
 
-    payload_values = (
-        payload.energy if payload else None,
-        payload.mood if payload else None,
-        payload.time_blocks if payload else None,
-    )
-    has_full_payload = payload is not None and all(
-        value is not None for value in payload_values
-    )
-    has_partial_payload = payload is not None and any(
-        value is not None for value in payload_values
-    )
+    payload_energy = payload.energy if payload else None
+    payload_mood = payload.mood if payload else None
+    payload_time_blocks = payload.time_blocks if payload else None
+    payload_values = (payload_energy, payload_mood, payload_time_blocks)
+    has_all_payload_fields = all(value is not None for value in payload_values)
+    has_any_payload_field = any(value is not None for value in payload_values)
 
     payload_project = _normalize_filter_value(payload.project if payload else None)
     payload_area = _normalize_filter_value(payload.area if payload else None)
@@ -261,28 +256,46 @@ async def plan_endpoint(
     project_filter_value = payload_project or query_project
     area_filter_value = payload_area or query_area
 
-    if selected_mode == "next_task" and not has_full_payload:
+    if selected_mode == "next_task" and not (
+        payload_energy is not None and payload_mood is not None
+    ):
         logger.warning(
             "Missing energy payload for next_task mode: provided_fields=%s",
             _payload_field_summary(payload),
         )
         raise HTTPException(
             status_code=400,
-            detail="Energy, mood, and time_blocks are required for next_task mode.",
+            detail="Energy and mood are required for next_task mode.",
         )
 
     recorded_entry: Optional[Dict[str, Any]] = None
-    if has_full_payload and payload:
-        recorded_entry = record_entry(payload.energy, payload.mood, payload.time_blocks)
+    payload_snapshot: Optional[Dict[str, Any]] = None
+    if payload:
+        snapshot: Dict[str, Any] = {}
+        if payload_energy is not None:
+            snapshot["energy"] = payload_energy
+        if payload_mood is not None:
+            snapshot["mood"] = payload_mood
+        if payload_time_blocks is not None:
+            snapshot["time_blocks"] = payload_time_blocks
+        if snapshot:
+            payload_snapshot = snapshot
+
+    if payload and has_all_payload_fields:
+        recorded_entry = record_entry(payload_energy, payload_mood, payload_time_blocks)
         logger.info(
             "Persisted energy entry via API for date=%s",
             recorded_entry.get("date"),
         )
         logger.debug("Persisted energy entry details: %s", recorded_entry)
-    elif has_partial_payload:
+    elif payload and payload_time_blocks is not None:
         logger.warning(
-            "Partial energy payload provided; skipping record_entry call: provided_fields=%s",
+            "Incomplete energy payload provided; skipping record_entry call: provided_fields=%s",
             _payload_field_summary(payload),
+        )
+    elif payload and has_any_payload_field:
+        logger.info(
+            "Energy or mood provided without time blocks; skipping record_entry call"
         )
 
     if selected_mode == "next_task":
@@ -331,7 +344,7 @@ async def plan_endpoint(
     logger.info("Loaded %d energy entries", len(entries))
     if recorded_entry and recorded_entry not in entries:
         entries = [*entries, recorded_entry]
-    latest = recorded_entry or (entries[-1] if entries else {})
+    latest = recorded_entry or payload_snapshot or (entries[-1] if entries else {})
     energy_level = latest.get("energy")
     mood_value = latest.get("mood")
     target_energy = effective_energy_level(energy_level, mood_value)
