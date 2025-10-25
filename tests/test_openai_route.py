@@ -138,6 +138,30 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
     assert recorded["mood"] == payload["mood"]
 
 
+def test_select_next_task_penalizes_executive_trigger():
+    today = date.today().isoformat()
+    tasks = [
+        {
+            "id": 1,
+            "title": "High Friction",
+            "due": today,
+            "energy_cost": 2,
+            "executive_trigger": "high",
+        },
+        {
+            "id": 2,
+            "title": "Low Friction",
+            "due": today,
+            "energy_cost": 2,
+            "executive_trigger": "low",
+        },
+    ]
+
+    selected = openai_route._select_next_task(tasks, mood="sad", energy_level=2)
+
+    assert selected["title"] == "Low Friction"
+
+
 def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPatch):
     today = date.today().isoformat()
     tasks = [
