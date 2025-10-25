@@ -126,9 +126,7 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
 
         if date_str := time_dict.get("date"):
             day = date.fromisoformat(date_str)
-            dt = datetime.combine(day, datetime.min.time())
-            dt = dt.replace(tzinfo=event_tz)
-            return dt.astimezone(tz)
+            return datetime.combine(day, datetime.min.time(), tz)
 
         return None
 
