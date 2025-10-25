@@ -163,3 +163,54 @@ def test_google_calendar(monkeypatch: pytest.MonkeyPatch):
     all_day = events[1]
     assert all_day.start == datetime(2025, 1, 4, 0, 0, tzinfo=tz)
     assert all_day.end == datetime(2025, 1, 5, 0, 0, tzinfo=tz)
+
+
+def test_google_calendar_all_day_only(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("CALENDAR_ICS_PATH", "")
+    monkeypatch.setenv("GOOGLE_CALENDAR_ID", "demo")
+    monkeypatch.setenv("GOOGLE_CREDENTIALS_PATH", "/creds.json")
+    monkeypatch.setenv("TIME_ZONE", "America/New_York")
+
+    import config as cfg
+
+    importlib.reload(cfg)
+    import calendar_integration as ci
+
+    importlib.reload(ci)
+
+    items = [
+        {
+            "summary": "All Day Only",
+            "start": {"date": "2025-02-10"},
+            "end": {"date": "2025-02-11"},
+        }
+    ]
+
+    class DummyCredentials:
+        @classmethod
+        def from_service_account_file(cls, *args, **kwargs):
+            return object()
+
+    class DummyService:
+        def __init__(self, items):
+            self._items = items
+
+        def events(self):
+            return self
+
+        def list(self, **kwargs):
+            return self
+
+        def execute(self):
+            return {"items": self._items}
+
+    monkeypatch.setattr(ci, "Credentials", DummyCredentials)
+    monkeypatch.setattr(ci, "build", lambda *args, **kwargs: DummyService(items))
+
+    events = ci.load_events(date(2025, 2, 10), date(2025, 2, 10))
+    assert [event.summary for event in events] == ["All Day Only"]
+
+    tz = ZoneInfo("America/New_York")
+    all_day = events[0]
+    assert all_day.start == datetime(2025, 2, 10, 0, 0, tzinfo=tz)
+    assert all_day.end == datetime(2025, 2, 11, 0, 0, tzinfo=tz)

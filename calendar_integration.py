@@ -115,16 +115,18 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
         if not time_dict:
             return None
 
+        tz_name = time_dict.get("timeZone")
+        event_tz = ZoneInfo(tz_name) if tz_name else tz
+
         if time_str := time_dict.get("dateTime"):
             dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
             if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=tz)
+                dt = dt.replace(tzinfo=event_tz)
             return dt.astimezone(tz)
 
         if date_str := time_dict.get("date"):
-            return datetime.combine(
-                date.fromisoformat(date_str), datetime.min.time(), tz
-            )
+            day = date.fromisoformat(date_str)
+            return datetime.combine(day, datetime.min.time(), tz)
 
         return None
 
