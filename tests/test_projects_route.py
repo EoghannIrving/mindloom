@@ -207,6 +207,39 @@ def test_merge_projects_success(monkeypatch, tmp_path):
     assert "Projects/source.md" not in projects_yaml
 
 
+def test_merge_projects_accepts_prefixed_slugs(monkeypatch, tmp_path):
+    vault_root = _setup_vault(monkeypatch, tmp_path)
+    _setup_project_paths(monkeypatch, tmp_path, vault_root)
+
+    target_file = vault_root / "target.md"
+    source_file = vault_root / "source.md"
+    vault_root.mkdir(parents=True, exist_ok=True)
+
+    target_file.write_text("# Target\n", encoding="utf-8")
+    source_file.write_text("# Source\n", encoding="utf-8")
+
+    tasks_path = config.TASKS_PATH
+    tasks_path.write_text("- project: Projects/source.md\n", encoding="utf-8")
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/projects/merge",
+            json={
+                "source_slug": "Projects/source.md",
+                "target_slug": "Projects/target.md",
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["source"] == "Projects/source.md"
+    assert data["target"] == "Projects/target.md"
+    assert source_file.exists() is False
+
+    tasks = yaml.safe_load(config.TASKS_PATH.read_text(encoding="utf-8")) or []
+    assert all(task.get("project") != "Projects/source.md" for task in tasks)
+
+
 def test_merge_projects_missing_source(monkeypatch, tmp_path):
     vault_root = _setup_vault(monkeypatch, tmp_path)
     _setup_project_paths(monkeypatch, tmp_path, vault_root)
