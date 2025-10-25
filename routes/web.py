@@ -32,6 +32,29 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
+def _build_option_values(tasks, field):
+    return sorted(
+        {
+            value
+            for task in tasks
+            for value in [str(task.get(field) or "").strip()]
+            if value
+        }
+    )
+
+
+def _load_project_area_options():
+    active_tasks = [
+        task
+        for task in read_tasks()
+        if str(task.get("status", "")).lower() != "complete"
+    ]
+    return {
+        "project_options": _build_option_values(active_tasks, "project"),
+        "area_options": _build_option_values(active_tasks, "area"),
+    }
+
+
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request):
     """Return the basic web interface."""
@@ -41,31 +64,27 @@ def index(request: Request):
         p.relative_to(prompts_dir).as_posix() for p in prompts_dir.rglob("*.txt")
     ]
     _due_soon_tasks = upcoming_tasks()
-    active_tasks = [
-        task
-        for task in read_tasks()
-        if str(task.get("status", "")).lower() != "complete"
-    ]
-
-    def build_options(tasks, field):
-        return sorted(
-            {
-                value
-                for task in tasks
-                for value in [str(task.get(field) or "").strip()]
-                if value
-            }
-        )
-
-    project_options = build_options(active_tasks, "project")
-    area_options = build_options(active_tasks, "area")
+    options = _load_project_area_options()
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "prompt_files": prompt_files,
-            "project_options": project_options,
-            "area_options": area_options,
+            **options,
+        },
+    )
+
+
+@router.get("/projects-page", response_class=HTMLResponse)
+def projects_page(request: Request):
+    """Render the projects management interface."""
+    logger.info("GET /projects-page")
+    options = _load_project_area_options()
+    return templates.TemplateResponse(
+        "projects.html",
+        {
+            "request": request,
+            **options,
         },
     )
 
