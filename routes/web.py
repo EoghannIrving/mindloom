@@ -129,7 +129,24 @@ def render_prompt_endpoint(data: dict = Body(...)):
     variables.setdefault("mood", latest.get("mood", ""))
     variables.setdefault("time_blocks", latest.get("time_blocks", 0))
 
-    prompts_dir = PROJECT_ROOT / "prompts"
-    template_path = prompts_dir / template_name
+    prompts_dir = (PROJECT_ROOT / "prompts").resolve()
+    requested_path = Path(template_name)
+
+    if requested_path.is_absolute():
+        raise HTTPException(status_code=400, detail="Invalid template path.")
+
+    try:
+        template_path = (prompts_dir / requested_path).resolve(strict=False)
+    except (RuntimeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid template path.")
+
+    try:
+        template_path.relative_to(prompts_dir)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid template path.")
+
+    if not template_path.is_file():
+        raise HTTPException(status_code=404, detail="Template not found.")
+
     result = render_prompt(str(template_path), variables)
     return {"result": result}
