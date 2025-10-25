@@ -79,6 +79,10 @@ def _normalize_slug_path(slug: str, vault_root: Path) -> Path:
     ):
         parts = parts[prefix_length:]
 
+    root_name = vault_root.name
+    while root_name and parts and parts[0] == root_name:
+        parts = parts[1:]
+
     normalized = Path(*parts)
     if normalized.suffix != ".md":
         normalized = normalized.with_suffix(".md")
