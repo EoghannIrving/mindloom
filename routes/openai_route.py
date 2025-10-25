@@ -2,7 +2,7 @@
 
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Literal, NoReturn, Optional
+from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple
 from pydantic import BaseModel
 import logging
 
@@ -106,10 +106,12 @@ def _executive_weight(task: Dict[str, Any]) -> Optional[int]:
 
 
 def _select_next_task(
-    tasks: List[Dict[str, Any]], mood: Optional[str], energy_level: Optional[int]
-) -> Optional[Dict[str, Any]]:
+    tasks: List[Dict[str, Any]],
+    mood: Optional[str],
+    energy_level: Optional[int],
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     if not tasks:
-        return None
+        return None, None
 
     mood_key = (mood or "").lower()
     target_energy = effective_energy_level(energy_level, mood)
@@ -118,7 +120,9 @@ def _select_next_task(
         mood_key, DEFAULT_EXECUTIVE_TOLERANCE
     )
 
-    def sort_key(task: Dict[str, Any]):
+    scored: List[Tuple[Dict[str, Any], Dict[str, Any], Tuple[Any, ...]]] = []
+
+    for task in tasks:
         due = _due_date_value(task)
         cost = _energy_cost(task)
         energy_penalty = abs(cost - target_energy) if cost is not None else 0
@@ -130,16 +134,30 @@ def _select_next_task(
 
         total_penalty = energy_penalty + executive_penalty
 
-        return (
-            due,
-            total_penalty,
-            energy_penalty,
-            executive_penalty,
-            cost if cost is not None else target_energy,
-            exec_weight if exec_weight is not None else executive_tolerance,
+        reasoning = {
+            "due_date": due.isoformat() if due != date.max else None,
+            "energy_penalty": energy_penalty,
+            "executive_penalty": executive_penalty,
+            "total_score": total_penalty,
+        }
+
+        scored.append(
+            (
+                task,
+                reasoning,
+                (
+                    due,
+                    total_penalty,
+                    energy_penalty,
+                    executive_penalty,
+                    cost if cost is not None else target_energy,
+                    exec_weight if exec_weight is not None else executive_tolerance,
+                ),
+            )
         )
 
-    return sorted(tasks, key=sort_key)[0]
+    selected_task, reasoning, _ = min(scored, key=lambda item: item[2])
+    return selected_task, reasoning
 
 
 @router.post("/ask")
@@ -174,6 +192,7 @@ class PlanRequest(BaseModel):
 class PlanResponse(BaseModel):
     plan: str
     next_task: Optional[Dict[str, Any]] = None
+    reasoning: Optional[Dict[str, Any]] = None
 
 
 def _payload_field_summary(payload: Optional[PlanRequest]) -> str:
@@ -389,7 +408,7 @@ async def plan_endpoint(
     logger.info("Tasks after energy filter: %d", len(tasks))
 
     if selected_mode == "next_task":
-        next_task = _select_next_task(tasks, mood_value, energy_level)
+        next_task, reasoning = _select_next_task(tasks, mood_value, energy_level)
         if next_task:
             plan_text = next_task.get("title", "")
         elif metadata_filter_eliminated_all:
@@ -410,7 +429,7 @@ async def plan_endpoint(
                 )
             else:
                 logger.info("No next task selected")
-        return PlanResponse(plan=plan_text, next_task=next_task)
+        return PlanResponse(plan=plan_text, next_task=next_task, reasoning=reasoning)
 
     if template == "plan_intensity_selector":
         selector_template = PROJECT_ROOT / "prompts" / "plan_intensity_selector.txt"

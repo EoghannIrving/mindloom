@@ -135,6 +135,12 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
     data = resp.json()
     assert data["plan"] == "Gentle Start"
     assert data["next_task"]["title"] == "Gentle Start"
+    assert data["reasoning"] == {
+        "due_date": today,
+        "energy_penalty": 0,
+        "executive_penalty": 0,
+        "total_score": 0,
+    }
     assert recorded["energy"] == payload["energy"]
     assert recorded["mood"] == payload["mood"]
 
@@ -307,9 +313,17 @@ def test_select_next_task_penalizes_executive_trigger():
         },
     ]
 
-    selected = openai_route._select_next_task(tasks, mood="sad", energy_level=2)
+    selected, reasoning = openai_route._select_next_task(
+        tasks, mood="sad", energy_level=2
+    )
 
     assert selected["title"] == "Low Friction"
+    assert reasoning == {
+        "due_date": today,
+        "energy_penalty": 1,
+        "executive_penalty": 0,
+        "total_score": 1,
+    }
 
 
 def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPatch):

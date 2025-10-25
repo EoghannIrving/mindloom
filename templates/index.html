@@ -275,7 +275,45 @@ function normalizeList(value) {
   return null;
 }
 
-function formatTaskSummary(task) {
+function formatScoreBreakdown(reasoning) {
+  if (!reasoning || typeof reasoning !== 'object') {
+    return [];
+  }
+
+  const breakdown = [];
+  const hasDueKey = Object.prototype.hasOwnProperty.call(reasoning, 'due_date');
+
+  if (hasDueKey) {
+    const dueValue = reasoning.due_date;
+    if (dueValue) {
+      const formatted = formatDueDetail(dueValue);
+      if (formatted) {
+        breakdown.push(`• ${formatted.replace(/^Due: /, 'Due date: ')}`);
+      } else {
+        breakdown.push(`• Due date: ${dueValue}`);
+      }
+    } else {
+      breakdown.push('• Due date: None provided');
+    }
+  }
+
+  const numericFields = [
+    ['energy_penalty', 'Energy penalty'],
+    ['executive_penalty', 'Executive penalty'],
+    ['total_score', 'Total score']
+  ];
+
+  numericFields.forEach(([key, label]) => {
+    const value = reasoning[key];
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      breakdown.push(`• ${label}: ${value}`);
+    }
+  });
+
+  return breakdown;
+}
+
+function formatTaskSummary(task, reasoning) {
   if (!task || typeof task !== 'object') {
     if (typeof task === 'string') {
       return task;
@@ -366,6 +404,11 @@ function formatTaskSummary(task) {
     lines.push('', ...details.map((detail) => `• ${detail}`));
   }
 
+  const breakdownLines = formatScoreBreakdown(reasoning);
+  if (breakdownLines.length) {
+    lines.push('', 'Score breakdown:', ...breakdownLines);
+  }
+
   return lines.join('\n');
 }
 
@@ -429,7 +472,7 @@ async function requestPlan(mode) {
   const data = await res.json();
   if (effectiveMode === 'next_task') {
     if (data.next_task) {
-      const summary = formatTaskSummary(data.next_task);
+      const summary = formatTaskSummary(data.next_task, data.reasoning);
       setPreContent(askResultEl, summary || JSON.stringify(data.next_task, null, 2));
     } else if (data.plan) {
       setPreContent(askResultEl, data.plan);
