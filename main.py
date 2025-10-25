@@ -14,6 +14,7 @@ from routes import (
     tasks_page,
     activation,
     calendar_page,
+    discord,
 )
 from config import config
 
@@ -37,4 +38,5 @@ app.include_router(openai_route.router)
 app.include_router(tasks_page.router)
 app.include_router(activation.router)
 app.include_router(calendar_page.router)
+app.include_router(discord.router)
 logger.info("Routers registered")
