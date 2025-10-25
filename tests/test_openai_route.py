@@ -22,7 +22,7 @@ def test_effective_energy_level_edge_cases():
     assert effective_energy_level(None, None, default=5) == 5
 
     # Mood-only inputs should respect the mapped target energy level.
-    assert effective_energy_level(None, "Joyful") == 4
+    assert effective_energy_level(None, "Joyful") == 5
     assert effective_energy_level(None, "sad") == 1
 
     # When energy and mood conflict, the minimum value should be used.

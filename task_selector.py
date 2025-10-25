@@ -9,7 +9,7 @@ MOOD_ENERGY_TARGETS = {
     "sad": 1,
     "meh": 2,
     "okay": 3,
-    "joyful": 4,
+    "joyful": 5,
 }
 
 EXECUTIVE_TRIGGER_WEIGHTS = {"low": 0, "medium": 1, "high": 2}
