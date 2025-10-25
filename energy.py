@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List, Optional
 import logging
 import yaml
 
@@ -48,7 +48,10 @@ MOOD_EMOJIS = {
 
 
 def record_entry(
-    energy: int, mood: str, time_blocks: int, path: Path = ENERGY_LOG_PATH
+    energy: int,
+    mood: str,
+    time_blocks: Optional[int] = None,
+    path: Path = ENERGY_LOG_PATH,
 ) -> Dict:
     """Record today's energy and free time blocks, then return the entry.
 
@@ -60,8 +63,9 @@ def record_entry(
         "date": date.today().isoformat(),
         "energy": energy,
         "mood": mood,
-        "time_blocks": time_blocks,
     }
+    if time_blocks is not None:
+        entry["time_blocks"] = time_blocks
     entries = read_entries(path)
     for idx, existing in enumerate(entries):
         if existing.get("date") == entry["date"]:

@@ -31,3 +31,12 @@ def test_record_entry_overwrites_same_day(tmp_path: Path):
     assert entries[0]["energy"] == 4
     assert entries[0]["mood"] == "Meh"
     assert entries[0]["time_blocks"] == 1
+
+
+def test_record_entry_omits_missing_time_blocks(tmp_path: Path):
+    """Entries without time block data should not persist a placeholder value."""
+    path = tmp_path / "energy.yaml"
+    entry = record_entry(4, "Okay", path=path)
+    assert "time_blocks" not in entry
+    entries = read_entries(path)
+    assert "time_blocks" not in entries[-1]
