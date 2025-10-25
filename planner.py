@@ -174,7 +174,8 @@ def parse_plan_reasons(plan: Any) -> Dict[str, str]:
 
 def filter_tasks_by_energy(tasks: List[Dict], energy: int | None) -> List[Dict]:
     """Return tasks whose ``energy_cost`` is within the available ``energy``."""
-    logger.info("Filtering %d tasks by energy=%s", len(tasks), energy)
+    logger.info("Filtering %d tasks by provided energy input", len(tasks))
+    logger.debug("Energy filter value: %s", energy)
     if energy is None:
         logger.debug("No energy limit provided")
         return tasks

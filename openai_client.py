@@ -36,12 +36,18 @@ async def ask_chatgpt(
         raise ValueError("OPENAI_API_KEY is not configured")
 
     messages = [{"role": "user", "content": prompt}]
+    prompt_length = len(prompt)
     logger.info(
-        "Sending ChatGPT request: model=%s max_tokens=%s messages=%s",
+        "Sending ChatGPT request: model=%s max_tokens=%s prompt_length=%s",
         model,
         max_tokens,
-        messages,
+        prompt_length,
     )
+    if prompt:
+        preview = prompt[:200]
+        if len(preview) < prompt_length:
+            preview = f"{preview}…"
+        logger.debug("ChatGPT prompt preview: %s", preview)
     try:
         async with openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY) as client:
             chat_completion = await client.chat.completions.create(

@@ -83,11 +83,18 @@ def get_projects(
 ):
     """Return projects filtered by query parameters."""
     logger.info(
-        "GET /projects status=%s area=%s effort=%s",
-        status,
-        area,
-        effort,
+        "GET /projects filters status=%s area=%s effort=%s",
+        bool(status),
+        bool(area),
+        bool(effort),
     )
+    if status or area or effort:
+        logger.debug(
+            "GET /projects filter values status=%s area=%s effort=%s",
+            status,
+            area,
+            effort,
+        )
     if not PROJECTS_FILE.exists():
         logger.warning("%s not found", PROJECTS_FILE)
         return {"error": f"{PROJECTS_FILE} not found"}
@@ -150,7 +157,8 @@ def get_tasks():
 def create_project(payload: ProjectCreateRequest):
     """Create a new project markdown file in the configured vault."""
 
-    logger.info("POST /projects slug=%s", payload.slug)
+    logger.info("POST /projects slug_length=%s", len(payload.slug))
+    logger.debug("POST /projects slug=%s", payload.slug)
     vault_root = Path(config.VAULT_PATH)
     vault_root.mkdir(parents=True, exist_ok=True)
 
@@ -202,5 +210,6 @@ def create_project(payload: ProjectCreateRequest):
         **frontmatter,
         "tasks": task_lines,
     }
-    logger.info("Created project at %s", target_path)
+    logger.info("Created project file for slug_length=%s", len(payload.slug))
+    logger.debug("Created project at %s", target_path)
     return response

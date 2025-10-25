@@ -36,14 +36,10 @@ class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods
 @router.post("/energy")
 def add_energy(data: EnergyInput):
     """Record today's energy, mood and free time blocks."""
-    logger.info(
-        "POST /energy energy=%s mood=%s time_blocks=%s",
-        data.energy,
-        data.mood,
-        data.time_blocks,
-    )
+    logger.info("POST /energy payload_received")
     entry = record_entry(data.energy, data.mood, data.time_blocks)
-    logger.info("Recorded entry: %s", entry)
+    logger.info("Recorded energy entry for date=%s", entry.get("date"))
+    logger.debug("Recorded energy entry details: %s", entry)
     return entry
 
 

@@ -114,6 +114,15 @@ class PlanResponse(BaseModel):
     next_task: Optional[Dict[str, Any]] = None
 
 
+def _payload_field_summary(payload: Optional[PlanRequest]) -> str:
+    if not payload:
+        return "none"
+    data = payload.model_dump(exclude_none=True)
+    if not data:
+        return "none"
+    return ",".join(sorted(data.keys()))
+
+
 @router.post("/plan", response_model=PlanResponse)
 async def plan_endpoint(
     intensity: str = Query("medium"),
@@ -163,8 +172,8 @@ async def plan_endpoint(
 
     if selected_mode == "next_task" and not has_full_payload:
         logger.warning(
-            "Missing energy payload for next_task mode: %s",
-            payload.model_dump() if payload else None,
+            "Missing energy payload for next_task mode: provided_fields=%s",
+            _payload_field_summary(payload),
         )
         raise HTTPException(
             status_code=400,
@@ -174,11 +183,15 @@ async def plan_endpoint(
     recorded_entry: Optional[Dict[str, Any]] = None
     if has_full_payload and payload:
         recorded_entry = record_entry(payload.energy, payload.mood, payload.time_blocks)
-        logger.info("Persisted energy entry via API: %s", recorded_entry)
+        logger.info(
+            "Persisted energy entry via API for date=%s",
+            recorded_entry.get("date"),
+        )
+        logger.debug("Persisted energy entry details: %s", recorded_entry)
     elif has_partial_payload:
         logger.warning(
-            "Partial energy payload provided; skipping record_entry call: %s",
-            payload.model_dump(),
+            "Partial energy payload provided; skipping record_entry call: provided_fields=%s",
+            _payload_field_summary(payload),
         )
 
     if selected_mode == "next_task":
@@ -201,7 +214,8 @@ async def plan_endpoint(
     latest = recorded_entry or (entries[-1] if entries else {})
     energy_level = latest.get("energy")
     if energy_level is not None:
-        logger.info("Filtering tasks by energy=%s", energy_level)
+        logger.info("Applying energy filter to tasks")
+        logger.debug("Energy level for filtering: %s", energy_level)
         filtered_tasks = filter_tasks_by_energy(tasks, int(energy_level))
         if not filtered_tasks and unfiltered_tasks:
             logger.info(
@@ -217,7 +231,15 @@ async def plan_endpoint(
     if selected_mode == "next_task":
         next_task = _select_next_task(tasks, latest.get("mood"), energy_level)
         plan_text = next_task.get("title", "") if next_task else ""
-        logger.info("Selected next task: %s", next_task)
+        if next_task:
+            logger.info(
+                "Selected next task id=%s due=%s",
+                next_task.get("id"),
+                next_task.get("due") or next_task.get("next_due"),
+            )
+            logger.debug("Selected next task details: %s", next_task)
+        else:
+            logger.info("No next task selected")
         return PlanResponse(plan=plan_text, next_task=next_task)
 
     if template == "plan_intensity_selector":
@@ -234,7 +256,13 @@ async def plan_endpoint(
                 exc,
                 "Failed to generate selector response from language model. Please try again later.",
             )
-        logger.info("Generated selector response: %s", response)
+        response_text = response or ""
+        logger.info("Generated selector response length=%s", len(response_text))
+        if response_text:
+            preview = response_text[:200]
+            if len(preview) < len(response_text):
+                preview = f"{preview}…"
+            logger.debug("Selector response preview: %s", preview)
         return PlanResponse(plan=response)
 
     events = load_events(date.today(), date.today())
@@ -268,7 +296,13 @@ async def plan_endpoint(
             exc,
             "Failed to generate plan from language model. Please try again later.",
         )
-    logger.info("Generated plan: %s", plan)
+    plan_text = plan or ""
+    logger.info("Generated plan length=%s", len(plan_text))
+    if plan_text:
+        plan_preview = plan_text[:200]
+        if len(plan_preview) < len(plan_text):
+            plan_preview = f"{plan_preview}…"
+        logger.debug("Generated plan preview: %s", plan_preview)
     save_plan(plan)
     logger.info("Plan saved")
     return PlanResponse(plan=plan)
