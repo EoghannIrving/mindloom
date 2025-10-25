@@ -179,7 +179,13 @@
         updateFeedback(el, message, 'error');
       }
 
-      function performActionWithFeedback(button, { loadingText = 'Loading…', preId, errorMessage, action }) {
+      function performActionWithFeedback(button, {
+        loadingText = 'Loading…',
+        preId,
+        feedbackEl,
+        errorMessage,
+        action,
+      }) {
         if (!button) {
           return async () => {};
         }
@@ -187,6 +193,7 @@
           if (button.disabled) {
             return null;
           }
+          const resolvedFeedbackEl = resolveElement(feedbackEl);
           const originalHtml = button.innerHTML;
           const originalAriaBusy = button.getAttribute('aria-busy');
           button.disabled = true;
@@ -199,6 +206,9 @@
             console.error(errorMessage, error);
             if (preId) {
               displayInlineError(preId, errorMessage, error);
+            }
+            if (resolvedFeedbackEl) {
+              displayInlineError(resolvedFeedbackEl, errorMessage, error);
             }
             return null;
           } finally {

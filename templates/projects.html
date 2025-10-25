@@ -428,6 +428,7 @@
     if (mergeBtn) {
       mergeBtn.onclick = performActionWithFeedback(mergeBtn, {
         loadingText: 'Merging…',
+        feedbackEl: mergeFeedbackEl,
         errorMessage: 'Unable to merge projects',
         action: async () => {
           clearFeedback(mergeFeedbackEl);
