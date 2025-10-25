@@ -23,7 +23,7 @@ Build the assistant core: life-area context, Obsidian integration, a structured 
   Extract task checkboxes and summarize content
 
 [x] **Design task schema**
-  Fields: `id`, `title`, `area`, `type`, `due`, `recurrence`, `effort`, `energy_cost`, `status`, `last_completed`, `executive_trigger?`  
+  Fields: `id`, `title`, `area`, `type`, `due`, `recurrence`, `effort`, `energy_cost`, `status`, `last_completed`, `executive_trigger`
   Store as `tasks.yaml`  
   _Future: add `activation_difficulty` for high-friction starts._
 
