@@ -2,6 +2,7 @@
 
 # pylint: disable=duplicate-code
 
+import json
 import logging
 from pathlib import Path
 from typing import List, Optional
@@ -12,11 +13,12 @@ from pydantic import BaseModel, Field, field_validator
 
 from parse_projects import (
     _task_to_line,
+    merge_project_files,
     parse_all_projects,
     save_tasks_yaml,
     write_tasks_to_projects,
 )
-from tasks import read_tasks
+from tasks import read_tasks, read_tasks_raw, write_tasks
 
 from config import config
 
@@ -65,6 +67,24 @@ class ProjectCreateRequest(BaseModel):
     tasks: Optional[List[ProjectTask]] = None
 
     @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, value: str) -> str:  # noqa: D401
+        """Ensure the slug stays within the vault."""
+
+        path = Path(value)
+        if path.is_absolute() or any(part == ".." for part in path.parts):
+            raise ValueError("slug must be a relative path without traversal")
+        return value
+
+
+class ProjectMergeRequest(BaseModel):
+    """Payload schema for merging two project markdown files."""
+
+    source_slug: str = Field(..., min_length=1)
+    target_slug: str = Field(..., min_length=1)
+    delete_source: bool = Field(True, description="Remove the source file after merge")
+
+    @field_validator("source_slug", "target_slug")
     @classmethod
     def validate_slug(cls, value: str) -> str:  # noqa: D401
         """Ensure the slug stays within the vault."""
@@ -212,4 +232,98 @@ def create_project(payload: ProjectCreateRequest):
     }
     logger.info("Created project file for slug_length=%s", len(payload.slug))
     logger.debug("Created project at %s", target_path)
+    return response
+
+
+def _resolve_slug(slug: str, vault_root: Path) -> Path:
+    """Return the filesystem path for a slug within the vault."""
+
+    slug_path = Path(slug)
+    if slug_path.suffix != ".md":
+        slug_path = slug_path.with_suffix(".md")
+    return (vault_root / slug_path).resolve()
+
+
+@router.post("/projects/merge")
+def merge_projects(payload: ProjectMergeRequest):
+    """Merge two markdown project files and update derived data."""
+
+    logger.info(
+        "POST /projects/merge source_length=%s target_length=%s delete_source=%s",
+        len(payload.source_slug),
+        len(payload.target_slug),
+        payload.delete_source,
+    )
+
+    vault_root = Path(config.VAULT_PATH)
+    vault_root.mkdir(parents=True, exist_ok=True)
+
+    source_path = _resolve_slug(payload.source_slug, vault_root)
+    target_path = _resolve_slug(payload.target_slug, vault_root)
+
+    if source_path == target_path:
+        logger.warning(
+            "Source and target slug resolve to the same path: %s", source_path
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source and target projects must be different",
+        )
+
+    if not source_path.exists():
+        logger.error("Source project missing: %s", source_path)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source project not found",
+        )
+
+    if not target_path.exists():
+        logger.error("Target project missing: %s", target_path)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Target project not found",
+        )
+
+    merge_result = merge_project_files(
+        source_path,
+        target_path,
+        delete_source=payload.delete_source,
+    )
+
+    vault_parent = vault_root.parent
+    source_rel = str(source_path.relative_to(vault_parent))
+    target_rel = str(target_path.relative_to(vault_parent))
+
+    logger.info("Updating tasks.yaml from %s to %s", source_rel, target_rel)
+    tasks = read_tasks_raw(TASKS_FILE)
+    migrated_yaml_tasks = 0
+    unique_tasks = []
+    seen = set()
+    for task in tasks:
+        if task.get("project") == source_rel:
+            task["project"] = target_rel
+            migrated_yaml_tasks += 1
+        key = json.dumps(task, sort_keys=True, ensure_ascii=False)
+        if key not in seen:
+            seen.add(key)
+            unique_tasks.append(task)
+
+    write_tasks(unique_tasks, TASKS_FILE)
+    logger.info("Updated %d tasks in tasks.yaml", migrated_yaml_tasks)
+
+    logger.info("Regenerating projects.yaml and markdown tasks export")
+    projects = parse_all_projects(vault_root)
+    with open(PROJECTS_FILE, "w", encoding="utf-8") as handle:
+        yaml.dump(projects, handle, sort_keys=False, allow_unicode=True)
+    save_tasks_yaml(projects, TASKS_FILE)
+
+    response = {
+        "source": source_rel,
+        "target": target_rel,
+        "migrated_project_tasks": merge_result.get("source_tasks", 0),
+        "target_total_tasks": merge_result.get("target_total_tasks", 0),
+        "tasks_relinked": migrated_yaml_tasks,
+        "source_removed": merge_result.get("source_removed", False),
+    }
+    logger.info("Merge complete: %s", response)
     return response
