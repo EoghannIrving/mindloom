@@ -198,6 +198,54 @@ def test_plan_endpoint_next_task_respects_project_filter_on_energy_fallback(
     assert data["next_task"]["title"] == "Deep Focus"
 
 
+def test_plan_endpoint_next_task_with_project_filter_and_no_matches(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    today = date.today().isoformat()
+    tasks = [
+        {
+            "id": 1,
+            "title": "General Task",
+            "due": today,
+            "energy_cost": 2,
+            "project": "Other",
+        }
+    ]
+
+    def fake_upcoming_tasks(days: int = 7):
+        return list(tasks)
+
+    monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
+
+    recorded: Dict[str, Any] = {}
+
+    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+        recorded.update(
+            {
+                "date": today,
+                "energy": energy,
+                "mood": mood,
+                "time_blocks": time_blocks,
+            }
+        )
+        return recorded.copy()
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+    monkeypatch.setattr(
+        openai_route, "filter_tasks_by_energy", lambda task_list, target: task_list
+    )
+
+    client = TestClient(app)
+    payload = {"energy": 2, "mood": "okay", "time_blocks": 3}
+    resp = client.post("/plan?mode=next_task&project_param=Focus", json=payload)
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["next_task"] is None
+    assert "No tasks match" in data["plan"]
+
+
 def test_plan_endpoint_next_task_uses_effective_energy(
     monkeypatch: pytest.MonkeyPatch,
 ):
@@ -374,7 +422,7 @@ def test_plan_endpoint_next_task_falls_back_when_filter_empty(
     assert data["next_task"]["title"] in {t["title"] for t in tasks}
 
 
-def test_plan_endpoint_next_task_metadata_filter_falls_back(
+def test_plan_endpoint_next_task_metadata_filter_returns_empty_when_no_match(
     monkeypatch: pytest.MonkeyPatch,
 ):
     today = date.today().isoformat()
@@ -430,8 +478,8 @@ def test_plan_endpoint_next_task_metadata_filter_falls_back(
 
     assert resp.status_code == 200
     data = resp.json()
-    assert data["next_task"] is not None
-    assert data["next_task"]["title"] in {t["title"] for t in tasks}
+    assert data["next_task"] is None
+    assert "No tasks match" in data["plan"]
 
 
 def test_plan_endpoint_next_task_requires_energy_and_mood(

@@ -311,8 +311,10 @@ async def plan_endpoint(
 
     unfiltered_tasks = list(tasks)
     metadata_filters_active = False
+    metadata_filter_eliminated_all = False
+    filters_requested = bool(project_filter_value or area_filter_value)
 
-    if project_filter_value or area_filter_value:
+    if filters_requested:
         logger.info(
             "Applying task metadata filters project=%s area=%s",
             project_filter_value,
@@ -338,11 +340,15 @@ async def plan_endpoint(
             metadata_filters_active = True
         else:
             logger.info(
-                "Task metadata filter removed all tasks; falling back to unfiltered task list"
+                "Task metadata filter removed all tasks; no tasks remain after applying filters"
             )
-            tasks = list(unfiltered_tasks)
+            tasks = []
+            metadata_filters_active = True
+            metadata_filter_eliminated_all = True
 
     metadata_filtered_tasks = list(tasks)
+    if metadata_filters_active and not metadata_filtered_tasks:
+        metadata_filter_eliminated_all = True
 
     entries = read_entries()
     logger.info("Loaded %d energy entries", len(entries))
@@ -384,7 +390,12 @@ async def plan_endpoint(
 
     if selected_mode == "next_task":
         next_task = _select_next_task(tasks, mood_value, energy_level)
-        plan_text = next_task.get("title", "") if next_task else ""
+        if next_task:
+            plan_text = next_task.get("title", "")
+        elif metadata_filter_eliminated_all:
+            plan_text = "No tasks match the selected project or area filters."
+        else:
+            plan_text = ""
         if next_task:
             logger.info(
                 "Selected next task id=%s due=%s",
@@ -393,7 +404,12 @@ async def plan_endpoint(
             )
             logger.debug("Selected next task details: %s", next_task)
         else:
-            logger.info("No next task selected")
+            if metadata_filter_eliminated_all:
+                logger.info(
+                    "No next task selected because no tasks matched the requested metadata filters"
+                )
+            else:
+                logger.info("No next task selected")
         return PlanResponse(plan=plan_text, next_task=next_task)
 
     if template == "plan_intensity_selector":
