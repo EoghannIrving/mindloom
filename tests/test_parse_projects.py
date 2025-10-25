@@ -149,6 +149,9 @@ def test_save_tasks_yaml(tmp_path: Path):
     assert data[0]["type"] == "task"
     assert data[0]["project"] == "demo.md"
     assert data[0]["source"] == "markdown"
+    assert data[0]["energy_cost"] == 3
+    assert data[1]["status"] == "complete"
+    assert data[1]["energy_cost"] == 3
 
 
 def test_save_tasks_yaml_preserves_standalone_tasks(tmp_path: Path):
