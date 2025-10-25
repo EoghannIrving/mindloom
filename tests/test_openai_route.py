@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import routes.openai_route as openai_route
 from routes.openai_route import effective_energy_level
+from task_selector import select_next_task
 from openai_client import OpenAIClientError
 from main import app
 
@@ -331,9 +332,7 @@ def test_select_next_task_penalizes_executive_trigger():
         },
     ]
 
-    selected, reasoning = openai_route._select_next_task(
-        tasks, mood="sad", energy_level=2
-    )
+    selected, reasoning = select_next_task(tasks, mood="sad", energy_level=2)
 
     assert selected["title"] == "Low Friction"
     assert reasoning == {
