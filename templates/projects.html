@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% block title %}Projects · Mindloom{% endblock %}
 {% block content %}
-  <div class="max-w-4xl mx-auto space-y-6">
-    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm">
-      <header class="mb-4">
-        <h1 class="text-2xl font-semibold text-gray-800">Project management</h1>
-        <p class="text-sm text-gray-500">
-          Create project files, parse existing notes, and merge duplicate projects.
+  <div class="max-w-5xl mx-auto space-y-6">
+    <section
+      class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
+      <div class="space-y-2">
+        <h1 class="text-3xl font-bold">Project management</h1>
+        <p class="text-lg text-indigo-100">
+          Create new project files, refresh your vault data, and merge duplicates without leaving Mindloom.
         </p>
+      </div>
+      <p class="text-sm text-indigo-100/80">
+        Use the tools below to generate fresh project files, parse existing notes, and consolidate overlapping workstreams.
+      </p>
+    </section>
+
+    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
+      <header>
+        <h2 class="text-xl font-semibold text-gray-800">Create a project</h2>
+        <p class="text-sm text-gray-600">Generate a fresh markdown file complete with optional checklist items.</p>
       </header>
       <details class="group rounded-xl border border-gray-200 bg-white/90 p-5 shadow-sm" open>
         <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
