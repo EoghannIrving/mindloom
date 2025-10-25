@@ -111,18 +111,29 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
         .get("items", [])
     )
 
+    def _parse_time(time_dict: dict[str, str]) -> datetime | None:
+        if not time_dict:
+            return None
+
+        if time_str := time_dict.get("dateTime"):
+            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=tz)
+            return dt.astimezone(tz)
+
+        if date_str := time_dict.get("date"):
+            return datetime.combine(
+                date.fromisoformat(date_str), datetime.min.time(), tz
+            )
+
+        return None
+
     events: List[Event] = []
     for item in items:
-        start_str = item.get("start", {}).get("dateTime") or item.get("start", {}).get(
-            "date"
-        )
-        end_str = item.get("end", {}).get("dateTime") or item.get("end", {}).get("date")
-        if not (start_str and end_str):
+        start_dt = _parse_time(item.get("start", {}))
+        end_dt = _parse_time(item.get("end", {}))
+        if not (start_dt and end_dt):
             continue
-        start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00")).astimezone(
-            tz
-        )
-        end_dt = datetime.fromisoformat(end_str.replace("Z", "+00:00")).astimezone(tz)
         events.append(Event(item.get("summary", ""), start_dt, end_dt))
     return events
 
