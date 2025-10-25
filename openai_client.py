@@ -7,6 +7,11 @@ from pathlib import Path
 
 import openai
 
+
+class OpenAIClientError(Exception):
+    """Raised when the OpenAI client encounters an error."""
+
+
 from config import config
 
 LOG_FILE = Path(config.LOG_DIR) / "openai_client.log"
@@ -37,10 +42,17 @@ async def ask_chatgpt(
         max_tokens,
         messages,
     )
-    async with openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY) as client:
-        chat_completion = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=max_tokens,
-        )
-        return chat_completion.choices[0].message.content
+    try:
+        async with openai.AsyncOpenAI(api_key=config.OPENAI_API_KEY) as client:
+            chat_completion = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+            )
+            return chat_completion.choices[0].message.content
+    except openai.OpenAIError as exc:
+        logger.exception("OpenAI API request failed")
+        raise OpenAIClientError("OpenAI API request failed") from exc
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        logger.exception("Unexpected error while calling OpenAI API")
+        raise OpenAIClientError("Unexpected error while calling OpenAI API") from exc

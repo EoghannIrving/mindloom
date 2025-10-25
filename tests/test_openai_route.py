@@ -1,3 +1,4 @@
+import logging
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import routes.openai_route as openai_route
+from openai_client import OpenAIClientError
 from main import app
 
 
@@ -293,3 +295,75 @@ def test_plan_endpoint_next_task_falls_back_to_future_tasks(
     assert calls == [0, 7]
     assert recorded["energy"] == payload["energy"]
     assert recorded["mood"] == payload["mood"]
+
+
+def test_ask_endpoint_handles_openai_error(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    async def fail(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500):
+        raise OpenAIClientError("boom")
+
+    monkeypatch.setattr(openai_route, "ask_chatgpt", fail)
+
+    client = TestClient(app)
+    with caplog.at_level(logging.ERROR):
+        resp = client.post("/ask", json={"prompt": "Hello"})
+
+    assert resp.status_code == 502
+    assert (
+        resp.json()["detail"]
+        == "Failed to fetch response from language model. Please try again later."
+    )
+    assert any(
+        "POST /ask OpenAI call failed" in record.message for record in caplog.records
+    )
+
+
+def test_plan_endpoint_handles_openai_error(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda: [])
+    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
+    monkeypatch.setattr(openai_route, "load_events", lambda start, end: [])
+    monkeypatch.setattr(openai_route, "save_plan", lambda plan: None)
+
+    async def fail(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500):
+        raise OpenAIClientError("boom")
+
+    monkeypatch.setattr(openai_route, "ask_chatgpt", fail)
+
+    client = TestClient(app)
+    with caplog.at_level(logging.ERROR):
+        resp = client.post("/plan?template=morning_planner")
+
+    assert resp.status_code == 502
+    assert (
+        resp.json()["detail"]
+        == "Failed to generate plan from language model. Please try again later."
+    )
+    assert any(
+        "POST /plan OpenAI call failed" in record.message for record in caplog.records
+    )
+
+
+def test_goal_breakdown_endpoint_handles_openai_error(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    async def fail(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500):
+        raise OpenAIClientError("boom")
+
+    monkeypatch.setattr(openai_route, "ask_chatgpt", fail)
+
+    client = TestClient(app)
+    with caplog.at_level(logging.ERROR):
+        resp = client.post("/goal-breakdown", json={"goal": "Ship"})
+
+    assert resp.status_code == 502
+    assert (
+        resp.json()["detail"]
+        == "Failed to generate goal breakdown from language model. Please try again later."
+    )
+    assert any(
+        "POST /goal-breakdown OpenAI call failed" in record.message
+        for record in caplog.records
+    )
