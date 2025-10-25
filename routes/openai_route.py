@@ -54,6 +54,31 @@ MOOD_EXECUTIVE_TOLERANCE = {
 DEFAULT_EXECUTIVE_TOLERANCE = 1
 
 
+def effective_energy_level(
+    energy_level: Optional[int], mood: Optional[str], default: int = 3
+) -> int:
+    mood_key = (mood or "").strip().lower()
+    mood_target = MOOD_ENERGY_TARGETS.get(mood_key)
+
+    values: List[int] = []
+    for raw in (energy_level, mood_target):
+        if raw is None:
+            continue
+        try:
+            values.append(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    if not values:
+        return default
+    if len(values) == 1:
+        combined = values[0]
+    else:
+        combined = min(values)
+
+    return max(0, combined)
+
+
 def _due_date_value(task: Dict[str, Any]) -> date:
     date_str = task.get("next_due") or task.get("due")
     if not date_str:
@@ -87,10 +112,7 @@ def _select_next_task(
         return None
 
     mood_key = (mood or "").lower()
-    mood_target = MOOD_ENERGY_TARGETS.get(mood_key)
-    target_energy = energy_level if energy_level is not None else mood_target
-    if target_energy is None:
-        target_energy = 3
+    target_energy = effective_energy_level(energy_level, mood)
 
     executive_tolerance = MOOD_EXECUTIVE_TOLERANCE.get(
         mood_key, DEFAULT_EXECUTIVE_TOLERANCE
@@ -311,23 +333,34 @@ async def plan_endpoint(
         entries = [*entries, recorded_entry]
     latest = recorded_entry or (entries[-1] if entries else {})
     energy_level = latest.get("energy")
-    if energy_level is not None:
-        logger.info("Applying energy filter to tasks")
-        logger.debug("Energy level for filtering: %s", energy_level)
-        filtered_tasks = filter_tasks_by_energy(tasks, int(energy_level))
-        if not filtered_tasks and unfiltered_tasks:
-            logger.info(
-                "Energy filter removed all tasks; falling back to unfiltered task list"
-            )
-            tasks = unfiltered_tasks
-        else:
-            tasks = filtered_tasks
-        logger.info("Tasks after energy filter: %d", len(tasks))
+    mood_value = latest.get("mood")
+    target_energy = effective_energy_level(energy_level, mood_value)
+    if energy_level is None and mood_value is None:
+        logger.info(
+            "No recent energy or mood entry found; using default target for filtering",
+        )
     else:
-        logger.info("No energy entry found; skipping energy filter")
+        logger.info(
+            "Applying energy filter to tasks using effective energy level %s",
+            target_energy,
+        )
+        logger.debug(
+            "Filter inputs - recorded energy: %s mood: %s",
+            energy_level,
+            mood_value,
+        )
+    filtered_tasks = filter_tasks_by_energy(tasks, target_energy)
+    if not filtered_tasks and unfiltered_tasks:
+        logger.info(
+            "Energy filter removed all tasks; falling back to unfiltered task list",
+        )
+        tasks = unfiltered_tasks
+    else:
+        tasks = filtered_tasks
+    logger.info("Tasks after energy filter: %d", len(tasks))
 
     if selected_mode == "next_task":
-        next_task = _select_next_task(tasks, latest.get("mood"), energy_level)
+        next_task = _select_next_task(tasks, mood_value, energy_level)
         plan_text = next_task.get("title", "") if next_task else ""
         if next_task:
             logger.info(
