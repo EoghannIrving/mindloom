@@ -40,9 +40,31 @@ def index(request: Request):
     prompt_files = [
         p.relative_to(prompts_dir).as_posix() for p in prompts_dir.rglob("*.txt")
     ]
+    tasks = upcoming_tasks()
+    project_options = sorted(
+        {
+            value
+            for task in tasks
+            for value in [str(task.get("project") or "").strip()]
+            if value
+        }
+    )
+    area_options = sorted(
+        {
+            value
+            for task in tasks
+            for value in [str(task.get("area") or "").strip()]
+            if value
+        }
+    )
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "prompt_files": prompt_files},
+        {
+            "request": request,
+            "prompt_files": prompt_files,
+            "project_options": project_options,
+            "area_options": area_options,
+        },
     )
 
 

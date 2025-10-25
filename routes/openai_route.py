@@ -107,6 +107,8 @@ class PlanRequest(BaseModel):
     energy: Optional[int] = None
     mood: Optional[str] = None
     time_blocks: Optional[int] = None
+    project: Optional[str] = None
+    area: Optional[str] = None
 
 
 class PlanResponse(BaseModel):
@@ -123,6 +125,20 @@ def _payload_field_summary(payload: Optional[PlanRequest]) -> str:
     return ",".join(sorted(data.keys()))
 
 
+def _normalize_filter_value(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _matches_filter(task_value: Any, filter_value: str) -> bool:
+    normalized = _normalize_filter_value(task_value)
+    if normalized is None:
+        return False
+    return normalized.casefold() == filter_value.casefold()
+
+
 @router.post("/plan", response_model=PlanResponse)
 async def plan_endpoint(
     intensity: str = Query("medium"),
@@ -135,6 +151,14 @@ async def plan_endpoint(
     focus: Optional[Literal["plan", "next_task"]] = Query(
         None,
         description="Alias for the mode parameter, kept for backward compatibility",
+    ),
+    project_param: Optional[str] = Query(
+        None,
+        description="Optional project filter applied before energy filtering.",
+    ),
+    area_param: Optional[str] = Query(
+        None,
+        description="Optional area filter applied before energy filtering.",
     ),
     payload: Optional[PlanRequest] = Body(
         None,
@@ -169,6 +193,13 @@ async def plan_endpoint(
     has_partial_payload = payload is not None and any(
         value is not None for value in payload_values
     )
+
+    payload_project = _normalize_filter_value(payload.project if payload else None)
+    payload_area = _normalize_filter_value(payload.area if payload else None)
+    query_project = _normalize_filter_value(project_param)
+    query_area = _normalize_filter_value(area_param)
+    project_filter_value = payload_project or query_project
+    area_filter_value = payload_area or query_area
 
     if selected_mode == "next_task" and not has_full_payload:
         logger.warning(
@@ -206,6 +237,35 @@ async def plan_endpoint(
     logger.info("Loaded %d upcoming tasks", len(tasks))
 
     unfiltered_tasks = list(tasks)
+
+    if project_filter_value or area_filter_value:
+        logger.info(
+            "Applying task metadata filters project=%s area=%s",
+            project_filter_value,
+            area_filter_value,
+        )
+        metadata_filtered_tasks = [
+            task
+            for task in unfiltered_tasks
+            if (
+                (
+                    not project_filter_value
+                    or _matches_filter(task.get("project"), project_filter_value)
+                )
+                and (
+                    not area_filter_value
+                    or _matches_filter(task.get("area"), area_filter_value)
+                )
+            )
+        ]
+        if metadata_filtered_tasks:
+            tasks = metadata_filtered_tasks
+            logger.info("Tasks after metadata filter: %d", len(tasks))
+        else:
+            logger.info(
+                "Task metadata filter removed all tasks; falling back to unfiltered task list"
+            )
+            tasks = list(unfiltered_tasks)
 
     entries = read_entries()
     logger.info("Loaded %d energy entries", len(entries))
