@@ -639,6 +639,30 @@ if (askBtn) {
     }
   });
 }
+
+async function prefillEnergyMoodFromLatestEntry() {
+  try {
+    const res = await fetch('/energy');
+    ensureOkResponse(res);
+    const data = await res.json();
+    const latest = Array.isArray(data) ? data[data.length - 1] : null;
+    if (!latest) {
+      return;
+    }
+    const energyEl = document.getElementById('energy');
+    if (energyEl && typeof latest.energy !== 'undefined') {
+      energyEl.value = String(latest.energy);
+    }
+    const moodEl = document.getElementById('mood');
+    if (moodEl && typeof latest.mood === 'string') {
+      moodEl.value = latest.mood;
+    }
+  } catch (error) {
+    console.error('Unable to sync energy/mood from latest entry', error);
+  }
+}
+
+prefillEnergyMoodFromLatestEntry();
 </script>
 
 {% endblock %}

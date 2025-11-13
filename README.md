@@ -169,8 +169,11 @@ python record_energy.py 3 Joyful 8
 ```
 Energy is scored 1-5 and mood accepts one of Sad, Meh, Okay or Joyful,
 and the final argument specifies how many 15-minute blocks of free time you have.
-Energy entries are stored in `data/energy_log.yaml`.
-Recording again on the same day will update the existing entry instead of adding a new one.
+Every invocation appends a timestamped check-in to `data/energy_log.yaml`, so you can
+capture multiple entries per day while the planner and `/daily-tasks` always use the
+most recent one. Requesting a next-task suggestion via `/plan?mode=next_task`
+(the UI's Next task button) now records the mood and energy you supplied, so
+those recommendations become part of the logged history as well.
 
 ## Development
 Pushes and pull requests run automated checks on GitHub Actions. Formatting is

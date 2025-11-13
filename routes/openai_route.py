@@ -12,7 +12,7 @@ from fastapi import APIRouter, Body, HTTPException, Query
 from openai_client import OpenAIClientError, ask_chatgpt
 from prompt_renderer import render_prompt
 from tasks import upcoming_tasks
-from energy import read_entries, record_entry
+from energy import latest_entry, read_entries, record_entry
 from planner import save_plan, filter_tasks_by_energy
 from config import PROJECT_ROOT, config
 from task_selector import effective_energy_level, select_next_task
@@ -176,7 +176,15 @@ async def plan_endpoint(
         if snapshot:
             payload_snapshot = snapshot
 
-    if payload and has_all_payload_fields:
+    if selected_mode == "next_task":
+        recorded_entry = record_entry(payload_energy, payload_mood, payload_time_blocks)
+        logger.info(
+            "Persisted energy entry via API for next_task date=%s recorded_at=%s",
+            recorded_entry.get("date"),
+            recorded_entry.get("recorded_at"),
+        )
+        logger.debug("Persisted energy entry details: %s", recorded_entry)
+    elif payload and has_all_payload_fields:
         recorded_entry = record_entry(payload_energy, payload_mood, payload_time_blocks)
         logger.info(
             "Persisted energy entry via API for date=%s",
@@ -249,7 +257,8 @@ async def plan_endpoint(
     logger.info("Loaded %d energy entries", len(entries))
     if recorded_entry and recorded_entry not in entries:
         entries = [*entries, recorded_entry]
-    latest = recorded_entry or payload_snapshot or (entries[-1] if entries else {})
+    latest_record = latest_entry(entries)
+    latest = recorded_entry or payload_snapshot or (latest_record or {})
     energy_level = latest.get("energy")
     mood_value = latest.get("mood")
     target_energy = effective_energy_level(energy_level, mood_value)

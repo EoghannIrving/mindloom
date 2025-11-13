@@ -17,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 import yaml
 
 from config import config, PROJECT_ROOT
-from energy import MOOD_EMOJIS, read_entries
+from energy import MOOD_EMOJIS, latest_entry, read_entries
 from tasks import read_tasks, write_tasks, mark_tasks_complete, complete_task
 from planner import read_plan, parse_plan_reasons, _clean
 from parse_projects import write_tasks_to_projects
@@ -46,6 +46,7 @@ MOOD_CAPACITY_ADJUSTMENTS = {
     "Joyful": 1,
 }
 DEFAULT_ENERGY_LEVEL = 3
+DEFAULT_STATUS_FILTER = "active"
 
 
 class TaskCreateRequest(BaseModel):
@@ -258,16 +259,7 @@ def _latest_energy_entry(entries: list[dict] | None = None) -> dict | None:
     """Return the most recent energy entry, if any."""
 
     records = entries or read_entries()
-    latest_entry: dict | None = None
-    latest_date: date | None = None
-    for entry in records:
-        entry_date = _parse_due_date(entry.get("date"))
-        if not entry_date:
-            continue
-        if latest_date is None or entry_date > latest_date:
-            latest_entry = entry
-            latest_date = entry_date
-    return latest_entry
+    return latest_entry(records)
 
 
 def _summarize_energy_entry(entry: dict | None) -> dict:
@@ -301,14 +293,15 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
         {
             "energy": energy_value,
             "available_energy": available_energy,
-            "available_display": min(5, available_energy),
-            "mood": mood_value,
-            "emoji": MOOD_EMOJIS.get(mood_value, ""),
-            "time_blocks": entry.get("time_blocks"),
-            "has_entry": True,
-            "message": f"Based on {energy_value} energy and {mood_value} mood.",
-        }
-    )
+                "available_display": min(5, available_energy),
+                "mood": mood_value,
+                "emoji": MOOD_EMOJIS.get(mood_value, ""),
+                "time_blocks": entry.get("time_blocks"),
+                "recorded_at": entry.get("recorded_at"),
+                "has_entry": True,
+                "message": f"Based on {energy_value} energy and {mood_value} mood.",
+            }
+        )
     return summary
 
 
@@ -419,7 +412,11 @@ def manage_tasks_page(request: Request):
     tasks = read_tasks()
 
     query = request.query_params.get("q", "").strip()
-    selected_status = request.query_params.get("status", "").strip()
+    status_param_provided = "status" in request.query_params
+    selected_status = request.query_params.get("status", "")
+    selected_status = selected_status.strip()
+    if not status_param_provided and not selected_status:
+        selected_status = DEFAULT_STATUS_FILTER
     selected_project = request.query_params.get("project", "").strip()
     selected_area = request.query_params.get("area", "").strip()
     selected_type = request.query_params.get("type", "").strip()

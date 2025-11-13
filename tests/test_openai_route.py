@@ -570,10 +570,20 @@ def test_plan_endpoint_next_task_allows_missing_time_blocks(
     monkeypatch.setattr(openai_route, "read_entries", lambda: [])
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
 
-    def fail_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
-        pytest.fail("record_entry should not be called when time blocks are omitted")
+    record_calls: list[tuple[int, str, Optional[int]]] = []
 
-    monkeypatch.setattr(openai_route, "record_entry", fail_record_entry)
+    def fake_record_entry(
+        energy: int, mood: str, time_blocks: Optional[int] = None
+    ):
+        record_calls.append((energy, mood, time_blocks))
+        return {
+            "date": today,
+            "energy": energy,
+            "mood": mood,
+            "time_blocks": time_blocks,
+        }
+
+    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
 
     client = TestClient(app)
     resp = client.post("/plan?mode=next_task", json={"energy": 2, "mood": "Okay"})
@@ -582,6 +592,7 @@ def test_plan_endpoint_next_task_allows_missing_time_blocks(
     data = resp.json()
     assert data["plan"] == "Gentle"
     assert data["next_task"]["title"] == "Gentle"
+    assert record_calls == [(2, "Okay", None)]
 
 
 def test_plan_endpoint_next_task_requires_payload_body(monkeypatch: pytest.MonkeyPatch):
