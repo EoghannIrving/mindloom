@@ -89,6 +89,24 @@ def projects_page(request: Request):
     )
 
 
+@router.get("/energy-trends", response_class=HTMLResponse)
+def energy_trends_page(request: Request):
+    """Render the energy and mood trends dashboard."""
+
+    logger.info("GET /energy-trends")
+    entries = sorted(
+        read_entries(),
+        key=lambda entry: entry.get("recorded_at") or entry.get("date") or "",
+    )
+    return templates.TemplateResponse(
+        "energy_trends.html",
+        {
+            "request": request,
+            "entries": entries,
+        },
+    )
+
+
 @router.post("/render-prompt")
 def render_prompt_endpoint(data: dict = Body(...)):
     """Render a prompt template with optional variables."""

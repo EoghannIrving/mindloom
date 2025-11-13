@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+{% block title %}Energy Trends{% endblock %}
+{% block content %}
+  <div class="max-w-5xl mx-auto space-y-6 pb-10">
+    <section class="rounded-3xl border border-gray-200 bg-white/90 p-6 shadow-lg">
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Mood log</p>
+        <h1 class="text-3xl font-semibold text-gray-900">Energy &amp; mood trends</h1>
+        <p class="text-sm text-gray-600">
+          Visualize how your energy level and mood shift throughout the day and compare weekly, monthly,
+          or yearly averages to spot patterns.
+        </p>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-2 text-sm">
+        <button
+          type="button"
+          data-range="day"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-indigo-600 px-4 py-1 text-white shadow transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          aria-pressed="true"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          data-range="week"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Week
+        </button>
+        <button
+          type="button"
+          data-range="month"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          data-range="year"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Year
+        </button>
+      </div>
+      <div class="mt-6 rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50 p-6 shadow-inner">
+        <canvas id="energyChart" height="260" class="w-full"></canvas>
+        <p id="rangeStatus" class="mt-3 text-xs text-gray-500">
+          Loading entries…
+        </p>
+      </div>
+      <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest entry</p>
+          <p id="latestEnergy" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="latestMoodBadge" class="text-sm text-gray-600">Mood —</p>
+          <p id="latestTimestamp" class="mt-1 text-xs text-gray-400">No entries yet</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Range average</p>
+          <p id="rangeAverageEnergy" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="rangeAverageMood" class="text-sm text-gray-600">Mood —</p>
+          <p class="mt-2 text-xs text-gray-400">
+            Based on <span id="rangeEntryCount">0 entries</span>
+          </p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Coverage</p>
+          <p id="rangeSpan" class="mt-2 text-base font-medium text-gray-900">—</p>
+          <p class="mt-2 text-xs text-gray-400">
+            <span id="rangeLabelDisplay">Today</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const rawEntries = {{ entries|tojson }};
+      const entries = Array.isArray(rawEntries) ? rawEntries : [];
+      const moodScale = {
+        Sad: 1,
+        Meh: 2,
+        Okay: 3,
+        Joyful: 4,
+      };
+      const moodEmojis = {
+        Sad: '😔',
+        Meh: '😐',
+        Okay: '😊',
+        Joyful: '😍',
+      };
+      const rangeLabels = {
+        day: 'Today',
+        week: 'Last 7 days',
+        month: 'Last 30 days',
+        year: 'Last 365 days',
+      };
+
+      const parsedEntries = entries
+        .map((entry) => {
+          const recordedAtRaw = entry.recorded_at || entry.recordedAt || entry.date || '';
+          const parsedDate = recordedAtRaw ? new Date(recordedAtRaw) : new Date(entry.date || '');
+          const recordedAtTs = Number.isFinite(parsedDate.getTime()) ? parsedDate.getTime() : null;
+          const recordedDate = recordedAtTs
+            ? parsedDate.toISOString().slice(0, 10)
+            : (entry.date || '');
+          const timeLabel = recordedAtTs
+            ? parsedDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+            : '—';
+          const energyValue = Number(entry.energy);
+          const moodInput = typeof entry.mood === 'string' ? entry.mood.trim() : '';
+          const moodLabel = moodInput in moodScale ? moodInput : 'Okay';
+          return {
+            energy: Number.isFinite(energyValue) ? energyValue : null,
+            moodLabel,
+            recordedAt: recordedAtTs ? parsedDate.toISOString() : '',
+            recordedAtTs,
+            recordedDate,
+            timeLabel,
+          };
+        })
+        .filter((item) => item.recordedAtTs && item.energy !== null);
+
+      parsedEntries.sort((a, b) => (a.recordedAtTs ?? 0) - (b.recordedAtTs ?? 0));
+
+      const chartButtons = document.querySelectorAll('[data-range]');
+      const chartCanvas = document.getElementById('energyChart');
+      const rangeStatus = document.getElementById('rangeStatus');
+      const latestEnergyEl = document.getElementById('latestEnergy');
+      const latestMoodBadge = document.getElementById('latestMoodBadge');
+      const latestTimestamp = document.getElementById('latestTimestamp');
+      const rangeAverageEnergy = document.getElementById('rangeAverageEnergy');
+      const rangeAverageMood = document.getElementById('rangeAverageMood');
+      const rangeEntryCount = document.getElementById('rangeEntryCount');
+      const rangeSpan = document.getElementById('rangeSpan');
+      const rangeLabelDisplay = document.getElementById('rangeLabelDisplay');
+
+      let energyChart;
+
+      function moodMetadata(value) {
+        if (!Number.isFinite(value)) {
+          return { label: '—', emoji: '' };
+        }
+        let bestMatch = { label: 'Okay', value: 3 };
+        Object.entries(moodScale).forEach(([label, rating]) => {
+          if (Math.abs(rating - value) < Math.abs(bestMatch.value - value)) {
+            bestMatch = { label, value: rating };
+          }
+        });
+        return { label: bestMatch.label, emoji: moodEmojis[bestMatch.label] || '' };
+      }
+
+      function bucketEntries(range) {
+        const now = new Date();
+        const start = new Date(now);
+        if (range === 'day') {
+          start.setHours(0, 0, 0, 0);
+        } else {
+          const offsets = { week: 6, month: 29, year: 364 };
+          const offsetDays = offsets[range] ?? offsets.month;
+          start.setDate(start.getDate() - offsetDays);
+          start.setHours(0, 0, 0, 0);
+        }
+        const filtered = parsedEntries.filter(
+          (entry) => entry.recordedAtTs && entry.recordedAtTs >= start.getTime()
+        );
+        if (!filtered.length) {
+          return {
+            labels: [],
+            energyData: [],
+            moodData: [],
+            count: 0,
+            spanStart: null,
+            spanEnd: null,
+          };
+        }
+
+        if (range === 'day') {
+          const sorted = filtered.slice().sort((a, b) => a.recordedAtTs! - b.recordedAtTs!);
+          return {
+            labels: sorted.map((entry) => entry.timeLabel),
+            energyData: sorted.map((entry) => entry.energy!),
+            moodData: sorted.map((entry) => moodScale[entry.moodLabel] ?? 3),
+            count: sorted.length,
+            spanStart: sorted[0]?.timeLabel || null,
+            spanEnd:
+              sorted.length && sorted[sorted.length - 1].timeLabel
+                ? sorted[sorted.length - 1].timeLabel
+                : null,
+          };
+        }
+
+        const buckets = new Map();
+        filtered.forEach((entry) => {
+          const dayKey = entry.recordedDate || entry.recordedAt?.slice(0, 10);
+          if (!dayKey) {
+            return;
+          }
+          const bucket = buckets.get(dayKey) || { energy: 0, mood: 0, count: 0 };
+          bucket.energy += entry.energy ?? 0;
+          bucket.mood += moodScale[entry.moodLabel] ?? 3;
+          bucket.count += 1;
+          buckets.set(dayKey, bucket);
+        });
+
+        const sortedDays = Array.from(buckets.entries()).sort(([a], [b]) => a.localeCompare(b));
+        return {
+          labels: sortedDays.map(([day]) => day),
+          energyData: sortedDays.map(([, bucket]) => bucket.energy / bucket.count),
+          moodData: sortedDays.map(([, bucket]) => bucket.mood / bucket.count),
+          count: filtered.length,
+          spanStart: sortedDays[0]?.[0] || null,
+            spanEnd: sortedDays.length ? sortedDays[sortedDays.length - 1][0] : null,
+        };
+      }
+
+      function drawFallbackChart(data) {
+        if (!chartCanvas) {
+          return;
+        }
+        const ctx = chartCanvas.getContext('2d');
+        if (!ctx) {
+          return;
+        }
+        const width = chartCanvas.clientWidth;
+        const height = chartCanvas.height;
+        chartCanvas.width = width;
+        chartCanvas.height = height;
+        ctx.clearRect(0, 0, width, height);
+        const margin = 24;
+        const graphWidth = Math.max(1, width - margin * 2);
+        const graphHeight = Math.max(1, height - margin * 2);
+        const minEnergy = 0;
+        const maxEnergy = 5;
+        const minMood = 1;
+        const maxMood = 4;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.04)';
+        ctx.fillRect(0, 0, width, height);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.1)';
+        ctx.beginPath();
+        for (let i = 0; i <= 5; i += 1) {
+          const y = margin + (graphHeight * (5 - i)) / 5;
+          ctx.moveTo(margin, y);
+          ctx.lineTo(width - margin, y);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '11px system-ui';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i <= 5; i += 1) {
+          const y = margin + (graphHeight * (5 - i)) / 5;
+          ctx.fillText(`${i}`, 6, y);
+        }
+
+        const computePoints = (values, minValue, maxValue) => {
+          const denom = Math.max(values.length - 1, 1);
+          return values.map((value, index) => {
+            const clamped = Math.max(minValue, Math.min(maxValue, value));
+            const normalized =
+              maxValue === minValue ? 0.5 : (clamped - minValue) / (maxValue - minValue);
+            const x = margin + (graphWidth * index) / denom;
+            const y = margin + graphHeight * (1 - normalized);
+            return { x, y };
+          });
+        };
+
+        const energyPoints = computePoints(data.energyData, minEnergy, maxEnergy);
+        const moodPoints = computePoints(data.moodData, minMood, maxMood);
+
+        const drawLine = (points, color, widthPx) => {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = widthPx;
+          ctx.beginPath();
+          points.forEach((point, index) => {
+            if (index === 0) {
+              ctx.moveTo(point.x, point.y);
+              return;
+            }
+            ctx.lineTo(point.x, point.y);
+          });
+          ctx.stroke();
+        };
+
+        const drawPoints = (points, fill) => {
+          ctx.fillStyle = fill;
+          points.forEach((point) => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        };
+
+        drawLine(energyPoints, '#4f46e5', 3);
+        drawPoints(energyPoints, '#4f46e5');
+        drawLine(moodPoints, '#ea580c', 2);
+        drawPoints(moodPoints, '#ffffff');
+        ctx.fillStyle = '#ea580c';
+        moodPoints.forEach((point) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+          ctx.strokeStyle = '#ea580c';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = '12px system-ui';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillText(data.labels[0] || '', margin, height - margin + 4);
+        ctx.textAlign = 'right';
+        ctx.fillText(data.labels[data.labels.length - 1] || '', width - margin, height - margin + 4);
+      }
+
+      function ensureChart(data) {
+        if (!chartCanvas) {
+          return;
+        }
+        if (typeof Chart === 'function') {
+          const config = {
+            type: 'line',
+            data: {
+              labels: data.labels,
+              datasets: [
+                {
+                  label: 'Energy',
+                  data: data.energyData,
+                  borderColor: '#4f46e5',
+                  backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                  borderWidth: 3,
+                  pointRadius: 4,
+                  pointHoverRadius: 6,
+                  tension: 0.3,
+                  yAxisID: 'energyAxis',
+                },
+                {
+                  label: 'Mood',
+                  data: data.moodData,
+                  borderColor: '#ea580c',
+                  backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                  borderDash: [6, 6],
+                  borderWidth: 2,
+                  pointRadius: 3,
+                  pointHoverRadius: 5,
+                  tension: 0.3,
+                  yAxisID: 'moodAxis',
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: {
+                mode: 'nearest',
+                intersect: false,
+              },
+              scales: {
+                energyAxis: {
+                  type: 'linear',
+                  position: 'left',
+                  min: 0,
+                  max: 5,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                  grid: {
+                    color: 'rgba(99, 102, 241, 0.15)',
+                  },
+                },
+                moodAxis: {
+                  type: 'linear',
+                  position: 'right',
+                  min: 1,
+                  max: 4,
+                  ticks: {
+                    stepSize: 1,
+                    callback(value) {
+                      return value && moodMetadata(value).label;
+                    },
+                  },
+                  grid: {
+                    drawOnChartArea: false,
+                  },
+                },
+              },
+              plugins: {
+                legend: {
+                  labels: {
+                    boxWidth: 12,
+                    padding: 16,
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label(context) {
+                      const label = context.dataset.label || '';
+                      const value = context.parsed.y;
+                      if (label === 'Mood') {
+                        return `${label}: ${moodMetadata(value).label} (${value?.toFixed(2) ?? '—'})`;
+                      }
+                      return `${label}: ${value?.toFixed(1) ?? '—'}`;
+                    },
+                  },
+                },
+              },
+            },
+          };
+
+          if (!energyChart) {
+            energyChart = new Chart(chartCanvas, config);
+          } else {
+            energyChart.data.labels = data.labels;
+            energyChart.data.datasets[0].data = data.energyData;
+            energyChart.data.datasets[1].data = data.moodData;
+            energyChart.update();
+          }
+          return;
+        }
+
+        drawFallbackChart(data);
+      }
+
+      function refreshLatestEntry() {
+        if (!parsedEntries.length) {
+          latestEnergyEl.textContent = '—';
+          latestMoodBadge.textContent = 'Mood —';
+          latestTimestamp.textContent = 'No entries yet';
+          return;
+        }
+        const latest = parsedEntries.length ? parsedEntries[parsedEntries.length - 1] : null;
+        latestEnergyEl.textContent = latest?.energy?.toFixed(0) || '—';
+        const moodInfo = moodMetadata(moodScale[latest?.moodLabel] ?? 3);
+        latestMoodBadge.textContent = `${moodInfo.emoji} ${moodInfo.label}`;
+        latestTimestamp.textContent = latest?.recordedAt
+          ? new Date(latest.recordedAt).toLocaleString()
+          : latest?.recordedDate || '—';
+      }
+
+      function updateRangeState(range) {
+        chartButtons.forEach((button) => {
+          const isActive = button.dataset.range === range;
+          button.classList.toggle('bg-indigo-600', isActive);
+          button.classList.toggle('text-white', isActive);
+          button.classList.toggle('shadow', isActive);
+          button.classList.toggle('text-gray-700', !isActive);
+          button.setAttribute('aria-pressed', String(isActive));
+        });
+      }
+
+      function refreshRange(range) {
+        const data = bucketEntries(range);
+        const averageEnergy =
+          data.energyData.length > 0
+            ? data.energyData.reduce((acc, current) => acc + current, 0) / data.energyData.length
+            : null;
+        const averageMood =
+          data.moodData.length > 0
+            ? data.moodData.reduce((acc, current) => acc + current, 0) / data.moodData.length
+            : null;
+
+        rangeEntryCount.textContent = `${data.count} ${data.count === 1 ? 'entry' : 'entries'}`;
+        rangeSpan.textContent =
+          data.spanStart && data.spanEnd
+            ? `${data.spanStart} → ${data.spanEnd}`
+            : data.spanStart || '—';
+        rangeLabelDisplay.textContent = rangeLabels[range];
+
+        if (averageEnergy === null) {
+          rangeAverageEnergy.textContent = '—';
+        } else {
+          rangeAverageEnergy.textContent = averageEnergy.toFixed(1);
+        }
+        if (averageMood === null) {
+          rangeAverageMood.textContent = 'Mood —';
+        } else {
+          const { label, emoji } = moodMetadata(averageMood);
+          rangeAverageMood.textContent = `${emoji} ${label}`;
+        }
+
+        if (!data.labels.length) {
+          rangeStatus.textContent = `No entries recorded during ${rangeLabels[range].toLowerCase()}.`;
+          if (energyChart) {
+            energyChart.data.labels = [];
+            energyChart.data.datasets.forEach((dataset) => {
+              dataset.data = [];
+            });
+            energyChart.update();
+          }
+          return;
+        }
+
+        rangeStatus.textContent = `${rangeLabels[range]} · ${data.spanStart} – ${data.spanEnd}`;
+        ensureChart(data);
+      }
+
+      chartButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const range = button.dataset.range;
+          updateRangeState(range);
+          refreshRange(range);
+        });
+      });
+
+      refreshLatestEntry();
+      updateRangeState('day');
+      refreshRange('day');
+    });
+  </script>
+
+{% endblock %}
