@@ -17,7 +17,7 @@ from fastapi.templating import Jinja2Templates
 import yaml
 
 from config import config, PROJECT_ROOT
-from tasks import read_tasks, write_tasks, mark_tasks_complete
+from tasks import read_tasks, write_tasks, mark_tasks_complete, complete_task
 from planner import read_plan, filter_tasks_by_plan, parse_plan_reasons, _clean
 from parse_projects import write_tasks_to_projects
 from pydantic import BaseModel, Field
@@ -342,6 +342,7 @@ async def save_tasks(request: Request):
     tasks = read_tasks()
     submitted_ids: set[str] = set()
     deleted_ids: set[str] = set()
+    completed_ids: set[str] = set()
     for key in form.keys():
         if "-" not in key:
             continue
@@ -351,6 +352,8 @@ async def save_tasks(request: Request):
         submitted_ids.add(task_id)
         if field == "delete" and form.get(key) == "1":
             deleted_ids.add(task_id)
+        if field == "complete" and form.get(key) == "1":
+            completed_ids.add(task_id)
     fields = [
         "title",
         "project",
@@ -398,6 +401,8 @@ async def save_tasks(request: Request):
         for field in fields:
             key = f"{field}-{tid}"
             _update_field(task, field, form.get(key))
+        if tid in completed_ids:
+            complete_task(task)
         task.pop("next_due", None)
         task.pop("due_today", None)
         remaining_tasks.append(task)

@@ -14,9 +14,11 @@ from datetime import date, timedelta
 from tasks import (
     write_tasks,
     read_tasks,
+    read_tasks_raw,
     mark_tasks_complete,
     due_within,
     upcoming_tasks,
+    RECURRENCE_DAYS,
 )
 
 
@@ -62,6 +64,25 @@ def test_mark_tasks_complete(tmp_path: Path):
     assert count == 1
     assert updated[0]["status"] == "complete"
     assert updated[0]["last_completed"] == date.today().isoformat()
+
+
+def test_mark_tasks_complete_advances_recurring_due(tmp_path: Path):
+    """Recurring tasks should push the due date forward after completion."""
+    path = tmp_path / "tasks.yaml"
+    tasks = [
+        {
+            "id": 1,
+            "title": "habit",
+            "status": "active",
+            "recurrence": "weekly",
+            "due": (date.today() - timedelta(days=1)).isoformat(),
+        }
+    ]
+    write_tasks(tasks, path)
+    mark_tasks_complete([1], path)
+    saved = read_tasks_raw(path)
+    expected_due = (date.today() + timedelta(days=RECURRENCE_DAYS["weekly"])).isoformat()
+    assert saved[0]["due"] == expected_due
 
 
 def test_due_date_flag(tmp_path: Path):

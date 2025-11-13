@@ -21,7 +21,10 @@ LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    try:
+        handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+    except PermissionError:
+        handler = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -46,6 +49,17 @@ def _next_due(task: Dict, today: date) -> date:
 
     days = RECURRENCE_DAYS.get(str(task.get("recurrence", "")).lower())
     return base + timedelta(days=days) if days else base
+
+
+def complete_task(task: Dict, today: date | None = None) -> None:
+    """Mark a single task as complete and advance recurring due dates."""
+    today_date = today or date.today()
+    iso_today = today_date.isoformat()
+    task["status"] = "complete"
+    task["last_completed"] = iso_today
+    if task.get("recurrence"):
+        next_due = _next_due(task, today_date)
+        task["due"] = next_due.isoformat()
 
 
 def apply_recurrence(tasks: List[Dict], today: date | None = None) -> List[Dict]:
@@ -98,12 +112,11 @@ def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     if task_ids:
         logger.debug("Task ids to complete: %s", task_ids)
     tasks = read_tasks(path)
-    today = date.today().isoformat()
+    today_date = date.today()
     count = 0
     for task in tasks:
         if task.get("id") in task_ids:
-            task["status"] = "complete"
-            task["last_completed"] = today
+            complete_task(task, today_date)
             count += 1
         task.pop("next_due", None)
         task.pop("due_today", None)

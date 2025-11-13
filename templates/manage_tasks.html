@@ -326,6 +326,21 @@
             {% if t.type %}
               <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.type }}</span>
             {% endif %}
+            <label
+              for="complete-{{ t.id }}"
+              class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2 py-1 text-slate-500 transition hover:border-slate-300"
+              data-task-complete-label-for="complete-{{ t.id }}"
+            >
+              <input
+                id="complete-{{ t.id }}"
+                name="complete-{{ t.id }}"
+                type="checkbox"
+                value="1"
+                class="h-4 w-4 cursor-pointer rounded-sm border-slate-200 text-amber-500 focus:ring-amber-300"
+                data-task-complete
+              />
+              <span class="text-[11px] font-semibold uppercase tracking-wide">Complete</span>
+            </label>
             <button
               type="button"
               class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-rose-700 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
@@ -675,6 +690,20 @@
                 taskDetails.remove();
               }
             });
+          });
+          const completeCheckboxes = manageTasksForm.querySelectorAll('[data-task-complete]');
+          completeCheckboxes.forEach((checkbox) => {
+            const stopToggle = (event) => {
+              event.stopPropagation();
+            };
+            checkbox.addEventListener('click', stopToggle);
+            checkbox.addEventListener('keydown', stopToggle);
+            const label = manageTasksForm.querySelector(
+              `[data-task-complete-label-for="${checkbox.id}"]`
+            );
+            if (label) {
+              label.addEventListener('click', stopToggle);
+            }
           });
         }
 
