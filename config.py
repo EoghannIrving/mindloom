@@ -38,6 +38,9 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     VAULT_PATH: Path = Field(DEFAULT_VAULT, env="VAULT_PATH")
     OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
     TASKS_PATH: Path = Field(PROJECT_ROOT / "data/tasks.yaml", env="TASKS_PATH")
+    TASK_COMPLETIONS_PATH: Path = Field(
+        PROJECT_ROOT / "data/task_completions.yaml", env="TASK_COMPLETIONS_PATH"
+    )
 
     LOG_DIR: Path = Field(PROJECT_ROOT / "data/logs", env="LOG_DIR")
     ENERGY_LOG_PATH: Path = Field(
@@ -70,6 +73,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         self.VAULT_PATH = self.VAULT_PATH.expanduser()
         self.OUTPUT_PATH = self.OUTPUT_PATH.expanduser()
         self.TASKS_PATH = self.TASKS_PATH.expanduser()
+        self.TASK_COMPLETIONS_PATH = self.TASK_COMPLETIONS_PATH.expanduser()
         self.LOG_DIR = self.LOG_DIR.expanduser()
         self.ENERGY_LOG_PATH = self.ENERGY_LOG_PATH.expanduser()
         self.PLAN_PATH = self.PLAN_PATH.expanduser()
@@ -92,6 +96,9 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
             fallback_data.mkdir(parents=True, exist_ok=True)
             self.OUTPUT_PATH = fallback_data / self.OUTPUT_PATH.name
             self.TASKS_PATH = fallback_data / self.TASKS_PATH.name
+            self.TASK_COMPLETIONS_PATH = (
+                fallback_data / Path(self.TASK_COMPLETIONS_PATH).name
+            )
             self.ENERGY_LOG_PATH = fallback_data / Path(self.ENERGY_LOG_PATH).name
             self.PLAN_PATH = fallback_data / Path(self.PLAN_PATH).name
             self.CALENDAR_ICS_PATH = str(

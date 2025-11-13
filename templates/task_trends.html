@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}Task Trends{% endblock %}
+{% block content %}
+  <div class="max-w-5xl mx-auto space-y-6 pb-10">
+    <section class="rounded-3xl border border-gray-200 bg-white/90 p-6 shadow-lg">
+      <div class="space-y-2">
+        <p class="text-xs font-semibold uppercase tracking-wider text-indigo-600">Task log</p>
+        <h1 class="text-3xl font-semibold text-gray-900">Completed task trends</h1>
+        <p class="text-sm text-gray-600">
+          Monitor how often you finish tasks, which ones require more energy, and whether they landed on time or late.
+        </p>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-2 text-sm">
+        <button
+          type="button"
+          data-range="day"
+          aria-pressed="false"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          data-range="week"
+          aria-pressed="true"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-indigo-600 px-4 py-1 text-white shadow transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Week
+        </button>
+        <button
+          type="button"
+          data-range="month"
+          aria-pressed="false"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Month
+        </button>
+        <button
+          type="button"
+          data-range="year"
+          aria-pressed="false"
+          class="range-toggle inline-flex items-center rounded-full border border-indigo-200 bg-white px-4 py-1 text-gray-700 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+        >
+          Year
+        </button>
+      </div>
+      <div class="mt-6 rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50 p-6 shadow-inner">
+        <div class="relative h-[260px] w-full">
+          <canvas id="taskChart" class="h-full w-full block"></canvas>
+        </div>
+        <p id="rangeStatus" class="mt-3 text-xs text-gray-500">Loading completions…</p>
+      </div>
+      <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest completion</p>
+          <p id="latestCompletionTitle" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="latestCompletionMeta" class="text-sm text-gray-600">No completions yet</p>
+          <p id="latestCompletionEnergy" class="mt-2 text-xs text-gray-400">Energy —</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Average energy (range)</p>
+          <p id="rangeAverageEnergy" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="rangeEntryCount" class="text-sm text-gray-600">0 completions</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">On-time ratio</p>
+          <p id="onTimeRatio" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="lateCount" class="text-sm text-gray-600">Late 0</p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Range span</p>
+          <p id="rangeSpan" class="mt-2 text-base font-medium text-gray-900">—</p>
+          <p id="rangeLabelDisplay" class="text-xs text-gray-400">Week</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const rawCompletions = {{ completions|tojson }};
+      const entries = Array.isArray(rawCompletions) ? rawCompletions : [];
+      const rangeLabels = {
+        day: 'Today',
+        week: 'Last 7 days',
+        month: 'Last 30 days',
+        year: 'Last 365 days',
+      };
+
+      const chartButtons = document.querySelectorAll('[data-range]');
+      const chartCanvas = document.getElementById('taskChart');
+      const rangeStatus = document.getElementById('rangeStatus');
+      const latestTitle = document.getElementById('latestCompletionTitle');
+      const latestMeta = document.getElementById('latestCompletionMeta');
+      const latestEnergy = document.getElementById('latestCompletionEnergy');
+      const rangeAverage = document.getElementById('rangeAverageEnergy');
+      const rangeEntryCount = document.getElementById('rangeEntryCount');
+      const onTimeRatio = document.getElementById('onTimeRatio');
+      const lateCount = document.getElementById('lateCount');
+      const rangeSpan = document.getElementById('rangeSpan');
+      const rangeLabelDisplay = document.getElementById('rangeLabelDisplay');
+      const MS_PER_DAY = 1000 * 60 * 60 * 24;
+      let taskChart;
+
+      function ensureUtcSuffix(value) {
+        if (!value || typeof value !== 'string') {
+          return '';
+        }
+        const trimmed = value.trim();
+        const hasOffset = trimmed.endsWith('Z') || /[+-]\\d{2}:\\d{2}$/.test(trimmed);
+        return hasOffset ? trimmed : `${trimmed}T00:00:00Z`;
+      }
+
+      function parseUtc(value) {
+        const normalized = ensureUtcSuffix(value);
+        if (!normalized) {
+          return null;
+        }
+        const parsed = new Date(normalized);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      }
+
+      function formatShortDate(date) {
+        if (!date) {
+          return '—';
+        }
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }
+
+      function formatLongDate(date) {
+        if (!date) {
+          return '—';
+        }
+        return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      function formatRangeLabel(start, end) {
+        if (!start || !end) {
+          return '—';
+        }
+        if (start.toDateString() === end.toDateString()) {
+          return formatLongDate(start);
+        }
+        return `${formatLongDate(start)} – ${formatLongDate(end)}`;
+      }
+
+      const parsedEntries = entries
+        .map((entry) => {
+          const completedDate = parseUtc(entry.completed_at || entry.completedAt);
+          const dueDate = parseUtc(entry.due);
+          if (!completedDate) {
+            return null;
+          }
+          const energyValue = Number(entry.energy_cost ?? entry.energyCost);
+          const completedLabel = completedDate.toISOString().slice(0, 10);
+          const isLate = !!dueDate && completedDate.getTime() > dueDate.getTime();
+          const daysLate = isLate
+            ? Math.max(1, Math.ceil((completedDate.getTime() - dueDate.getTime()) / MS_PER_DAY))
+            : 0;
+          return {
+            title: entry.title || 'Task',
+            project: entry.project || '',
+            energyCost: Number.isFinite(energyValue) ? energyValue : 0,
+            completedTs: completedDate.getTime(),
+            completedDate,
+            completedLabel,
+            dueDate,
+            isLate,
+            daysLate,
+          };
+        })
+        .filter(Boolean);
+
+      parsedEntries.sort((a, b) => (a.completedTs || 0) - (b.completedTs || 0));
+      const latestEntry = parsedEntries[parsedEntries.length - 1] ?? null;
+
+      function buildRangeData(range) {
+        const offsets = { day: 0, week: 6, month: 29, year: 364 };
+        const daysBack = offsets[range] ?? offsets.month;
+        const now = new Date();
+        const start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - daysBack);
+        const filtered = parsedEntries.filter((entry) => entry.completedTs >= start.getTime());
+        const buckets = new Map();
+        let totalEnergy = 0;
+        let onTime = 0;
+        let late = 0;
+        filtered.forEach((entry) => {
+          const key = entry.completedLabel;
+          if (!key) {
+            return;
+          }
+          const bucket = buckets.get(key) || { count: 0, energy: 0 };
+          bucket.count += 1;
+          bucket.energy += entry.energyCost;
+          buckets.set(key, bucket);
+          totalEnergy += entry.energyCost;
+          if (entry.isLate) {
+            late += 1;
+          } else {
+            onTime += 1;
+          }
+        });
+        const sortedBuckets = Array.from(buckets.entries()).sort(([a], [b]) => a.localeCompare(b));
+        const labels = sortedBuckets.map(([label]) => label);
+        const counts = sortedBuckets.map(([, bucket]) => bucket.count);
+        const energyPoints = sortedBuckets.map(([, bucket]) => bucket.energy / bucket.count);
+        return {
+          labels,
+          counts,
+          energyPoints,
+          total: filtered.length,
+          totalEnergy,
+          onTime,
+          late,
+          spanStart: labels[0] || null,
+          spanEnd: labels[labels.length - 1] || null,
+        };
+      }
+
+      function renderLatest(entry) {
+        if (!entry) {
+          latestTitle.textContent = '—';
+          latestMeta.textContent = 'No completions yet';
+          latestEnergy.textContent = 'Energy —';
+          return;
+        }
+        latestTitle.textContent = entry.title;
+        const dueLabel = entry.dueDate ? formatLongDate(entry.dueDate) : 'No due date';
+        const statusLabel = entry.isLate
+          ? `Late by ${entry.daysLate} day${entry.daysLate === 1 ? '' : 's'}`
+          : 'On time';
+        latestMeta.textContent = `Completed ${formatLongDate(entry.completedDate)} · ${dueLabel} · ${statusLabel}`;
+        latestEnergy.textContent = `Energy ${entry.energyCost}`;
+      }
+
+      function updateStats(range, data) {
+        rangeLabelDisplay.textContent = rangeLabels[range] || 'Range';
+        if (data.total) {
+          const entryLabel = data.total === 1 ? 'completion' : 'completions';
+          rangeStatus.textContent = `${data.total} ${entryLabel} logged`;
+          const average = (data.totalEnergy / data.total).toFixed(1);
+          rangeAverage.textContent = `${average} / 5 energy`;
+          rangeEntryCount.textContent = `${data.total} ${entryLabel}`;
+          const onTimePercent = Math.round((data.onTime / data.total) * 100);
+          onTimeRatio.textContent = `${data.onTime} / ${data.total} (${onTimePercent}%)`;
+        } else {
+          rangeStatus.textContent = 'No completions logged in this range.';
+          rangeAverage.textContent = '—';
+          rangeEntryCount.textContent = '0 completions';
+          onTimeRatio.textContent = '—';
+        }
+        lateCount.textContent = `Late ${data.late}`;
+        if (data.spanStart && data.spanEnd) {
+          const start = parseUtc(data.spanStart);
+          const end = parseUtc(data.spanEnd);
+          rangeSpan.textContent = formatRangeLabel(start, end);
+        } else {
+          rangeSpan.textContent = rangeLabels[range] || '—';
+        }
+      }
+
+      function updateButtonStates(activeRange) {
+        chartButtons.forEach((button) => {
+          const isActive = button.dataset.range === activeRange;
+          button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          if (isActive) {
+            button.classList.add('bg-indigo-600', 'text-white', 'shadow');
+            button.classList.remove('bg-white', 'text-gray-700', 'shadow-sm');
+          } else {
+            button.classList.add('bg-white', 'text-gray-700', 'shadow-sm');
+            button.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+          }
+        });
+      }
+
+      function renderChart(rangeData) {
+        if (!chartCanvas || typeof Chart !== 'function') {
+          return;
+        }
+        const config = {
+          type: 'bar',
+          data: {
+            labels: rangeData.labels,
+            datasets: [
+              {
+                label: 'Completions',
+                data: rangeData.counts,
+                backgroundColor: '#4f46e5',
+                borderRadius: 8,
+                yAxisID: 'countAxis',
+              },
+              {
+                type: 'line',
+                label: 'Avg energy',
+                data: rangeData.energyPoints,
+                borderColor: '#ec4899',
+                backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                borderWidth: 2,
+                tension: 0.35,
+                yAxisID: 'energyAxis',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                spanGaps: true,
+              },
+            ],
+          },
+          options: {
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            maintainAspectRatio: false,
+            scales: {
+              countAxis: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                },
+              },
+              energyAxis: {
+                type: 'linear',
+                position: 'right',
+                min: 0,
+                max: 5,
+                ticks: {
+                  stepSize: 1,
+                },
+                grid: {
+                  drawOnChartArea: false,
+                },
+              },
+              x: {
+                grid: {
+                  display: false,
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
+            },
+          },
+        };
+        if (taskChart) {
+          taskChart.destroy();
+        }
+        taskChart = new Chart(chartCanvas, config);
+      }
+
+      function setRange(range) {
+        const normalized = rangeLabels[range] ? range : 'week';
+        updateButtonStates(normalized);
+        const rangeData = buildRangeData(normalized);
+        updateStats(normalized, rangeData);
+        renderChart(rangeData);
+      }
+
+      renderLatest(latestEntry);
+      chartButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const nextRange = button.dataset.range;
+          setRange(nextRange);
+        });
+      });
+
+      setRange('week');
+    });
+  </script>
+{% endblock %}

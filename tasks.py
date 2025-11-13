@@ -7,17 +7,19 @@ from __future__ import annotations
 import logging
 from datetime import date, timedelta
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 import yaml
 
 from config import config
+from utils.tasks import resolve_energy_cost
 
 TASKS_FILE = Path(config.TASKS_PATH)
 TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 LOG_FILE = Path(config.LOG_DIR) / "tasks.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+COMPLETION_LOG_PATH = Path(config.TASK_COMPLETIONS_PATH)
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
@@ -63,6 +65,7 @@ def complete_task(task: Dict, today: date | None = None) -> None:
     today_date = today or date.today()
     iso_today = today_date.isoformat()
     task["last_completed"] = iso_today
+    record_task_completion(task, completed_at=iso_today)
     if task.get("recurrence"):
         task["status"] = "active"
         next_due = _next_due(task, today_date)
@@ -133,6 +136,90 @@ def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     write_tasks(tasks, path)
     logger.info("Updated %d tasks", count)
     return count
+
+
+def _normalize_completion_timestamp(value: date | str | None) -> str | None:
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, str):
+        candidate = value.strip()
+        return candidate or None
+    return None
+
+
+def read_task_completions(path: Path | None = None) -> List[Dict]:
+    target = path or COMPLETION_LOG_PATH
+    if not target.exists():
+        return []
+    with open(target, "r", encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or []
+    if isinstance(data, list):
+        return data
+    return []
+
+
+def _write_task_completions(entries: List[Dict], path: Path | None = None) -> None:
+    target = path or COMPLETION_LOG_PATH
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open(target, "w", encoding="utf-8") as handle:
+        yaml.dump(entries, handle, sort_keys=False, allow_unicode=True)
+
+
+def record_task_completion(
+    task: Dict,
+    *,
+    completed_at: str | date | None = None,
+    path: Path | None = None,
+) -> None:
+    timestamp = _normalize_completion_timestamp(
+        completed_at or task.get("last_completed")
+    )
+    if not timestamp:
+        return
+    entry = {
+        "task_id": task.get("id"),
+        "title": str(task.get("title") or "Task"),
+        "project": str(task.get("project") or ""),
+        "area": str(task.get("area") or ""),
+        "due": str(task.get("due") or ""),
+        "completed_at": timestamp,
+        "energy_cost": resolve_energy_cost(task),
+    }
+    entries = read_task_completions(path=path)
+    seen = {(item.get("task_id"), item.get("completed_at")) for item in entries}
+    key = (entry["task_id"], entry["completed_at"])
+    if key in seen:
+        return
+    entries.append(entry)
+    _write_task_completions(entries, path=path)
+
+
+def task_completion_history(
+    tasks_list: List[Dict] | None = None, path: Path | None = None
+) -> List[Dict]:
+    history = read_task_completions(path=path)
+    seen = {(item.get("task_id"), item.get("completed_at")) for item in history}
+    tasks_candidate = tasks_list or read_tasks()
+    for task in tasks_candidate:
+        last_completed = task.get("last_completed")
+        if not last_completed:
+            continue
+        key = (task.get("id"), str(last_completed))
+        if key in seen:
+            continue
+        history.append(
+            {
+                "task_id": task.get("id"),
+                "title": str(task.get("title") or "Task"),
+                "project": str(task.get("project") or ""),
+                "area": str(task.get("area") or ""),
+                "due": str(task.get("due") or ""),
+                "completed_at": str(last_completed),
+                "energy_cost": resolve_energy_cost(task),
+            }
+        )
+        seen.add(key)
+    return history
 
 
 def due_within(

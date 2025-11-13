@@ -19,6 +19,9 @@ from tasks import (
     due_within,
     upcoming_tasks,
     RECURRENCE_DAYS,
+    read_task_completions,
+    record_task_completion,
+    task_completion_history,
 )
 
 
@@ -169,3 +172,31 @@ def test_upcoming_tasks(tmp_path: Path):
     assert "overdue" in titles
     assert "soon" in titles
     assert "later" not in titles
+
+
+def test_record_task_completion_logs_entry(tmp_path: Path):
+    """record_task_completion should persist a single completion per timestamp."""
+    log_path = tmp_path / "completions.yaml"
+    task = {"id": 4, "title": "demo", "status": "active", "effort": "medium"}
+    record_task_completion(task, completed_at=date.today(), path=log_path)
+    history = read_task_completions(path=log_path)
+    assert len(history) == 1
+    assert history[0]["title"] == "demo"
+    assert history[0]["completed_at"] == date.today().isoformat()
+    record_task_completion(task, completed_at=date.today(), path=log_path)
+    assert len(read_task_completions(path=log_path)) == 1
+
+
+def test_task_completion_history_merges_last_completed(tmp_path: Path):
+    """task_completion_history should fall back to last_completed when log is empty."""
+    log_path = tmp_path / "completions.yaml"
+    completed_iso = date.today().isoformat()
+    tasks = [{"id": 5, "title": "merge-test", "last_completed": completed_iso}]
+    history = task_completion_history(tasks_list=tasks, path=log_path)
+    assert history
+    assert history[0]["completed_at"] == completed_iso
+    assert history[0]["title"] == "merge-test"
+
+    record_task_completion(tasks[0], completed_at=completed_iso, path=log_path)
+    merged = task_completion_history(tasks_list=tasks, path=log_path)
+    assert len(merged) == 1

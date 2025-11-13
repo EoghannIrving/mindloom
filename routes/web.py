@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from prompt_renderer import render_prompt
-from tasks import read_tasks, upcoming_tasks
+from tasks import read_tasks, task_completion_history, upcoming_tasks
 from energy import read_entries
 from calendar_integration import load_events
 from utils.logging import configure_logger
@@ -103,6 +103,24 @@ def energy_trends_page(request: Request):
         {
             "request": request,
             "entries": entries,
+        },
+    )
+
+
+@router.get("/task-trends", response_class=HTMLResponse)
+def task_trends_page(request: Request):
+    """Render a dashboard tracking completed tasks and their energy cost."""
+
+    logger.info("GET /task-trends")
+    completions = sorted(
+        task_completion_history(),
+        key=lambda entry: entry.get("completed_at") or "",
+    )
+    return templates.TemplateResponse(
+        "task_trends.html",
+        {
+            "request": request,
+            "completions": completions,
         },
     )
 

@@ -28,6 +28,8 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
   configured.
 - Automatically pull calendar events from linked `.ics` files or Google Calendar when visiting the `/calendar` page, caching them in `data/calendar_cache.json`.
 - Visualize logged energy and mood trends for the current day, week, month, or year on the `/energy-trends` dashboard.
+- Track completed tasks, their energy cost, and whether they landed on time or late through `/task-trends`.
+- Backfill the task completion log with every historical `last_completed` entry via `python scripts/seed_task_completions.py`.
 - Containerized setup using Docker and docker-compose.
 - **Planned**: flexible input modes (voice, image capture, quick log) after the UI milestone.
 
