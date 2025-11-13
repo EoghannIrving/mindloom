@@ -333,7 +333,15 @@
               {{ (t.status or 'unknown')|title }}
             </span>
             {% if t.is_overdue %}
-              <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-700">Overdue</span>
+              <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-700">
+                <span class="sr-only">Overdue</span>
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="16" rx="3" ry="3"></rect>
+                  <path d="M3 9h18"></path>
+                  <path d="M8 1v4"></path>
+                  <path d="M16 1v4"></path>
+                </svg>
+              </span>
             {% elif t.is_due_today %}
               <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">
                 <span class="sr-only">Due today</span>

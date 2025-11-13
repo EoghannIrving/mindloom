@@ -214,8 +214,10 @@ def _annotate_task(task: dict, today: date) -> dict:
 
     due_date = _task_due_date(task)
     task["due_date_normalized"] = due_date.isoformat() if due_date else None
-    task["is_overdue"] = bool(due_date and due_date < today)
-    task["is_due_today"] = bool(due_date and due_date == today)
+    status = str(task.get("status", "")).lower()
+    is_complete = status == "complete"
+    task["is_overdue"] = bool(due_date and due_date < today and not is_complete)
+    task["is_due_today"] = bool(due_date and due_date == today and not is_complete)
     task["_due_sort_key"] = due_date or date.max
     return task
 
