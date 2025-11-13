@@ -99,7 +99,12 @@ def select_next_task(
     for task in tasks:
         due = _due_date_value(task)
         cost = _energy_cost(task)
-        energy_penalty = abs(cost - target_energy) if cost is not None else 0
+        if cost is None:
+            energy_penalty = target_energy
+        elif cost <= target_energy:
+            energy_penalty = target_energy - cost
+        else:
+            energy_penalty = cost
 
         exec_weight = _executive_weight(task)
         executive_penalty = (

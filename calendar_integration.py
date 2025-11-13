@@ -11,7 +11,10 @@ from pathlib import Path
 from typing import List
 from zoneinfo import ZoneInfo
 
-from ics import Calendar
+try:
+    from ics import Calendar
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    Calendar = None
 
 from config import config, PROJECT_ROOT
 
@@ -44,6 +47,15 @@ if not logger.handlers:
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
+
+if Calendar is None:
+    class Calendar:  # pragma: no cover - fallback when dependency missing
+        def __init__(self, text: str | None = None) -> None:
+            self.events = []
+
+    logger.warning(
+        "ICS dependency not available; .ics event parsing will be skipped."
+    )
 
 
 @dataclass

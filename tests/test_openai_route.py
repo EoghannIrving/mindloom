@@ -232,7 +232,7 @@ def test_plan_endpoint_next_task_with_project_filter_and_no_matches(
             "id": 1,
             "title": "General Task",
             "due": today,
-            "energy_cost": 2,
+        "energy_cost": 1,
             "project": "Other",
         }
     ]
@@ -320,7 +320,7 @@ def test_select_next_task_penalizes_executive_trigger():
             "id": 1,
             "title": "High Friction",
             "due": today,
-            "energy_cost": 2,
+        "energy_cost": 1,
             "executive_trigger": "high",
         },
         {
@@ -337,10 +337,23 @@ def test_select_next_task_penalizes_executive_trigger():
     assert selected["title"] == "Low Friction"
     assert reasoning == {
         "due_date": today,
-        "energy_penalty": 1,
-        "executive_penalty": 0,
-        "total_score": 1,
+        "energy_penalty": 0,
+        "executive_penalty": 2,
+        "total_score": 2,
     }
+
+
+def test_select_next_task_prefers_high_energy_within_limits():
+    today = date.today().isoformat()
+    tasks = [
+        {"id": 1, "title": "Easy Win", "due": today, "energy_cost": 1},
+        {"id": 2, "title": "High Reward", "due": today, "energy_cost": 3},
+    ]
+
+    selected, reasoning = select_next_task(tasks, mood="meh", energy_level=3)
+
+    assert selected["title"] == "High Reward"
+    assert reasoning["energy_penalty"] == 0
 
 
 def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPatch):
