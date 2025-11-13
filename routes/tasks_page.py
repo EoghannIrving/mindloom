@@ -17,8 +17,9 @@ from fastapi.templating import Jinja2Templates
 import yaml
 
 from config import config, PROJECT_ROOT
+from energy import MOOD_EMOJIS, read_entries
 from tasks import read_tasks, write_tasks, mark_tasks_complete, complete_task
-from planner import read_plan, filter_tasks_by_plan, parse_plan_reasons, _clean
+from planner import read_plan, parse_plan_reasons, _clean
 from parse_projects import write_tasks_to_projects
 from pydantic import BaseModel, Field
 
@@ -38,6 +39,13 @@ if not logger.handlers:
 
 
 ENERGY_MAPPING = {"low": 1, "medium": 3, "high": 5}
+MOOD_CAPACITY_ADJUSTMENTS = {
+    "Sad": -1,
+    "Meh": -0.5,
+    "Okay": 0,
+    "Joyful": 1,
+}
+DEFAULT_ENERGY_LEVEL = 3
 
 
 class TaskCreateRequest(BaseModel):
@@ -147,14 +155,28 @@ def create_task(payload: TaskCreateRequest):
 def tasks_page(request: Request):
     """Display all saved tasks with checkboxes."""
     logger.info("GET /daily-tasks")
+    today = date.today()
     tasks = read_tasks()
     plan = read_plan()
     reasons = parse_plan_reasons(plan)
-    tasks = filter_tasks_by_plan(tasks, plan)
-    for task in tasks:
-        task["reason"] = reasons.get(_clean(str(task.get("title", ""))), "")
+    energy_entries = read_entries()
+    latest_entry = _latest_energy_entry(energy_entries)
+    energy_summary = _summarize_energy_entry(latest_entry)
+
+    due_today = _collect_due_today_tasks(tasks, today, reasons)
+    achievable_tasks, over_limit_tasks = _score_due_tasks(
+        due_today, energy_summary["available_energy"]
+    )
+
     return templates.TemplateResponse(
-        "tasks.html", {"request": request, "tasks": tasks}
+        "tasks.html",
+        {
+            "request": request,
+            "achievable_tasks": achievable_tasks,
+            "over_limit_tasks": over_limit_tasks,
+            "energy_summary": energy_summary,
+            "today": today,
+        },
     )
 
 
@@ -181,10 +203,16 @@ def _parse_due_date(value: str | date | None) -> date | None:
     return None
 
 
+def _task_due_date(task: dict) -> date | None:
+    """Determine the next relevant due date for a task."""
+
+    return _parse_due_date(task.get("next_due") or task.get("due"))
+
+
 def _annotate_task(task: dict, today: date) -> dict:
     """Attach sorting helpers and due date flags to a task."""
 
-    due_date = _parse_due_date(task.get("due"))
+    due_date = _task_due_date(task)
     task["due_date_normalized"] = due_date.isoformat() if due_date else None
     task["is_overdue"] = bool(due_date and due_date < today)
     task["is_due_today"] = bool(due_date and due_date == today)
@@ -221,7 +249,133 @@ def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
                 str(task.get("title", "")),
             ),
         )
-    return tasks
+        return tasks
+
+
+def _latest_energy_entry(entries: list[dict] | None = None) -> dict | None:
+    """Return the most recent energy entry, if any."""
+
+    records = entries or read_entries()
+    latest_entry: dict | None = None
+    latest_date: date | None = None
+    for entry in records:
+        entry_date = _parse_due_date(entry.get("date"))
+        if not entry_date:
+            continue
+        if latest_date is None or entry_date > latest_date:
+            latest_entry = entry
+            latest_date = entry_date
+    return latest_entry
+
+
+def _summarize_energy_entry(entry: dict | None) -> dict:
+    """Translate an energy entry into context used on the UI."""
+
+    summary = {
+        "entry": entry,
+        "energy": DEFAULT_ENERGY_LEVEL,
+        "available_energy": float(DEFAULT_ENERGY_LEVEL),
+        "available_display": float(DEFAULT_ENERGY_LEVEL),
+        "mood": "Okay",
+        "emoji": MOOD_EMOJIS.get("Okay", ""),
+        "time_blocks": None,
+        "has_entry": False,
+        "message": "Record today's energy to unlock personalized ordering.",
+    }
+    if not entry:
+        return summary
+
+    try:
+        energy_value = int(entry.get("energy", DEFAULT_ENERGY_LEVEL))
+    except (TypeError, ValueError):
+        energy_value = DEFAULT_ENERGY_LEVEL
+
+    raw_mood = str(entry.get("mood") or "Okay").capitalize()
+    mood_value = raw_mood if raw_mood else "Okay"
+    adjustment = MOOD_CAPACITY_ADJUSTMENTS.get(mood_value, 0)
+    available_energy = max(0.5, energy_value + adjustment)
+
+    summary.update(
+        {
+            "energy": energy_value,
+            "available_energy": available_energy,
+            "available_display": min(5, available_energy),
+            "mood": mood_value,
+            "emoji": MOOD_EMOJIS.get(mood_value, ""),
+            "time_blocks": entry.get("time_blocks"),
+            "has_entry": True,
+            "message": f"Based on {energy_value} energy and {mood_value} mood.",
+        }
+    )
+    return summary
+
+
+def _resolve_energy_cost(task: dict) -> int:
+    """Normalize the stored energy cost to an integer."""
+
+    value = task.get("energy_cost")
+    if value is None:
+        effort = str(task.get("effort") or "low").lower()
+        return ENERGY_MAPPING.get(effort, ENERGY_MAPPING["low"])
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        effort = str(task.get("effort") or "low").lower()
+        return ENERGY_MAPPING.get(effort, ENERGY_MAPPING["low"])
+
+
+def _collect_due_today_tasks(
+    tasks: list[dict], today: date, reasons: dict[str, str]
+) -> list[dict]:
+    """Return the subset of incomplete tasks explicitly due today."""
+
+    due_tasks: list[dict] = []
+    for original in tasks:
+        if str(original.get("status", "")).lower() == "complete":
+            continue
+        due_date = _task_due_date(original)
+        if not due_date or due_date != today:
+            continue
+        task = dict(original)
+        task["due_date_normalized"] = due_date.isoformat()
+        title_key = _clean(str(task.get("title", "")))
+        task["reason"] = reasons.get(title_key, "")
+        due_tasks.append(task)
+    return due_tasks
+
+
+def _score_due_tasks(
+    tasks: list[dict], available_energy: float
+) -> tuple[list[dict], list[dict]]:
+    """Split due tasks into achievable and over-limit buckets."""
+
+    achievable: list[dict] = []
+    over_limit: list[dict] = []
+    for task in tasks:
+        cost = _resolve_energy_cost(task)
+        gap = available_energy - cost
+        annotated = dict(task)
+        annotated["energy_cost"] = cost
+        annotated["capacity_gap"] = gap
+        if gap >= 0:
+            achievable.append(annotated)
+        else:
+            over_limit.append(annotated)
+
+    achievable.sort(
+        key=lambda candidate: (
+            candidate["capacity_gap"],
+            -candidate["energy_cost"],
+            str(candidate.get("title", "")).lower(),
+        )
+    )
+    over_limit.sort(
+        key=lambda candidate: (
+            -candidate["energy_cost"],
+            str(candidate.get("title", "")).lower(),
+        )
+    )
+    return achievable, over_limit
 
 
 def _load_defined_projects(output_path: Path | str | None = None) -> list[str]:

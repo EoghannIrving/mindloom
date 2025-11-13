@@ -13,11 +13,9 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
 - Write modified tasks back to markdown via the `/write-tasks` API endpoint or the web interface.
 - Retrieve saved tasks through the `/tasks` API endpoint.
-- Mark tasks complete via the `/daily-tasks` web page.
+- Mark tasks complete via the `/daily-tasks` web page, which automatically pulls today’s due tasks, ranks the achievable ones by your logged energy/mood, and lists anything that exceeds your capacity separately.
 - Edit all task fields via the `/manage-tasks` page.
 - Create new vault projects and individual tasks directly from the web interface.
-- If `data/morning_plan.yaml` exists, `/daily-tasks` shows only tasks referenced
-  by the latest morning plan.
 - Task matching ignores punctuation so titles like `Check garden hose.` still
   match the plan text.
 - Render prompt templates via the `/render-prompt` API or the web interface.
@@ -128,7 +126,7 @@ The script writes detailed logs to `data/logs/parse_projects.log`.
 Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today's tasks, `/manage-tasks` to edit them and `/calendar` to view loaded events.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
 
 ### Add projects and tasks from the UI
 
@@ -151,8 +149,8 @@ redirecting the UI:
 ```bash
 curl -X POST 'http://localhost:8000/plan?mode=next_task'
 ```
-When `mode=plan`, the response is stored in `data/morning_plan.yaml` and used
-to filter `/daily-tasks`.
+When `mode=plan`, the response is stored in `data/morning_plan.yaml` and its
+recommendations are surfaced on `/daily-tasks` through inline reason notes.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
 before generating the prompt. Using `template=plan_intensity_selector`
 returns a task selection based on the chosen intensity, while

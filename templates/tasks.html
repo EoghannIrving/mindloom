@@ -1,24 +1,143 @@
 {% extends "base.html" %}
 {% block title %}Today's Tasks{% endblock %}
 {% block content %}
-  <div class="max-w-xl mx-auto space-y-4">
-    <h1 class="text-2xl font-bold mb-4">Today's Tasks</h1>
-    <form method="post" class="space-y-2">
-      <ul class="space-y-1">
-        {% for t in tasks %}
-        <li>
-          {% set completed = t.status == 'complete' %}
-          <label class="flex items-center">
-            <input type="checkbox" name="task_id" value="{{ t.id }}" class="mr-2" {% if completed %}checked{% endif %}>
-            <span class="{{ 'line-through text-gray-500' if completed else '' }}">{{ t.title }}</span>
-          </label>
-          {% if t.reason %}
-          <p class="ml-6 text-sm text-gray-600">{{ t.reason }}</p>
+  <div class="max-w-4xl mx-auto space-y-6 py-6">
+    <header class="space-y-2">
+      <p class="text-sm font-semibold text-slate-500">Due {{ today.strftime("%A, %B %d, %Y") }}</p>
+      <h1 class="text-3xl font-bold tracking-tight">Today's Tasks</h1>
+      <p class="text-sm text-slate-500">
+        Prioritized by your current energy and mood so you tackle the hardest achievable work first.
+      </p>
+    </header>
+
+    <div class="grid gap-4">
+      <div class="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">
+            {{ energy_summary.emoji }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-slate-700">
+              Energy {{ energy_summary.energy }} · {{ energy_summary.mood }}
+            </p>
+            <p class="text-xs text-slate-500">
+              Available capacity {{ energy_summary.available_display | round(1) }} / 5
+            </p>
+          </div>
+          {% if energy_summary.time_blocks is not none %}
+          <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+            {{ energy_summary.time_blocks }} free blocks
+          </div>
           {% endif %}
-        </li>
-        {% endfor %}
-      </ul>
-      <button class="px-3 py-1 bg-blue-500 text-white rounded">Mark Complete</button>
+        </div>
+        <p class="mt-4 text-xs text-slate-500">{{ energy_summary.message }}</p>
+      </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+      <section class="space-y-3 rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Ready for today</h2>
+            <p class="text-xs text-slate-500">
+              Sorted hardest first while keeping you within your current energy limit.
+            </p>
+          </div>
+          <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            {{ achievable_tasks | length }} tasks
+          </span>
+        </div>
+        {% if achievable_tasks %}
+        <ul class="space-y-3">
+          {% for task in achievable_tasks %}
+          <li class="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-3">
+                <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                <span class="text-xs font-mono uppercase text-slate-500">
+                  Energy {{ task.energy_cost }}
+                </span>
+              </div>
+              <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                {% if task.project %}
+                <span>Project {{ task.project }}</span>
+                {% endif %}
+                {% if task.area %}
+                <span>Area {{ task.area }}</span>
+                {% endif %}
+                <span>
+                  Leaves {{ task.capacity_gap | round(1) }} energy
+                </span>
+              </div>
+              {% if task.reason %}
+              <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-slate-500">
+          Nothing due today fits within your current energy level. Take a breather or adjust your energy log.
+        </p>
+        {% endif %}
+      </section>
+
+      <section class="space-y-3 rounded-2xl border border-rose-200 bg-rose-50/80 p-4 shadow-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Exceeds your limit</h2>
+            <p class="text-xs text-slate-500">
+              Too costly for now—saved here for when you feel ready.
+            </p>
+          </div>
+          <span class="text-xs font-semibold uppercase tracking-wide text-rose-500">
+            {{ over_limit_tasks | length }} blocked
+          </span>
+        </div>
+        {% if over_limit_tasks %}
+        <ul class="space-y-3">
+          {% for task in over_limit_tasks %}
+          <li class="flex items-start gap-3 rounded-xl border border-rose-200 bg-white p-3">
+            <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-rose-300 text-rose-500 focus:ring-rose-500">
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-3">
+                <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                <span class="text-xs font-mono uppercase text-slate-500">
+                  Energy {{ task.energy_cost }}
+                </span>
+              </div>
+              <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                {% if task.project %}
+                <span>Project {{ task.project }}</span>
+                {% endif %}
+                {% if task.area %}
+                <span>Area {{ task.area }}</span>
+                {% endif %}
+                <span>
+                  Exceeds limit by {{ (-task.capacity_gap) | round(1) }}
+                </span>
+              </div>
+              {% if task.reason %}
+              <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-rose-600">
+          All due tasks fall within your current capacity. Keep the momentum going.
+        </p>
+        {% endif %}
+      </section>
+
+      <div class="flex justify-end">
+        <button class="flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          Mark Complete
+        </button>
+      </div>
     </form>
   </div>
 {% endblock %}
