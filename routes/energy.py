@@ -1,4 +1,4 @@
-"""API routes for recording daily energy, mood and free time blocks."""
+"""API routes for recording daily energy and mood."""
 
 # pylint: disable=duplicate-code
 
@@ -30,14 +30,13 @@ class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods
 
     energy: int
     mood: str
-    time_blocks: int
 
 
 @router.post("/energy")
 def add_energy(data: EnergyInput):
-    """Record today's energy, mood and free time blocks."""
+    """Record today's energy and mood."""
     logger.info("POST /energy payload_received")
-    entry = record_entry(data.energy, data.mood, data.time_blocks)
+    entry = record_entry(data.energy, data.mood)
     logger.info("Recorded energy entry for date=%s", entry.get("date"))
     logger.debug("Recorded energy entry details: %s", entry)
     return entry

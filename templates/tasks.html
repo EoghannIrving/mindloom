@@ -24,11 +24,6 @@
               Available capacity {{ energy_summary.available_display | round(1) }} / 5
             </p>
           </div>
-          {% if energy_summary.time_blocks is not none %}
-          <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-            {{ energy_summary.time_blocks }} free blocks
-          </div>
-          {% endif %}
         </div>
         <p class="mt-4 text-xs text-slate-500">{{ energy_summary.message }}</p>
       </div>

@@ -272,7 +272,6 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
         "available_display": float(DEFAULT_ENERGY_LEVEL),
         "mood": "Okay",
         "emoji": MOOD_EMOJIS.get("Okay", ""),
-        "time_blocks": None,
         "has_entry": False,
         "message": "Record today's energy to unlock personalized ordering.",
     }
@@ -296,7 +295,6 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
                 "available_display": min(5, available_energy),
                 "mood": mood_value,
                 "emoji": MOOD_EMOJIS.get(mood_value, ""),
-                "time_blocks": entry.get("time_blocks"),
                 "recorded_at": entry.get("recorded_at"),
                 "has_entry": True,
                 "message": f"Based on {energy_value} energy and {mood_value} mood.",

@@ -44,7 +44,7 @@ def test_plan_endpoint_selector(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         openai_route,
         "read_entries",
-        lambda: [{"date": today, "energy": 5, "time_blocks": 4}],
+        lambda: [{"date": today, "energy": 5}],
     )
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
 
@@ -81,7 +81,7 @@ def test_plan_endpoint_morning_planner(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         openai_route,
         "read_entries",
-        lambda: [{"date": today, "energy": 5, "time_blocks": 4}],
+        lambda: [{"date": today, "energy": 5}],
     )
     monkeypatch.setattr(openai_route, "save_plan", lambda plan: None)
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
@@ -126,13 +126,12 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
 
     monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -147,7 +146,7 @@ def test_plan_endpoint_next_task(monkeypatch: pytest.MonkeyPatch):
     )
 
     client = TestClient(app)
-    payload = {"energy": 3, "mood": "Sad", "time_blocks": 6}
+    payload = {"energy": 3, "mood": "Sad"}
     resp = client.post("/plan?mode=next_task", json=payload)
 
     assert resp.status_code == 200
@@ -192,13 +191,12 @@ def test_plan_endpoint_next_task_respects_project_filter_on_energy_fallback(
 
     recorded: Dict[str, Any] = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -214,7 +212,7 @@ def test_plan_endpoint_next_task_respects_project_filter_on_energy_fallback(
     )
 
     client = TestClient(app)
-    payload = {"energy": 1, "mood": "meh", "time_blocks": 3}
+    payload = {"energy": 1, "mood": "meh"}
     resp = client.post("/plan?mode=next_task&project_param=Focus", json=payload)
 
     assert resp.status_code == 200
@@ -244,13 +242,12 @@ def test_plan_endpoint_next_task_with_project_filter_and_no_matches(
 
     recorded: Dict[str, Any] = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -262,7 +259,7 @@ def test_plan_endpoint_next_task_with_project_filter_and_no_matches(
     )
 
     client = TestClient(app)
-    payload = {"energy": 2, "mood": "okay", "time_blocks": 3}
+    payload = {"energy": 2, "mood": "okay"}
     resp = client.post("/plan?mode=next_task&project_param=Focus", json=payload)
 
     assert resp.status_code == 200
@@ -287,13 +284,12 @@ def test_plan_endpoint_next_task_uses_effective_energy(
 
     recorded: Dict[str, Any] = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -304,7 +300,7 @@ def test_plan_endpoint_next_task_uses_effective_energy(
     )
 
     client = TestClient(app)
-    payload = {"energy": 4, "mood": "sad", "time_blocks": 4}
+    payload = {"energy": 4, "mood": "sad"}
     resp = client.post("/plan?mode=next_task", json=payload)
 
     assert resp.status_code == 200
@@ -384,13 +380,12 @@ def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPa
 
     recorded = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -400,7 +395,7 @@ def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
 
     client = TestClient(app)
-    payload = {"energy": 3, "mood": "Okay", "time_blocks": 2, "project": "Alpha"}
+    payload = {"energy": 3, "mood": "Okay", "project": "Alpha"}
     resp = client.post("/plan?mode=next_task", json=payload)
 
     assert resp.status_code == 200
@@ -409,7 +404,6 @@ def test_plan_endpoint_next_task_filters_by_project(monkeypatch: pytest.MonkeyPa
     assert data["next_task"]["title"] == "Alpha Deliverable"
     assert recorded["energy"] == payload["energy"]
     assert recorded["mood"] == payload["mood"]
-    assert recorded["time_blocks"] == payload["time_blocks"]
 
 
 def test_plan_endpoint_next_task_falls_back_when_filter_empty(
@@ -438,13 +432,12 @@ def test_plan_endpoint_next_task_falls_back_when_filter_empty(
 
     monkeypatch.setattr(openai_route, "upcoming_tasks", fake_upcoming_tasks)
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today.isoformat(),
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -457,7 +450,7 @@ def test_plan_endpoint_next_task_falls_back_when_filter_empty(
     )
 
     client = TestClient(app)
-    payload = {"energy": 1, "mood": "sad", "time_blocks": 3}
+    payload = {"energy": 1, "mood": "sad"}
     resp = client.post("/plan?mode=next_task", json=payload)
 
     assert resp.status_code == 200
@@ -496,13 +489,12 @@ def test_plan_endpoint_next_task_metadata_filter_returns_empty_when_no_match(
 
     recorded = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today,
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -515,7 +507,6 @@ def test_plan_endpoint_next_task_metadata_filter_returns_empty_when_no_match(
     payload = {
         "energy": 2,
         "mood": "Okay",
-        "time_blocks": 3,
         "project": "Gamma",
     }
     resp = client.post("/plan?mode=next_task", json=payload)
@@ -534,13 +525,12 @@ def test_plan_endpoint_next_task_requires_energy_and_mood(
 
     record_calls = []
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
-        record_calls.append((energy, mood, time_blocks))
+    def fake_record_entry(energy: int, mood: str):
+        record_calls.append((energy, mood))
         return {
             "date": date.today().isoformat(),
             "energy": energy,
             "mood": mood,
-            "time_blocks": time_blocks,
         }
 
     monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
@@ -557,57 +547,18 @@ def test_plan_endpoint_next_task_requires_energy_and_mood(
     assert record_calls == []
 
 
-def test_plan_endpoint_next_task_allows_missing_time_blocks(
-    monkeypatch: pytest.MonkeyPatch,
-):
-    today = date.today().isoformat()
-    tasks = [
-        {"id": 1, "title": "Gentle", "due": today, "energy_cost": 2},
-        {"id": 2, "title": "Intense", "due": today, "energy_cost": 4},
-    ]
-
-    monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=7: list(tasks))
-    monkeypatch.setattr(openai_route, "read_entries", lambda: [])
-    monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
-
-    record_calls: list[tuple[int, str, Optional[int]]] = []
-
-    def fake_record_entry(
-        energy: int, mood: str, time_blocks: Optional[int] = None
-    ):
-        record_calls.append((energy, mood, time_blocks))
-        return {
-            "date": today,
-            "energy": energy,
-            "mood": mood,
-            "time_blocks": time_blocks,
-        }
-
-    monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
-
-    client = TestClient(app)
-    resp = client.post("/plan?mode=next_task", json={"energy": 2, "mood": "Okay"})
-
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["plan"] == "Gentle"
-    assert data["next_task"]["title"] == "Gentle"
-    assert record_calls == [(2, "Okay", None)]
-
-
 def test_plan_endpoint_next_task_requires_payload_body(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(openai_route, "upcoming_tasks", lambda days=7: [])
     monkeypatch.setattr(openai_route, "read_entries", lambda: [])
 
     record_calls = []
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
-        record_calls.append((energy, mood, time_blocks))
+    def fake_record_entry(energy: int, mood: str):
+        record_calls.append((energy, mood))
         return {
             "date": date.today().isoformat(),
             "energy": energy,
             "mood": mood,
-            "time_blocks": time_blocks,
         }
 
     monkeypatch.setattr(openai_route, "record_entry", fake_record_entry)
@@ -639,13 +590,12 @@ def test_plan_endpoint_next_task_falls_back_to_future_tasks(
 
     recorded = {}
 
-    def fake_record_entry(energy: int, mood: str, time_blocks: Optional[int] = None):
+    def fake_record_entry(energy: int, mood: str):
         recorded.update(
             {
                 "date": today.isoformat(),
                 "energy": energy,
                 "mood": mood,
-                "time_blocks": time_blocks,
             }
         )
         return recorded.copy()
@@ -655,7 +605,7 @@ def test_plan_endpoint_next_task_falls_back_to_future_tasks(
     monkeypatch.setattr(openai_route, "filter_tasks_by_energy", lambda t, e: t)
 
     client = TestClient(app)
-    payload = {"energy": 2, "mood": "Okay", "time_blocks": 3}
+    payload = {"energy": 2, "mood": "Okay"}
     resp = client.post("/plan?mode=next_task", json=payload)
 
     assert resp.status_code == 200
@@ -702,7 +652,7 @@ def test_plan_endpoint_plan_mode_applies_metadata_filters(
     monkeypatch.setattr(
         openai_route,
         "read_entries",
-        lambda: [{"date": today, "energy": 4, "time_blocks": 3}],
+        lambda: [{"date": today, "energy": 4}],
     )
 
     async def fake_ask(prompt: str, model: str = "gpt-4o-mini", max_tokens: int = 500):

@@ -1,4 +1,4 @@
-"""CLI script to record daily energy, mood and free time blocks."""
+"""CLI script to record daily energy and mood."""
 
 # pylint: disable=duplicate-code
 
@@ -20,9 +20,7 @@ if not logger.handlers:
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-parser = argparse.ArgumentParser(
-    description="Record today's energy, mood and free time blocks"
-)
+parser = argparse.ArgumentParser(description="Record today's energy and mood")
 parser.add_argument("energy", type=int, choices=range(1, 6), help="Energy level 1-5")
 parser.add_argument(
     "mood",
@@ -30,16 +28,10 @@ parser.add_argument(
     choices=["Sad", "Meh", "Okay", "Joyful"],
     help="Mood",
 )
-parser.add_argument(
-    "time_blocks",
-    type=int,
-    help="Number of free 15-minute blocks available",
-)
-
 args = parser.parse_args()
 
 logger.info("CLI invoked to record energy entry")
-entry = record_entry(args.energy, args.mood, args.time_blocks)
+entry = record_entry(args.energy, args.mood)
 logger.info("Recorded energy entry for date=%s", entry.get("date"))
 logger.debug("Recorded energy entry details: %s", entry)
 print(f"Recorded: {entry}")

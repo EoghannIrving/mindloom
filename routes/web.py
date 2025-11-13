@@ -127,7 +127,6 @@ def render_prompt_endpoint(data: dict = Body(...)):
 
     variables.setdefault("energy", latest.get("energy", 0))
     variables.setdefault("mood", latest.get("mood", ""))
-    variables.setdefault("time_blocks", latest.get("time_blocks", 0))
 
     prompts_dir = (PROJECT_ROOT / "prompts").resolve()
     requested_path = Path(template_name)

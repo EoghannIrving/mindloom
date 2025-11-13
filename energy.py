@@ -1,4 +1,4 @@
-"""Utilities for recording daily energy, mood and free time blocks."""
+"""Utilities for recording daily energy and mood."""
 
 # pylint: disable=duplicate-code
 
@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 import logging
 import yaml
 
@@ -103,10 +103,9 @@ def latest_entry(entries: List[Dict]) -> Dict | None:
 def record_entry(
     energy: int,
     mood: str,
-    time_blocks: Optional[int] = None,
     path: Path = ENERGY_LOG_PATH,
 ) -> Dict:
-    """Record today's energy and free time blocks, then return the entry."""
+    """Record today's energy and mood snapshot, then return the entry."""
 
     recorded_at = _current_timestamp()
     logger.info(
@@ -120,8 +119,6 @@ def record_entry(
         "mood": mood,
         "recorded_at": recorded_at,
     }
-    if time_blocks is not None:
-        entry["time_blocks"] = time_blocks
     entries = read_entries(path)
     entries.append(entry)
     with open(path, "w", encoding="utf-8") as handle:

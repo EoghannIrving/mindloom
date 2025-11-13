@@ -126,7 +126,7 @@ The script writes detailed logs to `data/logs/parse_projects.log`.
 Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy (including free time blocks) and render prompt templates. Visit `/daily-tasks` to check off today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and mood, and render prompt templates. Visit `/daily-tasks` to check off today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
 
 ### Add projects and tasks from the UI
 
@@ -163,12 +163,11 @@ curl -X POST http://localhost:8000/goal-breakdown \
   -d '{"goal": "Write a blog post about AI"}'
 ```
 
-Record today's energy, mood and free time blocks from the command line:
+Record today's energy and mood from the command line:
 ```bash
-python record_energy.py 3 Joyful 8
+python record_energy.py 3 Joyful
 ```
-Energy is scored 1-5 and mood accepts one of Sad, Meh, Okay or Joyful,
-and the final argument specifies how many 15-minute blocks of free time you have.
+Energy is scored 1-5 and mood accepts one of Sad, Meh, Okay or Joyful.
 Every invocation appends a timestamped check-in to `data/energy_log.yaml`, so you can
 capture multiple entries per day while the planner and `/daily-tasks` always use the
 most recent one. Requesting a next-task suggestion via `/plan?mode=next_task`

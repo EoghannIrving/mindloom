@@ -60,11 +60,6 @@
             {% endfor %}
           </select>
         </div>
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="timeBlocks" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Time blocks free</label>
-          <input id="timeBlocks" type="number" step="1" placeholder="Time blocks free"
-            class="w-full rounded-lg border-0 bg-white/10 text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3" />
-        </div>
         <button id="focusAskBtn"
           class="w-full sm:w-auto lg:self-end inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 text-lg font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
           Ask Mindloom
@@ -156,7 +151,6 @@ if (recordBtn) {
       const payload = {
         energy: parseInt(document.getElementById('energy').value),
         mood: document.getElementById('mood').value,
-        time_blocks: parseInt(document.getElementById('timeBlocks').value || '0')
       };
       const res = await fetch('/energy', {
         method: 'POST',
@@ -383,10 +377,6 @@ function formatTaskSummary(task, reasoning) {
     details.push(energyDetail);
   }
 
-  if (typeof task.time_blocks === 'number' && !Number.isNaN(task.time_blocks)) {
-    details.push(`Time blocks: ${task.time_blocks}`);
-  }
-
   if (task.duration) {
     details.push(`Duration: ${task.duration}`);
   }
@@ -432,14 +422,12 @@ async function requestPlan(mode) {
   const effectiveMode = mode || 'next_task';
   const energyEl = document.getElementById('energy');
   const moodEl = document.getElementById('mood');
-  const timeBlocksEl = document.getElementById('timeBlocks');
   const askResultEl = document.getElementById('askResult');
 
   const requestPayload = {};
   if (effectiveMode === 'next_task') {
     const energyValue = energyEl ? energyEl.value : '';
     const moodValue = moodEl ? moodEl.value : '';
-    const timeBlocksValue = timeBlocksEl ? timeBlocksEl.value : '';
 
     if (!energyValue || !moodValue) {
       const message = '⚠️ Please select your energy and mood before asking for the next task.';
@@ -456,15 +444,6 @@ async function requestPlan(mode) {
 
     requestPayload.energy = parsedEnergy;
     requestPayload.mood = moodValue;
-    if (timeBlocksValue !== '') {
-      const parsedTimeBlocks = Number.parseInt(timeBlocksValue, 10);
-      if (Number.isNaN(parsedTimeBlocks)) {
-        const message = '⚠️ Time blocks must be a valid number when provided.';
-        setPreContent(askResultEl, message);
-        return;
-      }
-      requestPayload.time_blocks = parsedTimeBlocks;
-    }
   }
 
   const projectValue = projectFilterSelect ? projectFilterSelect.value : '';
@@ -544,9 +523,6 @@ async function renderPromptAction() {
     const energyData = await energyRes.json();
     const latest = energyData[energyData.length - 1];
     if (latest) {
-      if (!('time_blocks' in variables)) {
-        variables.time_blocks = latest.time_blocks;
-      }
       if (!('energy' in variables)) {
         variables.energy = latest.energy;
       }
