@@ -10,6 +10,7 @@ from config import config
 import parse_projects
 from main import app
 from routes import projects as projects_route
+from utils.vault import normalize_slug_path
 
 
 def _setup_vault(monkeypatch, tmp_path: Path) -> Path:
@@ -320,13 +321,13 @@ def test_normalize_slug_path_preserves_legitimate_directories(monkeypatch, tmp_p
     vault_root.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(config, "VAULT_PATH", vault_root)
 
-    normalized = projects_route._normalize_slug_path("user/report.md", vault_root)
+    normalized = normalize_slug_path("user/report.md", vault_root)
     assert normalized == Path("user/report.md")
 
     full_prefix_parts = [part for part in vault_root.parts if part not in {"", "/"}]
     repeated_prefix_parts = full_prefix_parts + full_prefix_parts
     repeated_slug = Path(*repeated_prefix_parts, "notes")
-    repeated = projects_route._normalize_slug_path(str(repeated_slug), vault_root)
+    repeated = normalize_slug_path(str(repeated_slug), vault_root)
     assert repeated == Path("notes.md")
 
 

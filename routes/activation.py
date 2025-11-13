@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import List
 
@@ -12,19 +11,12 @@ from fastapi import APIRouter
 from config import config
 from tasks import read_tasks
 from energy import read_entries
+from utils.logging import configure_logger
 
 router = APIRouter()
 
 LOG_FILE = Path(config.LOG_DIR) / "activation.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 async def _call_activation_engine(payload: dict) -> List[dict]:

@@ -3,7 +3,6 @@
 # pylint: disable=duplicate-code
 
 import json
-import logging
 from pathlib import Path
 from typing import List, Optional
 
@@ -21,21 +20,15 @@ from parse_projects import (
 from tasks import read_tasks, read_tasks_raw, write_tasks
 
 from config import config
+from utils.logging import configure_logger
+from utils.vault import normalize_slug_path, resolve_slug_path
 
 router = APIRouter()
 PROJECTS_FILE = Path(config.OUTPUT_PATH)
 TASKS_FILE = Path(config.TASKS_PATH)
 
 LOG_FILE = Path(config.LOG_DIR) / "projects.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 class ProjectTask(BaseModel):
@@ -49,45 +42,6 @@ class ProjectTask(BaseModel):
     energy_cost: Optional[int] = None
     last_completed: Optional[str] = None
     executive_trigger: Optional[str] = None
-
-
-def _normalize_slug_path(slug: str, vault_root: Path) -> Path:
-    """Normalize a slug to a relative path under the vault root."""
-
-    slug_path = Path(slug)
-    if slug_path.is_absolute():
-        raise ValueError("slug must be a relative path without traversal")
-
-    parts: List[str] = []
-    for part in slug_path.parts:
-        if part in {"", "."}:
-            continue
-        if part == "..":
-            raise ValueError("slug must be a relative path without traversal")
-        parts.append(part)
-
-    if not parts:
-        raise ValueError("slug must reference a file within the vault")
-
-    vault_parts = [p for p in vault_root.parts if p not in {"", "/"}]
-    # Remove any leading segments that repeat the full vault root path.
-    prefix_length = len(vault_parts)
-    while (
-        prefix_length
-        and len(parts) >= prefix_length
-        and parts[:prefix_length] == vault_parts
-    ):
-        parts = parts[prefix_length:]
-
-    root_name = vault_root.name
-    while root_name and parts and parts[0] == root_name:
-        parts = parts[1:]
-
-    normalized = Path(*parts)
-    if normalized.suffix != ".md":
-        normalized = normalized.with_suffix(".md")
-
-    return normalized
 
 
 class ProjectCreateRequest(BaseModel):
@@ -129,7 +83,7 @@ class ProjectMergeRequest(BaseModel):
         """Ensure the slug stays within the vault and normalize it."""
 
         vault_root = Path(config.VAULT_PATH)
-        normalized = _normalize_slug_path(value, vault_root)
+        normalized = normalize_slug_path(value, vault_root)
         return str(normalized)
 
 
@@ -277,22 +231,12 @@ def _resolve_slug(slug: str, vault_root: Path) -> Path:
     """Return the filesystem path for a slug within the vault."""
 
     try:
-        normalized = _normalize_slug_path(slug, vault_root)
+        return resolve_slug_path(slug, vault_root)
     except ValueError as exc:  # pragma: no cover - defensive, caught by validation
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-
-    candidate = (vault_root / normalized).resolve()
-    try:
-        candidate.relative_to(vault_root)
-    except ValueError as exc:  # pragma: no cover - safety guard
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="slug must resolve within the vault",
-        ) from exc
-    return candidate
 
 
 @router.post("/projects/merge")

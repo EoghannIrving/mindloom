@@ -4,7 +4,6 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple
 from pydantic import BaseModel
-import logging
 
 from calendar_integration import load_events
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -16,19 +15,13 @@ from energy import latest_entry, read_entries, record_entry
 from planner import save_plan, filter_tasks_by_energy
 from config import PROJECT_ROOT, config
 from task_selector import effective_energy_level, select_next_task
+from utils.logging import configure_logger
+from utils.tasks import filter_tasks_by_metadata, normalize_filter_value
 
 router = APIRouter()
 
 LOG_FILE = Path(config.LOG_DIR) / "openai_api.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 def _raise_language_model_error(context: str, exc: Exception, detail: str) -> NoReturn:
@@ -77,20 +70,6 @@ def _payload_field_summary(payload: Optional[PlanRequest]) -> str:
     if not data:
         return "none"
     return ",".join(sorted(data.keys()))
-
-
-def _normalize_filter_value(value: Optional[str]) -> Optional[str]:
-    if value is None:
-        return None
-    text = str(value).strip()
-    return text or None
-
-
-def _matches_filter(task_value: Any, filter_value: str) -> bool:
-    normalized = _normalize_filter_value(task_value)
-    if normalized is None:
-        return False
-    return normalized.casefold() == filter_value.casefold()
 
 
 @router.post("/plan", response_model=PlanResponse)
@@ -142,10 +121,10 @@ async def plan_endpoint(
     has_all_payload_fields = all(value is not None for value in payload_values)
     has_any_payload_field = any(value is not None for value in payload_values)
 
-    payload_project = _normalize_filter_value(payload.project if payload else None)
-    payload_area = _normalize_filter_value(payload.area if payload else None)
-    query_project = _normalize_filter_value(project_param)
-    query_area = _normalize_filter_value(area_param)
+    payload_project = normalize_filter_value(payload.project if payload else None)
+    payload_area = normalize_filter_value(payload.area if payload else None)
+    query_project = normalize_filter_value(project_param)
+    query_area = normalize_filter_value(area_param)
     project_filter_value = payload_project or query_project
     area_filter_value = payload_area or query_area
 
@@ -216,20 +195,11 @@ async def plan_endpoint(
             project_filter_value,
             area_filter_value,
         )
-        metadata_filtered_tasks = [
-            task
-            for task in unfiltered_tasks
-            if (
-                (
-                    not project_filter_value
-                    or _matches_filter(task.get("project"), project_filter_value)
-                )
-                and (
-                    not area_filter_value
-                    or _matches_filter(task.get("area"), area_filter_value)
-                )
-            )
-        ]
+        metadata_filtered_tasks = filter_tasks_by_metadata(
+            unfiltered_tasks,
+            project=project_filter_value,
+            area=area_filter_value,
+        )
         if metadata_filtered_tasks:
             tasks = metadata_filtered_tasks
             logger.info("Tasks after metadata filter: %d", len(tasks))

@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -14,20 +13,13 @@ from fastapi.templating import Jinja2Templates
 
 from calendar_integration import load_events
 from config import config, PROJECT_ROOT
+from utils.logging import configure_logger
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
 
 LOG_FILE = Path(config.LOG_DIR) / "calendar_page.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 @router.get("/calendar", response_class=HTMLResponse)

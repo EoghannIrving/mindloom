@@ -2,7 +2,6 @@
 
 # pylint: disable=duplicate-code
 
-import logging
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -10,19 +9,12 @@ from pydantic import BaseModel
 
 from energy import read_entries, record_entry
 from config import config
+from utils.logging import configure_logger
 
 router = APIRouter()
 
 LOG_FILE = Path(config.LOG_DIR) / "energy_api.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods

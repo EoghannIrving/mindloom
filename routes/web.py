@@ -2,7 +2,6 @@
 
 # pylint: disable=duplicate-code
 
-import logging
 from pathlib import Path
 
 from datetime import date
@@ -15,32 +14,15 @@ from prompt_renderer import render_prompt
 from tasks import read_tasks, upcoming_tasks
 from energy import read_entries
 from calendar_integration import load_events
+from utils.logging import configure_logger
+from utils.tasks import build_option_values
 
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
 
 LOG_FILE = Path(config.LOG_DIR) / "web.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
-
-def _build_option_values(tasks, field):
-    return sorted(
-        {
-            value
-            for task in tasks
-            for value in [str(task.get(field) or "").strip()]
-            if value
-        }
-    )
+logger = configure_logger(__name__, LOG_FILE)
 
 
 def _load_project_area_options():
@@ -50,8 +32,8 @@ def _load_project_area_options():
         if str(task.get("status", "")).lower() != "complete"
     ]
     return {
-        "project_options": _build_option_values(active_tasks, "project"),
-        "area_options": _build_option_values(active_tasks, "area"),
+        "project_options": build_option_values(active_tasks, "project"),
+        "area_options": build_option_values(active_tasks, "area"),
     }
 
 

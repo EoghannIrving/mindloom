@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import date
 from pathlib import Path
 from typing import List, Optional
@@ -22,20 +21,40 @@ from tasks import read_tasks, write_tasks, mark_tasks_complete, complete_task
 from planner import read_plan, parse_plan_reasons, _clean
 from parse_projects import write_tasks_to_projects
 from pydantic import BaseModel, Field
+from utils.logging import configure_logger
+from utils.tasks import (
+    annotate_task,
+    matches_search_query,
+    resolve_energy_cost,
+    sort_tasks,
+    task_due_date,
+    unique_sorted_values,
+)
+
+
+def _task_due_date(task: dict) -> date | None:
+    """Return the next due date for compatibility with legacy callers."""
+
+    return task_due_date(task)
+
+
+def _annotate_task(task: dict, today: date) -> dict:
+    """Expose the shared annotation helper for existing tests."""
+
+    return annotate_task(task, today)
+
+
+def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
+    """Expose the shared sorter for existing tests."""
+
+    return sort_tasks(tasks, mode)
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
 
 LOG_FILE = Path(config.LOG_DIR) / "tasks_page.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 ENERGY_MAPPING = {"low": 1, "medium": 3, "high": 5}
@@ -192,70 +211,6 @@ def complete_tasks(task_id: List[int] = Form([])):
     return RedirectResponse("/daily-tasks", status_code=303)
 
 
-def _parse_due_date(value: str | date | None) -> date | None:
-    """Convert stored due date strings to ``date`` objects when possible."""
-
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str) and value:
-        try:
-            return date.fromisoformat(value)
-        except ValueError:
-            return None
-    return None
-
-
-def _task_due_date(task: dict) -> date | None:
-    """Determine the next relevant due date for a task."""
-
-    return _parse_due_date(task.get("next_due") or task.get("due"))
-
-
-def _annotate_task(task: dict, today: date) -> dict:
-    """Attach sorting helpers and due date flags to a task."""
-
-    due_date = _task_due_date(task)
-    task["due_date_normalized"] = due_date.isoformat() if due_date else None
-    status = str(task.get("status", "")).lower()
-    is_complete = status == "complete"
-    task["is_overdue"] = bool(due_date and due_date < today and not is_complete)
-    task["is_due_today"] = bool(due_date and due_date == today and not is_complete)
-    task["_due_sort_key"] = due_date or date.max
-    return task
-
-
-def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
-    """Sort tasks according to the requested mode."""
-
-    if mode == "due_asc":
-        return sorted(
-            tasks,
-            key=lambda task: (
-                task.get("_due_sort_key", date.max),
-                str(task.get("title", "")),
-            ),
-        )
-    if mode == "overdue_first":
-        return sorted(
-            tasks,
-            key=lambda task: (
-                0 if task.get("is_overdue") else 1,
-                task.get("_due_sort_key", date.max),
-                str(task.get("title", "")),
-            ),
-        )
-    if mode == "status":
-        return sorted(
-            tasks,
-            key=lambda task: (
-                str(task.get("status", "")),
-                task.get("_due_sort_key", date.max),
-                str(task.get("title", "")),
-            ),
-        )
-        return tasks
-
-
 def _latest_energy_entry(entries: list[dict] | None = None) -> dict | None:
     """Return the most recent energy entry, if any."""
 
@@ -304,20 +259,6 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
     return summary
 
 
-def _resolve_energy_cost(task: dict) -> int:
-    """Normalize the stored energy cost to an integer."""
-
-    value = task.get("energy_cost")
-    if value is None:
-        effort = str(task.get("effort") or "low").lower()
-        return ENERGY_MAPPING.get(effort, ENERGY_MAPPING["low"])
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        effort = str(task.get("effort") or "low").lower()
-        return ENERGY_MAPPING.get(effort, ENERGY_MAPPING["low"])
-
-
 def _collect_due_today_tasks(
     tasks: list[dict], today: date, reasons: dict[str, str]
 ) -> list[dict]:
@@ -327,7 +268,7 @@ def _collect_due_today_tasks(
     for original in tasks:
         if str(original.get("status", "")).lower() == "complete":
             continue
-        due_date = _task_due_date(original)
+        due_date = task_due_date(original)
         if not due_date or due_date != today:
             continue
         task = dict(original)
@@ -346,7 +287,7 @@ def _score_due_tasks(
     achievable: list[dict] = []
     over_limit: list[dict] = []
     for task in tasks:
-        cost = _resolve_energy_cost(task)
+        cost = resolve_energy_cost(task)
         gap = available_energy - cost
         annotated = dict(task)
         annotated["energy_cost"] = cost
@@ -424,14 +365,11 @@ def manage_tasks_page(request: Request):
 
     def _matches(task: dict) -> bool:
         if query:
-            haystacks = [
-                str(task.get("title", "")),
-                str(task.get("notes", "")),
-                str(task.get("project", "")),
-                str(task.get("area", "")),
-                str(task.get("type", "")),
-            ]
-            if not any(query.lower() in haystack.lower() for haystack in haystacks):
+            if not matches_search_query(
+                task,
+                query,
+                ["title", "notes", "project", "area", "type"],
+            ):
                 return False
         task_status = str(task.get("status", "")).strip()
         if selected_status:
@@ -446,18 +384,18 @@ def manage_tasks_page(request: Request):
         return True
 
     filtered_tasks = [
-        _annotate_task(dict(task), today) for task in tasks if _matches(task)
+        annotate_task(dict(task), today) for task in tasks if _matches(task)
     ]
-    sorted_tasks = _sort_tasks(filtered_tasks, sort_mode)
+    sorted_tasks = sort_tasks(filtered_tasks, sort_mode)
 
     projects_from_tasks = {
         str(project) for project in (task.get("project") for task in tasks) if project
     }
     defined_projects = {str(project) for project in _load_defined_projects() if project}
     projects = sorted(projects_from_tasks | defined_projects)
-    areas = sorted({t.get("area") for t in tasks if t.get("area")})
-    task_types = sorted({t.get("type") for t in tasks if t.get("type")})
-    statuses = sorted({t.get("status") for t in tasks if t.get("status")})
+    areas = unique_sorted_values(tasks, "area")
+    task_types = unique_sorted_values(tasks, "type")
+    statuses = unique_sorted_values(tasks, "status")
     sort_options = [
         ("due_asc", "Due date (oldest first)"),
         ("overdue_first", "Overdue first"),

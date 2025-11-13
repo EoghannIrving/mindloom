@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -12,19 +11,13 @@ from pydantic import BaseModel, Field
 from config import config
 from tasks import read_tasks
 from task_selector import select_next_task
+from utils.logging import configure_logger
+from utils.tasks import filter_tasks_by_metadata
 
 router = APIRouter(prefix="/discord", tags=["discord"])
 
 LOG_FILE = Path(config.LOG_DIR) / "discord_api.log"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+logger = configure_logger(__name__, LOG_FILE)
 
 
 class NextTaskResponse(BaseModel):
@@ -54,15 +47,12 @@ def _filter_tasks(
 ) -> List[Dict[str, Any]]:
     """Return incomplete tasks filtered by the optional project name."""
 
-    filtered = [
-        task for task in tasks if str(task.get("status", "")).lower() != "complete"
-    ]
-    if project_filter:
-        term = project_filter.strip().lower()
-        filtered = [
-            task for task in filtered if term in str(task.get("project", "")).lower()
-        ]
-    return filtered
+    return filter_tasks_by_metadata(
+        tasks,
+        project=project_filter,
+        project_contains=True,
+        exclude_completed=True,
+    )
 
 
 @router.get("/next-task", response_model=NextTaskResponse)
