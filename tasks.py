@@ -41,25 +41,34 @@ RECURRENCE_DAYS = {
 
 def _next_due(task: Dict, today: date) -> date:
     """Return the next due date for a recurring task."""
-    base = today
-    if task.get("last_completed"):
-        base = date.fromisoformat(str(task["last_completed"]))
-    elif task.get("due"):
-        base = date.fromisoformat(str(task["due"]))
+    recurrence = str(task.get("recurrence", "")).lower()
+    days = RECURRENCE_DAYS.get(recurrence)
+    if not days:
+        return today
 
-    days = RECURRENCE_DAYS.get(str(task.get("recurrence", "")).lower())
-    return base + timedelta(days=days) if days else base
+    last_completed = task.get("last_completed")
+    if last_completed:
+        completed_date = date.fromisoformat(str(last_completed))
+        return completed_date + timedelta(days=days)
+
+    due_value = task.get("due")
+    if due_value:
+        return date.fromisoformat(str(due_value))
+
+    return today
 
 
 def complete_task(task: Dict, today: date | None = None) -> None:
     """Mark a single task as complete and advance recurring due dates."""
     today_date = today or date.today()
     iso_today = today_date.isoformat()
-    task["status"] = "complete"
     task["last_completed"] = iso_today
     if task.get("recurrence"):
+        task["status"] = "active"
         next_due = _next_due(task, today_date)
         task["due"] = next_due.isoformat()
+    else:
+        task["status"] = "complete"
 
 
 def apply_recurrence(tasks: List[Dict], today: date | None = None) -> List[Dict]:
@@ -117,13 +126,7 @@ def mark_tasks_complete(task_ids: List[int], path: Path = TASKS_FILE) -> int:
     count = 0
     for task in tasks:
         if task.get("id") in task_ids:
-            task["status"] = "complete"
-            task["last_completed"] = today
-            recurrence = str(task.get("recurrence", "")).lower()
-            days = RECURRENCE_DAYS.get(recurrence)
-            if days:
-                next_due_date = today_date + timedelta(days=days)
-                task["due"] = next_due_date.isoformat()
+            complete_task(task, today_date)
             count += 1
         task.pop("next_due", None)
         task.pop("due_today", None)

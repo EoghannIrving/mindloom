@@ -54,6 +54,24 @@ def test_recurring_task_future_due(tmp_path: Path):
     assert result[0]["next_due"] != today
 
 
+def test_recurring_task_without_completion_uses_due(tmp_path: Path):
+    """Recurring tasks retain their due date until completion."""
+    target = tmp_path / "tasks.yaml"
+    today = date.today().isoformat()
+    tasks = [
+        {
+            "title": "repeat",
+            "recurrence": "weekly",
+            "due": today,
+            "status": "active",
+        }
+    ]
+    write_tasks(tasks, target)
+    result = read_tasks(target)
+    assert result[0]["next_due"] == today
+    assert result[0]["due_today"] is True
+
+
 def test_mark_tasks_complete(tmp_path: Path):
     """mark_tasks_complete should update status and last_completed."""
     path = tmp_path / "tasks.yaml"
@@ -85,6 +103,25 @@ def test_mark_recurring_task_updates_due(tmp_path: Path):
     expected_due = (today + timedelta(days=1)).isoformat()
     assert updated[0]["due"] == expected_due
     assert updated[0]["next_due"] == expected_due
+
+
+def test_mark_recurring_task_stays_active(tmp_path: Path):
+    """Completing a recurring task should not mark it complete."""
+    path = tmp_path / "tasks.yaml"
+    today = date.today()
+    tasks = [
+        {
+            "id": 2,
+            "title": "habit",
+            "status": "active",
+            "recurrence": "weekly",
+            "due": today.isoformat(),
+        }
+    ]
+    write_tasks(tasks, path)
+    mark_tasks_complete([2], path)
+    updated = read_tasks(path)
+    assert updated[0]["status"] == "active"
 
 
 def test_due_date_flag(tmp_path: Path):

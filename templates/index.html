@@ -205,17 +205,33 @@ const projectFilterSelect = document.getElementById('projectFilter');
 const areaFilterSelect = document.getElementById('areaFilter');
 const focusAskBtn = document.getElementById('focusAskBtn');
 
+function parseIsoLocalDate(dateString) {
+  if (typeof dateString !== 'string') {
+    return null;
+  }
+
+  const parts = dateString.split('-').map((value) => Number(value));
+  if (parts.length !== 3 || parts.some((value) => Number.isNaN(value))) {
+    return null;
+  }
+
+  const [year, month, day] = parts;
+  return new Date(year, month - 1, day);
+}
+
 function formatDueDetail(dateString) {
   if (!dateString) {
     return null;
   }
 
-  const parsed = new Date(dateString);
-  if (Number.isNaN(parsed.getTime())) {
+  let dueDate = parseIsoLocalDate(dateString);
+  if (!dueDate) {
+    dueDate = new Date(dateString);
+  }
+  if (Number.isNaN(dueDate.getTime())) {
     return `Due: ${dateString}`;
   }
 
-  const dueDate = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const msPerDay = 24 * 60 * 60 * 1000;
@@ -237,7 +253,7 @@ function formatDueDetail(dateString) {
   const formatted = dueDate.toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   });
 
   return `Due: ${formatted}${relation}`;

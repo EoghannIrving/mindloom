@@ -285,8 +285,6 @@ def manage_tasks_page(request: Request):
         if selected_status:
             if task_status != selected_status:
                 return False
-        elif task_status.lower() == "complete":
-            return False
         if selected_project and str(task.get("project", "")) != selected_project:
             return False
         if selected_area and str(task.get("area", "")) != selected_area:
