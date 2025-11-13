@@ -43,7 +43,9 @@
         </button>
       </div>
       <div class="mt-6 rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50 p-6 shadow-inner">
-        <canvas id="energyChart" height="260" class="w-full"></canvas>
+        <div class="relative h-[260px] w-full">
+          <canvas id="energyChart" class="h-full w-full block"></canvas>
+        </div>
         <p id="rangeStatus" class="mt-3 text-xs text-gray-500">
           Loading entries…
         </p>
@@ -83,12 +85,14 @@
         Sad: 1,
         Meh: 2,
         Okay: 3,
-        Joyful: 4,
+        Calm: 4,
+        Joyful: 5,
       };
       const moodEmojis = {
         Sad: '😔',
         Meh: '😐',
         Okay: '😊',
+        Calm: '😌',
         Joyful: '😍',
       };
       const rangeLabels = {
@@ -98,10 +102,36 @@
         year: 'Last 365 days',
       };
 
+      function ensureUtcSuffix(value) {
+        if (!value || typeof value !== 'string') {
+          return '';
+        }
+        const trimmed = value.trim();
+        const hasOffset = trimmed.endsWith('Z') || /[+-]\\d{2}:\\d{2}$/.test(trimmed);
+        return hasOffset ? trimmed : `${trimmed}Z`;
+      }
+
+      function parseUtc(value) {
+        const normalized = ensureUtcSuffix(value);
+        if (!normalized) {
+          return null;
+        }
+        const parsed = new Date(normalized);
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      }
+
       const parsedEntries = entries
         .map((entry) => {
-          const recordedAtRaw = entry.recorded_at || entry.recordedAt || entry.date || '';
-          const parsedDate = recordedAtRaw ? new Date(recordedAtRaw) : new Date(entry.date || '');
+          const recordedAtRaw = entry.recorded_at || entry.recordedAt;
+          const parsedDate = recordedAtRaw
+            ? parseUtc(recordedAtRaw)
+            : parseUtc(entry.date);
+          if (!parsedDate) {
+            return {
+              recordedAtTs: null,
+              energy: Number.isFinite(Number(entry.energy)) ? Number(entry.energy) : null,
+            };
+          }
           const recordedAtTs = Number.isFinite(parsedDate.getTime()) ? parsedDate.getTime() : null;
           const recordedDate = recordedAtTs
             ? parsedDate.toISOString().slice(0, 10)
@@ -127,6 +157,7 @@
 
       const chartButtons = document.querySelectorAll('[data-range]');
       const chartCanvas = document.getElementById('energyChart');
+      const chartWrapper = chartCanvas?.parentElement;
       const rangeStatus = document.getElementById('rangeStatus');
       const latestEnergyEl = document.getElementById('latestEnergy');
       const latestMoodBadge = document.getElementById('latestMoodBadge');
@@ -138,6 +169,17 @@
       const rangeLabelDisplay = document.getElementById('rangeLabelDisplay');
 
       let energyChart;
+
+      function getCanvasDimensions() {
+        const wrapperWidth = chartWrapper?.clientWidth;
+        const wrapperHeight = chartWrapper?.clientHeight;
+        const width = wrapperWidth || chartCanvas?.clientWidth || 0;
+        const height = wrapperHeight || chartCanvas?.clientHeight || 260;
+        return {
+          width: Math.max(1, width),
+          height: Math.max(1, height),
+        };
+      }
 
       function moodMetadata(value) {
         if (!Number.isFinite(value)) {
@@ -178,10 +220,15 @@
         }
 
         if (range === 'day') {
-          const sorted = filtered.slice().sort((a, b) => a.recordedAtTs! - b.recordedAtTs!);
+          const sorted = filtered
+            .slice()
+            .sort(
+              (a, b) =>
+                (a.recordedAtTs ?? 0) - (b.recordedAtTs ?? 0)
+            );
           return {
             labels: sorted.map((entry) => entry.timeLabel),
-            energyData: sorted.map((entry) => entry.energy!),
+            energyData: sorted.map((entry) => entry.energy ?? 0),
             moodData: sorted.map((entry) => moodScale[entry.moodLabel] ?? 3),
             count: sorted.length,
             spanStart: sorted[0]?.timeLabel || null,
@@ -224,10 +271,11 @@
         if (!ctx) {
           return;
         }
-        const width = chartCanvas.clientWidth;
-        const height = chartCanvas.height;
+        const { width, height } = getCanvasDimensions();
         chartCanvas.width = width;
         chartCanvas.height = height;
+        chartCanvas.style.width = `${width}px`;
+        chartCanvas.style.height = `${height}px`;
         ctx.clearRect(0, 0, width, height);
         const margin = 24;
         const graphWidth = Math.max(1, width - margin * 2);
@@ -235,7 +283,7 @@
         const minEnergy = 0;
         const maxEnergy = 5;
         const minMood = 1;
-        const maxMood = 4;
+        const maxMood = 5;
 
         ctx.fillStyle = 'rgba(15, 23, 42, 0.04)';
         ctx.fillRect(0, 0, width, height);
@@ -375,8 +423,8 @@
                 moodAxis: {
                   type: 'linear',
                   position: 'right',
-                  min: 1,
-                  max: 4,
+                min: 1,
+                max: 5,
                   ticks: {
                     stepSize: 1,
                     callback(value) {
@@ -411,7 +459,10 @@
             },
           };
 
-          if (!energyChart) {
+        const { width, height } = getCanvasDimensions();
+        chartCanvas.style.width = `${width}px`;
+        chartCanvas.style.height = `${height}px`;
+        if (!energyChart) {
             energyChart = new Chart(chartCanvas, config);
           } else {
             energyChart.data.labels = data.labels;

@@ -43,6 +43,7 @@ MOOD_EMOJIS = {
     "Sad": "😔",
     "Meh": "😐",
     "Okay": "😊",
+    "Calm": "😌",
     "Joyful": "😍",
 }
 

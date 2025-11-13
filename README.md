@@ -22,7 +22,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Query ChatGPT via the `/ask` API endpoint.
 - Generate a daily plan via the `/plan` API endpoint.
 - Expand goals into tasks via the `/goal-breakdown` API endpoint.
-- Record daily energy via the `/energy` API or `record_energy.py`.
+- Record daily energy via the `/energy` API or `record_energy.py` with moods Sad, Meh, Okay, Calm, or Joyful.
 - Request a single task suggestion via the `/suggest-task` endpoint when
   [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
   configured.
@@ -168,7 +168,7 @@ Record today's energy and mood from the command line:
 ```bash
 python record_energy.py 3 Joyful
 ```
-Energy is scored 1-5 and mood accepts one of Sad, Meh, Okay or Joyful.
+Energy is scored 1-5 and mood accepts Sad, Meh, Okay, Calm, or Joyful.
 Every invocation appends a timestamped check-in to `data/energy_log.yaml`, so you can
 capture multiple entries per day while the planner and `/daily-tasks` always use the
 most recent one. Requesting a next-task suggestion via `/plan?mode=next_task`

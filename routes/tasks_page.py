@@ -43,6 +43,7 @@ MOOD_CAPACITY_ADJUSTMENTS = {
     "Sad": -1,
     "Meh": -0.5,
     "Okay": 0,
+    "Calm": 0.5,
     "Joyful": 1,
 }
 DEFAULT_ENERGY_LEVEL = 3
