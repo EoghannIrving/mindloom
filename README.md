@@ -176,14 +176,19 @@ most recent one. Requesting a next-task suggestion via `/plan?mode=next_task`
 those recommendations become part of the logged history as well.
 
 ## Development
-Pushes and pull requests run automated checks on GitHub Actions. Formatting is
-verified with **Black**, linting with Pylint and Flake8, and tests are executed
-with Pytest. To avoid CI failures, format your code locally before committing:
+Pushes and pull requests run automated checks on GitHub Actions. The pipeline
+installs dependencies, compiles Python files, runs **Black**, **Flake8**, and
+Pytest. To mirror the workflow locally, install the required tooling,
+configure the Git hook once, and let `pre-commit` guard every commit:
 
 ```bash
-black .
-pytest -q
+pip install -r requirements.txt pre-commit
+pre-commit install
+pre-commit run --all-files
 ```
+
+The pre-commit hooks compile all tracked `.py` files, format them with Black,
+lint with Flake8, and run Pytest so your local checks match CI.
 
 
 ## Roadmap

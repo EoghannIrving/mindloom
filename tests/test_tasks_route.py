@@ -26,12 +26,12 @@ def _setup_task_environment(monkeypatch, tmp_path: Path) -> tuple[Path, Path]:
     def _read_tasks_override(path=None):  # pragma: no cover - signature parity
         return tasks.read_tasks(tasks_file)
 
-    def _write_tasks_override(data, path=None):  # pragma: no cover - signature parity
+    def _write_tasks_override(data, path=None):
+        # pragma: no cover - signature parity
         tasks.write_tasks(data, tasks_file)
 
-    def _sync_projects_override(
-        items, root=None, cleared_projects=None
-    ):  # pragma: no cover - signature parity
+    def _sync_projects_override(items, root=None, cleared_projects=None):
+        # pragma: no cover - signature parity
         return parse_projects.write_tasks_to_projects(
             items, root=vault_root, cleared_projects=cleared_projects
         )

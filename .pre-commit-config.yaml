@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3.12
+        additional_dependencies: []
+  - repo: local
+    hooks:
+      - id: python-syntax
+        name: python -m py_compile
+        entry: scripts/check_python_syntax.sh
+        language: script
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+  - repo: local
+    hooks:
+      - id: python-syntax
+        name: python -m py_compile
+        entry: scripts/check_python_syntax.sh
+        language: script
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: flake8-ci
+        name: flake8 (CI style)
+        entry: scripts/run_flake8_ci.sh
+        language: script
+        pass_filenames: false

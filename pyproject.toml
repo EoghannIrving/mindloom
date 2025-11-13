@@ -1,0 +1,9 @@
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+extend-ignore = ["E203", "E402"]
+[tool.flake8]
+max-line-length = 88
+extend-ignore = "E203,E402,W605"

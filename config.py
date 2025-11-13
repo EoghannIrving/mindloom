@@ -4,6 +4,8 @@
 
 from pathlib import Path
 from typing import ClassVar
+import os
+
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,6 +17,8 @@ if Path(".env.local").exists():
 
 # === Dynamically detect project root ===
 PROJECT_ROOT = Path(__file__).resolve().parent
+FALLBACK_CACHE = PROJECT_ROOT / ".cache"
+FALLBACK_CACHE.mkdir(parents=True, exist_ok=True)
 
 
 class Config(BaseSettings):  # pylint: disable=too-few-public-methods
@@ -43,6 +47,7 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     CALENDAR_ICS_PATH: str = Field(
         str(PROJECT_ROOT / "data/calendar.ics"), env="CALENDAR_ICS_PATH"
     )
+    DATA_ROOT: Path = Field(PROJECT_ROOT / "data", env="DATA_ROOT")
     TIME_ZONE: str = Field("UTC", env="TIME_ZONE")
     GOOGLE_CALENDAR_ID: str | None = Field(default=None, env="GOOGLE_CALENDAR_ID")
     GOOGLE_CREDENTIALS_PATH: str | None = Field(
@@ -73,6 +78,30 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
             self.GOOGLE_CREDENTIALS_PATH = str(
                 Path(self.GOOGLE_CREDENTIALS_PATH).expanduser()
             )
+        data_root = PROJECT_ROOT / "data"
+        use_fallback = False
+        try:
+            data_root.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            use_fallback = True
+        else:
+            if not os.access(data_root, os.W_OK):
+                use_fallback = True
+        if use_fallback:
+            fallback_data = FALLBACK_CACHE / "data"
+            fallback_data.mkdir(parents=True, exist_ok=True)
+            self.OUTPUT_PATH = fallback_data / self.OUTPUT_PATH.name
+            self.TASKS_PATH = fallback_data / self.TASKS_PATH.name
+            self.ENERGY_LOG_PATH = fallback_data / Path(self.ENERGY_LOG_PATH).name
+            self.PLAN_PATH = fallback_data / Path(self.PLAN_PATH).name
+            self.CALENDAR_ICS_PATH = str(
+                fallback_data / Path(self.CALENDAR_ICS_PATH).name
+            )
+            self.LOG_DIR = fallback_data / "logs"
+            self.DATA_ROOT = fallback_data
+        else:
+            self.DATA_ROOT = data_root
+        self.LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 config = Config()

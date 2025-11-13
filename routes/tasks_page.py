@@ -293,14 +293,14 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
         {
             "energy": energy_value,
             "available_energy": available_energy,
-                "available_display": min(5, available_energy),
-                "mood": mood_value,
-                "emoji": MOOD_EMOJIS.get(mood_value, ""),
-                "recorded_at": entry.get("recorded_at"),
-                "has_entry": True,
-                "message": f"Based on {energy_value} energy and {mood_value} mood.",
-            }
-        )
+            "available_display": min(5, available_energy),
+            "mood": mood_value,
+            "emoji": MOOD_EMOJIS.get(mood_value, ""),
+            "recorded_at": entry.get("recorded_at"),
+            "has_entry": True,
+            "message": f"Based on {energy_value} energy and {mood_value} mood.",
+        }
+    )
     return summary
 
 

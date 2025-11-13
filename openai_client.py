@@ -7,12 +7,12 @@ from pathlib import Path
 
 import openai
 
+from config import config
+
 
 class OpenAIClientError(Exception):
     """Raised when the OpenAI client encounters an error."""
 
-
-from config import config
 
 LOG_FILE = Path(config.LOG_DIR) / "openai_client.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)

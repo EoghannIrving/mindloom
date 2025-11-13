@@ -8,7 +8,7 @@ import os
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import List
+from typing import Any, List
 from zoneinfo import ZoneInfo
 
 try:
@@ -16,7 +16,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     Calendar = None
 
-from config import config, PROJECT_ROOT
+from config import config
 
 try:
     from googleapiclient.discovery import build
@@ -25,11 +25,11 @@ except Exception:  # pragma: no cover - optional dependency
     build = None
     Credentials = None
 
-CACHE_PATH = PROJECT_ROOT / "data/calendar_cache.json"
+CACHE_PATH = Path(config.DATA_ROOT) / "calendar_cache.json"
 ICS_PATHS = [
     Path(p).expanduser()
     for p in os.getenv(
-        "CALENDAR_ICS_PATH", str(PROJECT_ROOT / "data/calendar.ics")
+        "CALENDAR_ICS_PATH", str(Path(config.DATA_ROOT) / "calendar.ics")
     ).split(os.pathsep)
     if p
 ]
@@ -49,13 +49,75 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 if Calendar is None:
+
+    def _parse_datetime(
+        value: str, tz_hint: str | None, default_tz: ZoneInfo
+    ) -> datetime | None:
+        value = value.strip()
+        if not value:
+            return None
+        if value.endswith("Z"):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        fmt = "%Y%m%dT%H%M%S" if "T" in value else "%Y%m%d"
+        try:
+            parsed = datetime.strptime(value, fmt)
+        except ValueError:
+            return None
+        if fmt == "%Y%m%d":
+            parsed = datetime.combine(parsed.date(), datetime.min.time())
+        tz_name = tz_hint or default_tz.key
+        try:
+            tzinfo = ZoneInfo(tz_name)
+        except Exception:
+            tzinfo = default_tz
+        return parsed.replace(tzinfo=tzinfo)
+
+    def _parse_simple_calendar(text: str, tz: ZoneInfo) -> List["Event"]:
+        events: List["Event"] = []
+        current: dict[str, Any] = {}
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line == "BEGIN:VEVENT":
+                current = {}
+                continue
+            if line == "END:VEVENT":
+                if {"DTSTART", "DTEND"}.issubset(current):
+                    events.append(
+                        Event(
+                            summary=current.get("SUMMARY", ""),
+                            start=current["DTSTART"],
+                            end=current["DTEND"],
+                        )
+                    )
+                continue
+            if ":" not in line:
+                continue
+            header, value = line.split(":", 1)
+            parts = header.split(";")
+            field = parts[0]
+            tz_hint = None
+            for part in parts[1:]:
+                if part.startswith("TZID="):
+                    tz_hint = part.split("=", 1)[1]
+            if field in {"DTSTART", "DTEND"}:
+                dt = _parse_datetime(value, tz_hint, tz)
+                if dt:
+                    current[field] = dt
+            elif field == "SUMMARY":
+                current[field] = value
+        return events
+
     class Calendar:  # pragma: no cover - fallback when dependency missing
         def __init__(self, text: str | None = None) -> None:
-            self.events = []
+            tz = ZoneInfo(TIME_ZONE)
+            self.events = _parse_simple_calendar(text or "", tz)
 
-    logger.warning(
-        "ICS dependency not available; .ics event parsing will be skipped."
-    )
+    logger.warning("ICS dependency not available; using simple parser fallback.")
 
 
 @dataclass
@@ -89,9 +151,22 @@ def _read_ics_events() -> List[Event]:
             text = file_path.read_text(encoding="utf-8")
             cal = Calendar(text)
             for item in cal.events:
-                start = item.begin.to(TIME_ZONE).datetime
-                end = item.end.to(TIME_ZONE).datetime
-                events.append(Event(item.name or "", start, end))
+                if hasattr(item, "begin"):
+                    start = item.begin.to(TIME_ZONE).datetime
+                    end = item.end.to(TIME_ZONE).datetime
+                    summary = item.name or ""
+                else:
+                    start = getattr(item, "start", None)
+                    end = getattr(item, "end", None)
+                    summary = getattr(item, "summary", "") or ""
+                if start and end:
+                    events.append(
+                        Event(
+                            summary,
+                            start.astimezone(tz),
+                            end.astimezone(tz),
+                        )
+                    )
     return events
 
 
@@ -102,10 +177,20 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
         return []
 
     tz = ZoneInfo(TIME_ZONE)
-    creds = Credentials.from_service_account_file(
-        GOOGLE_CREDENTIALS_PATH,
-        scopes=["https://www.googleapis.com/auth/calendar.readonly"],
-    )
+    try:
+        creds = Credentials.from_service_account_file(
+            GOOGLE_CREDENTIALS_PATH,
+            scopes=["https://www.googleapis.com/auth/calendar.readonly"],
+        )
+    except FileNotFoundError:
+        logger.info(
+            "Google credentials file %s does not exist; skipping Google Calendar",
+            GOOGLE_CREDENTIALS_PATH,
+        )
+        return []
+    except Exception as exc:
+        logger.warning("Failed to load Google credentials: %s", exc)
+        return []
     service = build("calendar", "v3", credentials=creds, cache_discovery=False)
 
     start_dt = datetime.combine(start, datetime.min.time(), tz)

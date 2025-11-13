@@ -230,7 +230,7 @@ def test_plan_endpoint_next_task_with_project_filter_and_no_matches(
             "id": 1,
             "title": "General Task",
             "due": today,
-        "energy_cost": 1,
+            "energy_cost": 1,
             "project": "Other",
         }
     ]
@@ -316,7 +316,7 @@ def test_select_next_task_penalizes_executive_trigger():
             "id": 1,
             "title": "High Friction",
             "due": today,
-        "energy_cost": 1,
+            "energy_cost": 1,
             "executive_trigger": "high",
         },
         {

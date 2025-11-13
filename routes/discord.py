@@ -130,7 +130,7 @@ def project_list(
         None,
         alias="q",
         description="Optional substring used to filter the returned project names.",
-    )
+    ),
 ) -> ProjectListResponse:
     """Return project identifiers for Discord autocomplete."""
 

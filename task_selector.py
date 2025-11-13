@@ -15,7 +15,7 @@ MOOD_ENERGY_TARGETS = {
 EXECUTIVE_TRIGGER_WEIGHTS = {"low": 0, "medium": 1, "high": 2}
 
 MOOD_EXECUTIVE_TOLERANCE = {
-    "sad": 0,
+    "sad": -2,
     "meh": 1,
     "okay": 1,
     "joyful": 2,
@@ -101,10 +101,8 @@ def select_next_task(
         cost = _energy_cost(task)
         if cost is None:
             energy_penalty = target_energy
-        elif cost <= target_energy:
-            energy_penalty = target_energy - cost
         else:
-            energy_penalty = cost
+            energy_penalty = max(target_energy - cost, 0)
 
         exec_weight = _executive_weight(task)
         executive_penalty = (
