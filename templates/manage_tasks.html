@@ -297,9 +297,22 @@
                 type="button"
                 data-bulk-apply
                 data-field="status"
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                aria-label="Apply status to selected tasks"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
               >
-                Apply
+                <span class="sr-only">Apply status</span>
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 11l3 3 7-7" />
+                </svg>
               </button>
             </div>
           </div>
@@ -319,9 +332,22 @@
                 data-bulk-apply
                 data-field="project"
                 data-allow-empty
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                aria-label="Apply project to selected tasks"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
               >
-                Apply
+                <span class="sr-only">Apply project</span>
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 11l3 3 7-7" />
+                </svg>
               </button>
             </div>
           </div>
@@ -341,9 +367,22 @@
                 data-bulk-apply
                 data-field="area"
                 data-allow-empty
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                aria-label="Apply area to selected tasks"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
               >
-                Apply
+                <span class="sr-only">Apply area</span>
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 11l3 3 7-7" />
+                </svg>
               </button>
             </div>
           </div>
@@ -364,9 +403,22 @@
                 type="button"
                 data-bulk-apply
                 data-field="effort"
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                aria-label="Apply effort to selected tasks"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
               >
-                Apply
+                <span class="sr-only">Apply effort</span>
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 11l3 3 7-7" />
+                </svg>
               </button>
             </div>
           </div>
@@ -384,9 +436,22 @@
                 data-bulk-apply
                 data-field="due"
                 data-allow-empty
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                aria-label="Apply due date to selected tasks"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
               >
-                Apply
+                <span class="sr-only">Apply due</span>
+                <svg
+                  class="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 11l3 3 7-7" />
+                </svg>
               </button>
             </div>
           </div>
@@ -870,12 +935,13 @@
               .filter(Boolean);
           const applyBulkField = (field, value, allowEmpty = false) => {
             if (!field) {
-              return;
+              return false;
             }
             const normalizedValue = value == null ? '' : String(value).trim();
             if (!allowEmpty && !normalizedValue) {
-              return;
+              return false;
             }
+            let applied = false;
             getSelectedTaskIds().forEach((taskId) => {
               const targetInput = manageTasksForm.querySelector(`[name="${field}-${taskId}"]`);
               if (!targetInput) {
@@ -884,7 +950,9 @@
               targetInput.value = normalizedValue;
               targetInput.dispatchEvent(new Event('input', { bubbles: true }));
               targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+              applied = true;
             });
+            return applied;
           };
           const bulkApplyButtons = manageTasksForm.querySelectorAll('[data-bulk-apply]');
           bulkApplyButtons.forEach((button) => {
@@ -899,7 +967,10 @@
                 return;
               }
               const allowEmpty = button.hasAttribute('data-allow-empty');
-              applyBulkField(targetField, sourceControl.value, allowEmpty);
+              const applied = applyBulkField(targetField, sourceControl.value, allowEmpty);
+              if (applied) {
+                submitManageTasksForm();
+              }
             });
           });
           updateSelectionCount();
