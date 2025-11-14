@@ -261,6 +261,7 @@
             <p class="text-xs text-slate-500">
               <span data-selection-count>0</span> of {{ tasks|length }} selected
             </p>
+            <p class="text-xs text-slate-500">Choose a value then click the icon—each change saves immediately and reloads the list.</p>
           </div>
           <div class="flex flex-wrap gap-2 text-xs font-medium">
             <button
@@ -269,13 +270,6 @@
               class="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-slate-300"
             >
               Select all
-            </button>
-            <button
-              type="button"
-              data-clear-selection
-              class="rounded-full border border-transparent bg-slate-900 px-3 py-1 text-white transition hover:bg-slate-800"
-            >
-              Clear
             </button>
           </div>
         </div>
@@ -901,31 +895,58 @@
 
           const bulkCheckboxes = manageTasksForm.querySelectorAll('[data-bulk-checkbox]');
           const selectionCountEl = manageTasksForm.querySelector('[data-selection-count]');
+          const toggleSelectButton = manageTasksForm.querySelector('[data-select-all]');
+          const updateSelectAllToggleLabel = () => {
+            if (!toggleSelectButton) {
+              return;
+            }
+            toggleSelectButton.textContent = areAllSelected() ? 'Deselect all' : 'Select all';
+          };
+          const highlightClasses = ['ring-2', 'ring-indigo-400/60', 'bg-indigo-50/70'];
+          const setSummarySelection = (taskId, selected) => {
+            if (!taskId) {
+              return;
+            }
+            const summary = manageTasksForm.querySelector(
+              `[data-task-summary][data-task-id="${taskId}"]`
+            );
+            if (!summary) {
+              return;
+            }
+            if (selected) {
+              summary.classList.add(...highlightClasses);
+            } else {
+              summary.classList.remove(...highlightClasses);
+            }
+          };
           const updateSelectionCount = () => {
             const selectedCount = Array.from(bulkCheckboxes).filter((checkbox) => checkbox.checked).length;
             if (selectionCountEl) {
               selectionCountEl.textContent = selectedCount;
             }
+            updateSelectAllToggleLabel();
           };
-          bulkCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelectionCount));
+          bulkCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+              setSummarySelection(checkbox.getAttribute('data-task-id'), checkbox.checked);
+              updateSelectionCount();
+            });
+          });
+          const areAllSelected = () =>
+            bulkCheckboxes.length > 0 && Array.from(bulkCheckboxes).every((checkbox) => checkbox.checked);
+
           const toggleSelection = (value) => {
             bulkCheckboxes.forEach((checkbox) => {
               checkbox.checked = value;
+              setSummarySelection(checkbox.getAttribute('data-task-id'), value);
             });
             updateSelectionCount();
           };
-          const selectAllButton = manageTasksForm.querySelector('[data-select-all]');
-          const clearSelectionButton = manageTasksForm.querySelector('[data-clear-selection]');
-          if (selectAllButton) {
-            selectAllButton.addEventListener('click', (event) => {
+          if (toggleSelectButton) {
+            toggleSelectButton.addEventListener('click', (event) => {
               event.preventDefault();
-              toggleSelection(true);
-            });
-          }
-          if (clearSelectionButton) {
-            clearSelectionButton.addEventListener('click', (event) => {
-              event.preventDefault();
-              toggleSelection(false);
+              const allSelected = areAllSelected();
+              toggleSelection(!allSelected);
             });
           }
           const getSelectedTaskIds = () =>
