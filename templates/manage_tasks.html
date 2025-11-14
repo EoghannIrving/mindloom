@@ -254,6 +254,144 @@
       <input type="hidden" name="project" value="{{ selected_project or '' }}" />
       <input type="hidden" name="area" value="{{ selected_area or '' }}" />
       <input type="hidden" name="sort" value="{{ selected_sort or '' }}" />
+      <section class="space-y-4 border-b border-gray-200 bg-slate-50/70 px-4 py-4 md:px-6">
+        <div class="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-sm font-semibold text-slate-800">Bulk edit</p>
+            <p class="text-xs text-slate-500">
+              <span data-selection-count>0</span> of {{ tasks|length }} selected
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-medium">
+            <button
+              type="button"
+              data-select-all
+              class="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-slate-300"
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              data-clear-selection
+              class="rounded-full border border-transparent bg-slate-900 px-3 py-1 text-white transition hover:bg-slate-800"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div class="flex flex-col gap-2">
+            <label for="bulkStatus" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+            <div class="flex gap-2">
+              <select
+                id="bulkStatus"
+                data-bulk-target="status"
+                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                <option value="">Set status</option>
+                {% for opt in status_options %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+              </select>
+              <button
+                type="button"
+                data-bulk-apply
+                data-field="status"
+                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="bulkProject" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</label>
+            <div class="flex gap-2">
+              <input
+                id="bulkProject"
+                type="text"
+                list="projects"
+                data-bulk-target="project"
+                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="Type to filter"
+              >
+              <button
+                type="button"
+                data-bulk-apply
+                data-field="project"
+                data-allow-empty
+                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="bulkArea" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Area</label>
+            <div class="flex gap-2">
+              <input
+                id="bulkArea"
+                type="text"
+                list="areas"
+                data-bulk-target="area"
+                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="Type to filter"
+              >
+              <button
+                type="button"
+                data-bulk-apply
+                data-field="area"
+                data-allow-empty
+                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="bulkEffort" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Effort</label>
+            <div class="flex gap-2">
+              <select
+                id="bulkEffort"
+                data-bulk-target="effort"
+                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+                <option value="">Set effort</option>
+                {% for opt in ["low", "medium", "high"] %}
+                  <option value="{{ opt }}">{{ opt }}</option>
+                {% endfor %}
+              </select>
+              <button
+                type="button"
+                data-bulk-apply
+                data-field="effort"
+                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="bulkDue" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Due date</label>
+            <div class="flex gap-2">
+              <input
+                id="bulkDue"
+                type="date"
+                data-bulk-target="due"
+                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              >
+              <button
+                type="button"
+                data-bulk-apply
+                data-field="due"
+                data-allow-empty
+                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
       <div class="divide-y divide-gray-200 pt-3" data-task-list>
       {% for t in tasks %}
       {% set status_styles = {
@@ -278,13 +416,23 @@
       <input type="hidden" name="delete-{{ t.id }}" value="" data-delete-input data-task-id="{{ t.id }}">
       <details class="group bg-white/90 transition" data-task-details>
         <summary
-          class="grid cursor-pointer gap-3 px-4 py-3 text-sm text-slate-600 transition focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center {{ summary_styles.get(status_key, 'border border-gray-200 bg-white/90') }} {{ hover_styles.get(status_key, 'hover:bg-indigo-50/40') }}"
+          class="grid cursor-pointer gap-3 px-4 py-3 text-sm text-slate-600 transition focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center {{ summary_styles.get(status_key, 'border border-gray-200 bg-white/90') }} {{ hover_styles.get(status_key, 'hover:bg-indigo-50/40') }}"
           aria-controls="task-body-{{ t.id }}"
           aria-expanded="false"
           data-task-summary
           data-task-id="{{ t.id }}"
           data-task-status="{{ status_key }}"
         >
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              aria-label="Select {{ t.title or 'task' }}"
+              data-bulk-checkbox
+              data-task-id="{{ t.id }}"
+              onclick="event.stopPropagation()"
+            >
+          </div>
           <div class="space-y-2">
             <span class="text-sm font-semibold text-slate-900">{{ t.title or 'Untitled task' }}</span>
             <div class="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
@@ -685,6 +833,76 @@
               }
             });
           });
+
+          const bulkCheckboxes = manageTasksForm.querySelectorAll('[data-bulk-checkbox]');
+          const selectionCountEl = manageTasksForm.querySelector('[data-selection-count]');
+          const updateSelectionCount = () => {
+            const selectedCount = Array.from(bulkCheckboxes).filter((checkbox) => checkbox.checked).length;
+            if (selectionCountEl) {
+              selectionCountEl.textContent = selectedCount;
+            }
+          };
+          bulkCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', updateSelectionCount));
+          const toggleSelection = (value) => {
+            bulkCheckboxes.forEach((checkbox) => {
+              checkbox.checked = value;
+            });
+            updateSelectionCount();
+          };
+          const selectAllButton = manageTasksForm.querySelector('[data-select-all]');
+          const clearSelectionButton = manageTasksForm.querySelector('[data-clear-selection]');
+          if (selectAllButton) {
+            selectAllButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              toggleSelection(true);
+            });
+          }
+          if (clearSelectionButton) {
+            clearSelectionButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              toggleSelection(false);
+            });
+          }
+          const getSelectedTaskIds = () =>
+            Array.from(bulkCheckboxes)
+              .filter((checkbox) => checkbox.checked)
+              .map((checkbox) => checkbox.getAttribute('data-task-id'))
+              .filter(Boolean);
+          const applyBulkField = (field, value, allowEmpty = false) => {
+            if (!field) {
+              return;
+            }
+            const normalizedValue = value == null ? '' : String(value).trim();
+            if (!allowEmpty && !normalizedValue) {
+              return;
+            }
+            getSelectedTaskIds().forEach((taskId) => {
+              const targetInput = manageTasksForm.querySelector(`[name="${field}-${taskId}"]`);
+              if (!targetInput) {
+                return;
+              }
+              targetInput.value = normalizedValue;
+              targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+              targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+          };
+          const bulkApplyButtons = manageTasksForm.querySelectorAll('[data-bulk-apply]');
+          bulkApplyButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+              event.preventDefault();
+              const targetField = button.getAttribute('data-field');
+              if (!targetField) {
+                return;
+              }
+              const sourceControl = manageTasksForm.querySelector(`[data-bulk-target="${targetField}"]`);
+              if (!sourceControl) {
+                return;
+              }
+              const allowEmpty = button.hasAttribute('data-allow-empty');
+              applyBulkField(targetField, sourceControl.value, allowEmpty);
+            });
+          });
+          updateSelectionCount();
 
           const recurrenceDays = {
             daily: 1,
