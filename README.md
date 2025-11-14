@@ -129,7 +129,7 @@ The script writes detailed logs to `data/logs/parse_projects.log`.
 Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and mood, and render prompt templates. Visit `/daily-tasks` to check off today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and mood, and render prompt templates. Visit `/daily-tasks` to check off overdue and today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
 
 ### Add projects and tasks from the UI
 

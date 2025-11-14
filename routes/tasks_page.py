@@ -184,9 +184,9 @@ def tasks_page(request: Request):
     latest_entry = _latest_energy_entry(energy_entries)
     energy_summary = _summarize_energy_entry(latest_entry)
 
-    due_today = _collect_due_today_tasks(tasks, today, reasons)
+    due_tasks = _collect_due_tasks(tasks, today, reasons)
     achievable_tasks, over_limit_tasks = _score_due_tasks(
-        due_today, energy_summary["available_energy"]
+        due_tasks, energy_summary["available_energy"]
     )
 
     return templates.TemplateResponse(
@@ -259,17 +259,17 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
     return summary
 
 
-def _collect_due_today_tasks(
+def _collect_due_tasks(
     tasks: list[dict], today: date, reasons: dict[str, str]
 ) -> list[dict]:
-    """Return the subset of incomplete tasks explicitly due today."""
+    """Return the subset of incomplete tasks that are due today or overdue."""
 
     due_tasks: list[dict] = []
     for original in tasks:
         if str(original.get("status", "")).lower() == "complete":
             continue
         due_date = task_due_date(original)
-        if not due_date or due_date != today:
+        if not due_date or due_date > today:
             continue
         task = dict(original)
         task["due_date_normalized"] = due_date.isoformat()

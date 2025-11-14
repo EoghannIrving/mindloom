@@ -25,9 +25,9 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
     """Centralized application settings."""
 
     # === General ===
-    ENVIRONMENT: str = Field("development", env="ENVIRONMENT")
-    DEBUG: bool = Field(True, env="DEBUG")
-    PORT: int = Field(8000, env="PORT")
+    ENVIRONMENT: str = Field("development")
+    DEBUG: bool = Field(True)
+    PORT: int = Field(8000)
 
     # === Paths ===
     DEFAULT_VAULT: ClassVar[Path] = (
@@ -35,32 +35,24 @@ class Config(BaseSettings):  # pylint: disable=too-few-public-methods
         if Path("/vault/Projects").exists()
         else PROJECT_ROOT / "vault/Projects"
     )
-    VAULT_PATH: Path = Field(DEFAULT_VAULT, env="VAULT_PATH")
-    OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml", env="OUTPUT_PATH")
-    TASKS_PATH: Path = Field(PROJECT_ROOT / "data/tasks.yaml", env="TASKS_PATH")
-    TASK_COMPLETIONS_PATH: Path = Field(
-        PROJECT_ROOT / "data/task_completions.yaml", env="TASK_COMPLETIONS_PATH"
-    )
+    VAULT_PATH: Path = Field(DEFAULT_VAULT)
+    OUTPUT_PATH: Path = Field(PROJECT_ROOT / "projects.yaml")
+    TASKS_PATH: Path = Field(PROJECT_ROOT / "data/tasks.yaml")
+    TASK_COMPLETIONS_PATH: Path = Field(PROJECT_ROOT / "data/task_completions.yaml")
 
-    LOG_DIR: Path = Field(PROJECT_ROOT / "data/logs", env="LOG_DIR")
-    ENERGY_LOG_PATH: Path = Field(
-        PROJECT_ROOT / "data/energy_log.yaml", env="ENERGY_LOG_PATH"
-    )
-    PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.yaml", env="PLAN_PATH")
-    CALENDAR_ICS_PATH: str = Field(
-        str(PROJECT_ROOT / "data/calendar.ics"), env="CALENDAR_ICS_PATH"
-    )
-    DATA_ROOT: Path = Field(PROJECT_ROOT / "data", env="DATA_ROOT")
-    TIME_ZONE: str = Field("UTC", env="TIME_ZONE")
-    GOOGLE_CALENDAR_ID: str | None = Field(default=None, env="GOOGLE_CALENDAR_ID")
-    GOOGLE_CREDENTIALS_PATH: str | None = Field(
-        default=None, env="GOOGLE_CREDENTIALS_PATH"
-    )
+    LOG_DIR: Path = Field(PROJECT_ROOT / "data/logs")
+    ENERGY_LOG_PATH: Path = Field(PROJECT_ROOT / "data/energy_log.yaml")
+    PLAN_PATH: Path = Field(PROJECT_ROOT / "data/morning_plan.yaml")
+    CALENDAR_ICS_PATH: str = Field(str(PROJECT_ROOT / "data/calendar.ics"))
+    DATA_ROOT: Path = Field(PROJECT_ROOT / "data")
+    TIME_ZONE: str = Field("UTC")
+    GOOGLE_CALENDAR_ID: str | None = Field(default=None)
+    GOOGLE_CREDENTIALS_PATH: str | None = Field(default=None)
 
     # === Optional tokens ===
-    OPENAI_API_KEY: str = Field(default="", env="OPENAI_API_KEY")
-    API_KEY: str = Field(default="", env="API_KEY")
-    ACTIVATION_ENGINE_URL: str | None = Field(default=None, env="ACTIVATION_ENGINE_URL")
+    OPENAI_API_KEY: str = Field(default="")
+    API_KEY: str = Field(default="")
+    ACTIVATION_ENGINE_URL: str | None = Field(default=None)
 
     model_config = SettingsConfigDict(
         env_file=".env",
