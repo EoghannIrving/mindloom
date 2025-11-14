@@ -394,7 +394,6 @@ def manage_tasks_page(request: Request):
     defined_projects = {str(project) for project in _load_defined_projects() if project}
     projects = sorted(projects_from_tasks | defined_projects)
     areas = unique_sorted_values(tasks, "area")
-    task_types = unique_sorted_values(tasks, "type")
     statuses = unique_sorted_values(tasks, "status")
     sort_options = [
         ("due_asc", "Due date (oldest first)"),
@@ -409,7 +408,6 @@ def manage_tasks_page(request: Request):
             "tasks": sorted_tasks,
             "project_options": projects,
             "area_options": areas,
-            "type_options": task_types,
             "status_options": statuses,
             "sort_options": sort_options,
             "search_query": query,
