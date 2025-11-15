@@ -41,6 +41,41 @@
         >
           Year
         </button>
+        <div class="ml-auto flex items-center gap-2 rounded-full border border-indigo-200 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          Focus:
+          <button
+            type="button"
+            data-focus-mode="all"
+            class="focus-mode-toggle rounded-full border border-transparent bg-indigo-100 px-3 py-1 text-indigo-700 transition hover:bg-indigo-200"
+            aria-pressed="true"
+          >
+            All
+          </button>
+          <button
+            type="button"
+            data-focus-mode="low"
+            class="focus-mode-toggle rounded-full border border-transparent bg-white px-3 py-1 text-indigo-600 transition hover:bg-indigo-50"
+            aria-pressed="false"
+          >
+            Low
+          </button>
+          <button
+            type="button"
+            data-focus-mode="medium"
+            class="focus-mode-toggle rounded-full border border-transparent bg-white px-3 py-1 text-indigo-600 transition hover:bg-indigo-50"
+            aria-pressed="false"
+          >
+            Medium
+          </button>
+          <button
+            type="button"
+            data-focus-mode="high"
+            class="focus-mode-toggle rounded-full border border-transparent bg-white px-3 py-1 text-indigo-600 transition hover:bg-indigo-50"
+            aria-pressed="false"
+          >
+            High
+          </button>
+        </div>
       </div>
       <div class="mt-6 rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50 p-6 shadow-inner">
         <div class="relative h-[260px] w-full">
@@ -50,7 +85,7 @@
           Loading entries…
         </p>
       </div>
-      <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+      <div class="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Latest entry</p>
           <p id="latestEnergy" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
@@ -71,6 +106,12 @@
           <p class="mt-2 text-xs text-gray-400">
             <span id="rangeLabelDisplay">Today</span>
           </p>
+        </div>
+        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Comparison</p>
+          <p id="comparisonEnergy" class="mt-2 text-3xl font-semibold text-indigo-900">—</p>
+          <p id="comparisonMood" class="text-sm text-gray-600">Mood —</p>
+          <p id="comparisonDiff" class="mt-2 text-xs text-indigo-600">—</p>
         </div>
       </div>
     </section>
@@ -100,6 +141,12 @@
         week: 'Last 7 days',
         month: 'Last 30 days',
         year: 'Last 365 days',
+      };
+      const focusPredicates = {
+        all: () => true,
+        low: (entry) => Number.isFinite(entry.energy) && entry.energy <= 2,
+        medium: (entry) => Number.isFinite(entry.energy) && entry.energy === 3,
+        high: (entry) => Number.isFinite(entry.energy) && entry.energy >= 4,
       };
 
       function ensureUtcSuffix(value) {
@@ -133,9 +180,7 @@
             };
           }
           const recordedAtTs = Number.isFinite(parsedDate.getTime()) ? parsedDate.getTime() : null;
-          const recordedDate = recordedAtTs
-            ? parsedDate.toISOString().slice(0, 10)
-            : (entry.date || '');
+          const recordedDate = recordedAtTs ? parsedDate.toISOString().slice(0, 10) : (entry.date || '');
           const timeLabel = recordedAtTs
             ? parsedDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
             : '—';
@@ -156,6 +201,7 @@
       parsedEntries.sort((a, b) => (a.recordedAtTs ?? 0) - (b.recordedAtTs ?? 0));
 
       const chartButtons = document.querySelectorAll('[data-range]');
+      const focusButtons = document.querySelectorAll('[data-focus-mode]');
       const chartCanvas = document.getElementById('energyChart');
       const chartWrapper = chartCanvas?.parentElement;
       const rangeStatus = document.getElementById('rangeStatus');
@@ -167,8 +213,13 @@
       const rangeEntryCount = document.getElementById('rangeEntryCount');
       const rangeSpan = document.getElementById('rangeSpan');
       const rangeLabelDisplay = document.getElementById('rangeLabelDisplay');
+      const comparisonEnergyEl = document.getElementById('comparisonEnergy');
+      const comparisonMoodEl = document.getElementById('comparisonMood');
+      const comparisonDiffEl = document.getElementById('comparisonDiff');
 
       let energyChart;
+      let activeRange = 'day';
+      let activeFocus = 'all';
 
       function getCanvasDimensions() {
         const wrapperWidth = chartWrapper?.clientWidth;
@@ -194,19 +245,21 @@
         return { label: bestMatch.label, emoji: moodEmojis[bestMatch.label] || '' };
       }
 
-      function bucketEntries(range) {
+      function bucketEntries(range, entriesSubset) {
         const now = new Date();
         const start = new Date(now);
+        const offsets = { week: 6, month: 29, year: 364 };
+        const offsetDays = offsets[range] ?? offsets.month;
+        const rangeDays = range === 'day' ? 1 : offsetDays + 1;
         if (range === 'day') {
           start.setHours(0, 0, 0, 0);
         } else {
-          const offsets = { week: 6, month: 29, year: 364 };
-          const offsetDays = offsets[range] ?? offsets.month;
           start.setDate(start.getDate() - offsetDays);
           start.setHours(0, 0, 0, 0);
         }
-        const filtered = parsedEntries.filter(
-          (entry) => entry.recordedAtTs && entry.recordedAtTs >= start.getTime()
+        const startTs = start.getTime();
+        const filtered = entriesSubset.filter(
+          (entry) => entry.recordedAtTs && entry.recordedAtTs >= startTs
         );
         if (!filtered.length) {
           return {
@@ -216,26 +269,26 @@
             count: 0,
             spanStart: null,
             spanEnd: null,
+            rangeStartTs: startTs,
+            rangeDays,
           };
         }
 
         if (range === 'day') {
           const sorted = filtered
             .slice()
-            .sort(
-              (a, b) =>
-                (a.recordedAtTs ?? 0) - (b.recordedAtTs ?? 0)
-            );
+            .sort((a, b) => (a.recordedAtTs ?? 0) - (b.recordedAtTs ?? 0));
           return {
             labels: sorted.map((entry) => entry.timeLabel),
             energyData: sorted.map((entry) => entry.energy ?? 0),
             moodData: sorted.map((entry) => moodScale[entry.moodLabel] ?? 3),
             count: sorted.length,
             spanStart: sorted[0]?.timeLabel || null,
-            spanEnd:
-              sorted.length && sorted[sorted.length - 1].timeLabel
-                ? sorted[sorted.length - 1].timeLabel
-                : null,
+            spanEnd: sorted.length && sorted[sorted.length - 1].timeLabel
+              ? sorted[sorted.length - 1].timeLabel
+              : null,
+            rangeStartTs: startTs,
+            rangeDays,
           };
         }
 
@@ -259,11 +312,37 @@
           moodData: sortedDays.map(([, bucket]) => bucket.mood / bucket.count),
           count: filtered.length,
           spanStart: sortedDays[0]?.[0] || null,
-            spanEnd: sortedDays.length ? sortedDays[sortedDays.length - 1][0] : null,
+          spanEnd: sortedDays.length ? sortedDays[sortedDays.length - 1][0] : null,
+          rangeStartTs: startTs,
+          rangeDays,
         };
       }
 
-      function drawFallbackChart(data) {
+      function computeComparison(range, entriesSubset, rangeStartTs, rangeDays) {
+        if (!Number.isFinite(rangeStartTs) || !Number.isFinite(rangeDays) || rangeDays < 1) {
+          return { energyAvg: null, moodAvg: null };
+        }
+        const dayMs = 24 * 60 * 60 * 1000;
+        const prevEndTs = rangeStartTs;
+        const prevStartTs = rangeStartTs - rangeDays * dayMs;
+        const comparisonEntries = entriesSubset.filter(
+          (entry) => entry.recordedAtTs && entry.recordedAtTs >= prevStartTs && entry.recordedAtTs < prevEndTs
+        );
+        if (!comparisonEntries.length) {
+          return { energyAvg: null, moodAvg: null };
+        }
+        const energySum = comparisonEntries.reduce((acc, entry) => acc + (entry.energy ?? 0), 0);
+        const moodSum = comparisonEntries.reduce(
+          (acc, entry) => acc + (moodScale[entry.moodLabel] ?? 3),
+          0
+        );
+        return {
+          energyAvg: energySum / comparisonEntries.length,
+          moodAvg: moodSum / comparisonEntries.length,
+        };
+      }
+
+      function drawFallbackChart(data, comparison) {
         if (!chartCanvas) {
           return;
         }
@@ -296,6 +375,19 @@
           ctx.lineTo(width - margin, y);
         }
         ctx.stroke();
+
+        if (comparison?.energyAvg !== null) {
+          const normalized = Math.max(0, Math.min(5, comparison.energyAvg));
+          const y = margin + graphHeight * (1 - normalized / (maxEnergy - minEnergy));
+          ctx.strokeStyle = 'rgba(168, 85, 247, 0.5)';
+          ctx.setLineDash([6, 4]);
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(margin, y);
+          ctx.lineTo(width - margin, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
 
         ctx.fillStyle = '#0f172a';
         ctx.font = '11px system-ui';
@@ -365,11 +457,14 @@
         ctx.fillText(data.labels[data.labels.length - 1] || '', width - margin, height - margin + 4);
       }
 
-      function ensureChart(data) {
+      function ensureChart(data, comparison) {
         if (!chartCanvas) {
           return;
         }
         if (typeof Chart === 'function') {
+          const comparisonValues = data.labels.map(() =>
+            Number.isFinite(comparison?.energyAvg) ? comparison.energyAvg : null
+          );
           const config = {
             type: 'line',
             data: {
@@ -398,6 +493,18 @@
                   tension: 0.3,
                   yAxisID: 'moodAxis',
                 },
+                {
+                  label: 'Prior period avg',
+                  data: comparisonValues,
+                  borderColor: '#a855f7',
+                  backgroundColor: 'rgba(168, 85, 247, 0.08)',
+                  borderWidth: 2,
+                  borderDash: [6, 6],
+                  pointRadius: 0,
+                  fill: true,
+                  tension: 0,
+                  yAxisID: 'energyAxis',
+                },
               ],
             },
             options: {
@@ -423,8 +530,8 @@
                 moodAxis: {
                   type: 'linear',
                   position: 'right',
-                min: 1,
-                max: 5,
+                  min: 1,
+                  max: 5,
                   ticks: {
                     stepSize: 1,
                     callback(value) {
@@ -459,21 +566,22 @@
             },
           };
 
-        const { width, height } = getCanvasDimensions();
-        chartCanvas.style.width = `${width}px`;
-        chartCanvas.style.height = `${height}px`;
-        if (!energyChart) {
+          const { width, height } = getCanvasDimensions();
+          chartCanvas.style.width = `${width}px`;
+          chartCanvas.style.height = `${height}px`;
+          if (!energyChart) {
             energyChart = new Chart(chartCanvas, config);
           } else {
             energyChart.data.labels = data.labels;
             energyChart.data.datasets[0].data = data.energyData;
             energyChart.data.datasets[1].data = data.moodData;
+            energyChart.data.datasets[2].data = comparisonValues;
             energyChart.update();
           }
           return;
         }
 
-        drawFallbackChart(data);
+        drawFallbackChart(data, comparison);
       }
 
       function refreshLatestEntry() {
@@ -483,7 +591,7 @@
           latestTimestamp.textContent = 'No entries yet';
           return;
         }
-        const latest = parsedEntries.length ? parsedEntries[parsedEntries.length - 1] : null;
+        const latest = parsedEntries[parsedEntries.length - 1];
         latestEnergyEl.textContent = latest?.energy?.toFixed(0) || '—';
         const moodInfo = moodMetadata(moodScale[latest?.moodLabel] ?? 3);
         latestMoodBadge.textContent = `${moodInfo.emoji} ${moodInfo.label}`;
@@ -503,8 +611,23 @@
         });
       }
 
+      function updateFocusState(mode) {
+        focusButtons.forEach((button) => {
+          const isActive = button.dataset.focusMode === mode;
+          button.classList.toggle('bg-indigo-100', isActive);
+          button.classList.toggle('text-indigo-700', isActive);
+          button.classList.toggle('bg-white', !isActive);
+          button.classList.toggle('text-indigo-600', !isActive);
+          button.setAttribute('aria-pressed', String(isActive));
+        });
+        activeFocus = mode;
+      }
+
       function refreshRange(range) {
-        const data = bucketEntries(range);
+        const focusPredicate = focusPredicates[activeFocus] || focusPredicates.all;
+        const focusedEntries = parsedEntries.filter(focusPredicate);
+        const data = bucketEntries(range, focusedEntries);
+        const comparison = computeComparison(range, focusedEntries, data.rangeStartTs, data.rangeDays);
         const averageEnergy =
           data.energyData.length > 0
             ? data.energyData.reduce((acc, current) => acc + current, 0) / data.energyData.length
@@ -532,6 +655,23 @@
           const { label, emoji } = moodMetadata(averageMood);
           rangeAverageMood.textContent = `${emoji} ${label}`;
         }
+        if (comparison.energyAvg === null) {
+          comparisonEnergyEl.textContent = '—';
+          comparisonDiffEl.textContent = 'No prior entries';
+        } else {
+          comparisonEnergyEl.textContent = comparison.energyAvg.toFixed(1);
+          const diff =
+            averageEnergy !== null ? (averageEnergy - comparison.energyAvg).toFixed(1) : null;
+          comparisonDiffEl.textContent = diff
+            ? `Compared to prior period: ${diff > 0 ? '+' : ''}${diff}`
+            : 'Compared to prior period';
+        }
+        if (comparison.moodAvg === null) {
+          comparisonMoodEl.textContent = 'Mood —';
+        } else {
+          const moodInfo = moodMetadata(comparison.moodAvg);
+          comparisonMoodEl.textContent = `${moodInfo.emoji} ${moodInfo.label}`;
+        }
 
         if (!data.labels.length) {
           rangeStatus.textContent = `No entries recorded during ${rangeLabels[range].toLowerCase()}.`;
@@ -546,19 +686,32 @@
         }
 
         rangeStatus.textContent = `${rangeLabels[range]} · ${data.spanStart} – ${data.spanEnd}`;
-        ensureChart(data);
+        ensureChart(data, comparison);
       }
 
       chartButtons.forEach((button) => {
         button.addEventListener('click', () => {
           const range = button.dataset.range;
+          activeRange = range;
           updateRangeState(range);
           refreshRange(range);
         });
       });
 
+      focusButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const mode = button.dataset.focusMode;
+          if (!mode) {
+            return;
+          }
+          updateFocusState(mode);
+          refreshRange(activeRange);
+        });
+      });
+
       refreshLatestEntry();
       updateRangeState('day');
+      updateFocusState('all');
       refreshRange('day');
     });
   </script>

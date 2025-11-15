@@ -83,7 +83,12 @@ if Calendar is None:
             if not line:
                 continue
             if line == "BEGIN:VEVENT":
-                current = {}
+                current = {
+                    "SUMMARY": "",
+                    "DESCRIPTION": "",
+                    "LOCATION": "",
+                    "URL": "",
+                }
                 continue
             if line == "END:VEVENT":
                 if {"DTSTART", "DTEND"}.issubset(current):
@@ -92,6 +97,9 @@ if Calendar is None:
                             summary=current.get("SUMMARY", ""),
                             start=current["DTSTART"],
                             end=current["DTEND"],
+                            location=current.get("LOCATION", ""),
+                            description=current.get("DESCRIPTION", ""),
+                            html_link=current.get("URL", ""),
                         )
                     )
                 continue
@@ -110,6 +118,12 @@ if Calendar is None:
                     current[field] = dt
             elif field == "SUMMARY":
                 current[field] = value
+            elif field == "DESCRIPTION":
+                current[field] = value
+            elif field == "LOCATION":
+                current[field] = value
+            elif field == "URL":
+                current[field] = value
         return events
 
     class Calendar:  # pragma: no cover - fallback when dependency missing
@@ -127,6 +141,9 @@ class Event:
     summary: str
     start: datetime
     end: datetime
+    location: str = ""
+    description: str = ""
+    html_link: str = ""
 
 
 def _read_ics_events() -> List[Event]:
@@ -159,12 +176,18 @@ def _read_ics_events() -> List[Event]:
                     start = getattr(item, "start", None)
                     end = getattr(item, "end", None)
                     summary = getattr(item, "summary", "") or ""
+                location = getattr(item, "location", "") or ""
+                description = getattr(item, "description", "") or ""
+                html_link = getattr(item, "url", "") or ""
                 if start and end:
                     events.append(
                         Event(
                             summary,
                             start.astimezone(tz),
                             end.astimezone(tz),
+                            location=location,
+                            description=description,
+                            html_link=html_link,
                         )
                     )
     return events
@@ -233,7 +256,19 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
         end_dt = _parse_time(item.get("end", {}))
         if not (start_dt and end_dt):
             continue
-        events.append(Event(item.get("summary", ""), start_dt, end_dt))
+        location = item.get("location") or ""
+        description = item.get("description") or ""
+        html_link = item.get("htmlLink") or ""
+        events.append(
+            Event(
+                item.get("summary", ""),
+                start_dt,
+                end_dt,
+                location=location,
+                description=description,
+                html_link=html_link,
+            )
+        )
     return events
 
 

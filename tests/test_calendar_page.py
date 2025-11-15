@@ -34,4 +34,4 @@ def test_calendar_page_loads_linked_calendars(monkeypatch):
     assert response.status_code == 200
     assert "Event" in response.text
     assert called["args"][0] == date.today()
-    assert called["args"][1] == date.today() + timedelta(days=7)
+    assert called["args"][1] == date.today() + timedelta(days=6)

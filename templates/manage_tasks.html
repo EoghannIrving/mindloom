@@ -287,27 +287,6 @@
                   <option value="{{ opt }}">{{ opt }}</option>
                 {% endfor %}
               </select>
-              <button
-                type="button"
-                data-bulk-apply
-                data-field="status"
-                aria-label="Apply status to selected tasks"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                <span class="sr-only">Apply status</span>
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 11l3 3 7-7" />
-                </svg>
-              </button>
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -318,31 +297,10 @@
                 type="text"
                 list="projects"
                 data-bulk-target="project"
+                data-bulk-allow-empty
                 class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 placeholder="Type to filter"
               >
-              <button
-                type="button"
-                data-bulk-apply
-                data-field="project"
-                data-allow-empty
-                aria-label="Apply project to selected tasks"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                <span class="sr-only">Apply project</span>
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 11l3 3 7-7" />
-                </svg>
-              </button>
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -353,31 +311,10 @@
                 type="text"
                 list="areas"
                 data-bulk-target="area"
+                data-bulk-allow-empty
                 class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 placeholder="Type to filter"
               >
-              <button
-                type="button"
-                data-bulk-apply
-                data-field="area"
-                data-allow-empty
-                aria-label="Apply area to selected tasks"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                <span class="sr-only">Apply area</span>
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 11l3 3 7-7" />
-                </svg>
-              </button>
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -393,27 +330,6 @@
                   <option value="{{ opt }}">{{ opt }}</option>
                 {% endfor %}
               </select>
-              <button
-                type="button"
-                data-bulk-apply
-                data-field="effort"
-                aria-label="Apply effort to selected tasks"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                <span class="sr-only">Apply effort</span>
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 11l3 3 7-7" />
-                </svg>
-              </button>
             </div>
           </div>
           <div class="flex flex-col gap-2">
@@ -423,32 +339,32 @@
                 id="bulkDue"
                 type="date"
                 data-bulk-target="due"
+                data-bulk-allow-empty
                 class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               >
-              <button
-                type="button"
-                data-bulk-apply
-                data-field="due"
-                data-allow-empty
-                aria-label="Apply due date to selected tasks"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                <span class="sr-only">Apply due</span>
-                <svg
-                  class="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M5 11l3 3 7-7" />
-                </svg>
-              </button>
             </div>
           </div>
+        </div>
+        <div class="mt-3 flex justify-end">
+          <button
+            type="button"
+            data-bulk-apply-all
+            class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+          >
+            Apply selected changes
+            <svg
+              class="h-3.5 w-3.5"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 11l3 3 7-7" />
+            </svg>
+          </button>
         </div>
       </section>
       <div class="divide-y divide-gray-200 pt-3" data-task-list>
@@ -696,12 +612,6 @@
       {% endfor %}
       </div>
       <div class="sticky bottom-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-2 backdrop-blur flex justify-end gap-3 rounded-b-3xl">
-        <a
-          href="{{ url_for('tasks_page') }}"
-          class="inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-200"
-        >
-          Cancel
-        </a>
         <button
           type="submit"
           class="inline-flex items-center rounded-xl bg-amber-300 px-5 py-2 text-sm font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
@@ -975,25 +885,34 @@
             });
             return applied;
           };
-          const bulkApplyButtons = manageTasksForm.querySelectorAll('[data-bulk-apply]');
-          bulkApplyButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
+          const applyAllButton = manageTasksForm.querySelector('[data-bulk-apply-all]');
+          const bulkFieldConfigs = [
+            { field: 'status', allowEmpty: false },
+            { field: 'project', allowEmpty: true },
+            { field: 'area', allowEmpty: true },
+            { field: 'effort', allowEmpty: false },
+            { field: 'due', allowEmpty: true },
+          ];
+          if (applyAllButton) {
+            applyAllButton.addEventListener('click', (event) => {
               event.preventDefault();
-              const targetField = button.getAttribute('data-field');
-              if (!targetField) {
-                return;
-              }
-              const sourceControl = manageTasksForm.querySelector(`[data-bulk-target="${targetField}"]`);
-              if (!sourceControl) {
-                return;
-              }
-              const allowEmpty = button.hasAttribute('data-allow-empty');
-              const applied = applyBulkField(targetField, sourceControl.value, allowEmpty);
-              if (applied) {
+              let appliedAny = false;
+              bulkFieldConfigs.forEach(({ field, allowEmpty }) => {
+                const sourceControl = manageTasksForm.querySelector(`[data-bulk-target="${field}"]`);
+                if (!sourceControl) {
+                  return;
+                }
+                const allow = allowEmpty || sourceControl.hasAttribute('data-bulk-allow-empty');
+                const applied = applyBulkField(field, sourceControl.value, allow);
+                if (applied) {
+                  appliedAny = true;
+                }
+              });
+              if (appliedAny) {
                 submitManageTasksForm();
               }
             });
-          });
+          }
           updateSelectionCount();
 
           const recurrenceDays = {

@@ -62,20 +62,146 @@
         <p class="text-sm text-gray-500">All-day events show first; overlapping time slots align with lanes.</p>
       </div>
 
+      <div class="mb-6 space-y-4 rounded-2xl border border-gray-200 bg-slate-50/70 p-4 text-sm text-gray-600 shadow-sm">
+        <form method="get" class="space-y-3">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Start date
+              <input
+                type="date"
+                name="start_date"
+                value="{{ start_date.isoformat() }}"
+                class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              />
+            </label>
+            <label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Window
+              <select
+                name="range"
+                class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+              >
+                {% for option in [7, 14, 21, 30] %}
+                <option value="{{ option }}" {% if range_days == option %}selected{% endif %}>{{ option }} days</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Focus overlapping days
+              <span class="flex items-center gap-2 text-xs font-normal text-slate-500">
+                <input type="hidden" name="focus_overlaps" value="0" />
+                <input
+                  type="checkbox"
+                  name="focus_overlaps"
+                  value="1"
+                  class="h-4 w-4 rounded border border-slate-300 accent-indigo-500"
+                  {% if focus_overlaps %}checked{% endif %}
+                />
+                Show days with concurrency
+              </span>
+            </label>
+            <label class="flex flex-col gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Focus task days
+              <span class="flex items-center gap-2 text-xs font-normal text-slate-500">
+                <input type="hidden" name="focus_tasks_due" value="0" />
+                <input
+                  type="checkbox"
+                  name="focus_tasks_due"
+                  value="1"
+                  class="h-4 w-4 rounded border border-slate-300 accent-indigo-500"
+                  {% if focus_tasks_due %}checked{% endif %}
+                />
+                Show days with tasks due
+              </span>
+            </label>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <label class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <input type="hidden" name="show_all_day" value="0" />
+              <input
+                type="checkbox"
+                name="show_all_day"
+                value="1"
+                class="h-4 w-4 rounded border border-slate-300 accent-indigo-500"
+                {% if show_all_day %}checked{% endif %}
+              />
+              All-day events
+            </label>
+            <label class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <input type="hidden" name="show_timed" value="0" />
+              <input
+                type="checkbox"
+                name="show_timed"
+                value="1"
+                class="h-4 w-4 rounded border border-slate-300 accent-indigo-500"
+                {% if show_timed %}checked{% endif %}
+              />
+              Timed events
+            </label>
+            <label class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <input type="hidden" name="show_tasks" value="0" />
+              <input
+                type="checkbox"
+                name="show_tasks"
+                value="1"
+                class="h-4 w-4 rounded border border-slate-300 accent-indigo-500"
+                {% if show_tasks %}checked{% endif %}
+              />
+              Tasks due
+            </label>
+          </div>
+          <div class="flex justify-end">
+            <button
+              type="submit"
+              class="rounded-2xl bg-indigo-600 px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500"
+            >
+              Apply filters
+            </button>
+          </div>
+        </form>
+        <div class="grid gap-2 text-xs text-slate-500 sm:grid-cols-3">
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full border border-slate-300 bg-white"></span>
+            Single lane · no overlaps
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full border border-rose-200 bg-rose-50"></span>
+            Highlighted lane · overlapping event
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-8 rounded-full border border-slate-300 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100"></span>
+            Lane spacing mirrors concurrency depth
+          </div>
+        </div>
+      </div>
+
       <div class="space-y-4">
-        {% for day in calendar_days %}
-        <div class="rounded-2xl border border-gray-200 bg-slate-50/70 px-5 py-4 shadow-sm">
+        {% if not display_days %}
+        <div class="rounded-2xl border border-dashed border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-500 shadow-sm">
+          <p>No days match the current filters.</p>
+          <p class="mt-1 text-xs">
+            <a href="/calendar" class="font-semibold text-indigo-600 underline-offset-2 hover:underline">Reset filters</a> to view the full range.
+          </p>
+        </div>
+        {% endif %}
+        {% for day in display_days %}
+        <div class="rounded-2xl border border-gray-200 bg-slate-50/70 px-5 py-4 shadow-sm" data-day-id="day-{{ loop.index0 }}">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p class="text-sm font-semibold text-gray-600">{{ day.date.strftime('%A, %b %d') }}</p>
               <p class="text-xs text-gray-500">{{ day.date.strftime('%Y-%m-%d') }}</p>
+              <p class="text-xs text-gray-500">
+                Energy load:
+                <span data-energy-target="day-{{ loop.index0 }}">{{ day.energy_total }}</span>
+                · Overdue:
+                <span data-overdue-target="day-{{ loop.index0 }}">{{ day.overdue_count }}</span>
+              </p>
             </div>
             <span class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-indigo-600">
               {{ day.count }} {{ "event" if day.count == 1 else "events" }}
             </span>
           </div>
 
-          {% if day.all_day_events %}
+          {% if show_all_day and day.all_day_events %}
           <div class="mt-3 flex flex-wrap gap-2">
             {% for event in day.all_day_events %}
             <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
@@ -86,54 +212,123 @@
             </span>
             {% endfor %}
           </div>
+          {% elif day.all_day_events %}
+          <p class="mt-3 text-xs italic text-slate-500">All-day events are hidden by the active filter.</p>
           {% endif %}
 
           <div class="mt-3 space-y-2">
-            {% if day.timed_events %}
-            {% for event in day.timed_events %}
-            <div class="flex items-start gap-3">
-              <p class="w-16 text-xs text-gray-500">
-                {{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}
-              </p>
-              <div class="flex-1">
-                <div class="relative">
-                  <div
-                    class="rounded-2xl border px-3 py-2 text-sm shadow-sm transition {{ 'border-rose-200 bg-rose-50' if event.overlaps else 'border-gray-200 bg-white' }}"
-                    style="margin-left: calc({{ event.lane_index }} * 0.75rem);"
-                  >
-                    <p class="font-semibold text-gray-900">{{ event.summary or 'Untitled event' }}</p>
-                    <p class="text-xs text-gray-500">
-                      Lane {{ event.lane_index + 1 }} of {{ event.total_lanes }}
-                    </p>
+            {% if show_timed %}
+              {% if day.timed_events %}
+                {% for event in day.timed_events %}
+                <div class="flex items-start gap-3">
+                  <p class="w-16 text-xs text-gray-500">
+                    {{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}
+                  </p>
+                  <div class="flex-1">
+                    <div class="relative">
+                        <div
+                          class="rounded-2xl border px-3 py-2 text-sm shadow-sm transition {{ 'border-rose-200 bg-rose-50' if event.overlaps else 'border-gray-200 bg-white' }}"
+                          style="margin-left: {{ event.start_pct }}%; width: {{ event.duration_pct }}%;"
+                        >
+                        <p class="font-semibold text-gray-900">{{ event.summary or 'Untitled event' }}</p>
+                        <p class="flex flex-wrap gap-2 text-xs uppercase tracking-wide text-gray-500">
+                          {% if event.location %}
+                          <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                            📍 {{ event.location }}
+                          </span>
+                          {% endif %}
+                        </p>
+                        {% if event.description %}
+                        <p class="mt-1 text-xs text-slate-600">
+                          {{ event.description | truncate(120, True, '…') }}
+                        </p>
+                        {% endif %}
+                        {% if event.html_link %}
+                        <p class="mt-2">
+                          <a
+                            href="{{ event.html_link }}"
+                            class="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View event
+                          </a>
+                        </p>
+                        {% endif %}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            {% endfor %}
-            {% else %}
-            <p class="text-sm text-gray-500">No timed events scheduled for this day.</p>
+                {% endfor %}
+              {% else %}
+                <p class="text-sm text-gray-500">No timed events scheduled for this day.</p>
+              {% endif %}
+            {% elif day.timed_events %}
+              <p class="text-sm text-gray-500">Timed events are hidden by the active filter.</p>
             {% endif %}
           </div>
 
-          {% if day.tasks_due %}
+          {% if show_tasks and day.tasks_due %}
           <div class="mt-3 rounded-2xl border border-dashed border-slate-200 bg-white/90 px-3 py-3 text-sm">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tasks due this day</p>
-            <ul class="mt-2 space-y-1">
+            <ul
+              id="calendar-tasks-day-{{ loop.index0 }}"
+              class="mt-2 space-y-1"
+              data-task-list="day-{{ loop.index0 }}"
+            >
               {% for task in day.tasks_due[:3] %}
-              <li class="flex items-center justify-between gap-3">
-                <span class="font-medium text-slate-800">{{ task.title }}</span>
-                <span class="text-xs text-slate-500">
-                  {% if task.project %}{{ task.project }} · {% endif %}energy {{ task.energy_cost }}
-                </span>
+              <li
+                class="flex items-center justify-between gap-3"
+                data-day-id="day-{{ loop.index0 }}"
+                data-energy-value="{{ task.energy_cost }}"
+                data-overdue="{{ 'true' if task.is_overdue else 'false' }}"
+              >
+                <div>
+                  <p class="flex items-center gap-2">
+                    <span class="font-medium text-slate-800">{{ task.title }}</span>
+                    {% if task.is_overdue %}
+                    <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-rose-600">Overdue</span>
+                    {% endif %}
+                  </p>
+                  <p class="text-xs text-slate-500">
+                    {% if task.project %}{{ task.project }} · {% endif %}energy {{ task.energy_cost }}
+                    {% if task.is_overdue and task.due_date %}
+                    · due {{ task.due_date.strftime('%b %d') }}
+                    {% endif %}
+                  </p>
+                </div>
+                {% if task.id %}
+                <button
+                  type="button"
+                  data-calendar-task-complete
+                  data-task-id="{{ task.id }}"
+                  data-day-id="day-{{ loop.index0 }}"
+                  data-energy-value="{{ task.energy_cost }}"
+                  data-overdue="{{ 'true' if task.is_overdue else 'false' }}"
+                  aria-label="Mark {{ task.title }} complete"
+                  class="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-600 transition hover:bg-indigo-50"
+                >
+                  <span aria-hidden="true">✓</span>
+                  <span class="sr-only">Mark complete</span>
+                </button>
+                {% endif %}
               </li>
               {% endfor %}
             </ul>
+            <p
+              class="mt-2 text-xs text-gray-500 hidden"
+              data-calendar-task-empty="day-{{ loop.index0 }}"
+            >
+              No tasks due for this day.
+            </p>
             {% if day.tasks_total > 3 %}
             <p class="mt-2 text-xs font-semibold text-indigo-600">
               <a href="/daily-tasks">+{{ day.tasks_total - 3 }} more</a>
             </p>
             {% endif %}
           </div>
+          {% elif day.tasks_due %}
+          <p class="mt-3 text-xs italic text-slate-500">Tasks are hidden by the active filter.</p>
           {% endif %}
 
           {% if day.has_overlaps %}
@@ -146,5 +341,63 @@
       </div>
     </section>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const updateSummary = (dayId, energyDelta, overdueDelta) => {
+        const energyEl = document.querySelector(`[data-energy-target="${dayId}"]`);
+        if (energyEl) {
+          const current = Number(energyEl.textContent) || 0;
+          energyEl.textContent = Math.max(0, current + energyDelta);
+        }
+        if (overdueDelta !== 0) {
+          const overdueEl = document.querySelector(`[data-overdue-target="${dayId}"]`);
+          if (overdueEl) {
+            const currentOverdue = Number(overdueEl.textContent) || 0;
+            overdueEl.textContent = Math.max(0, currentOverdue + overdueDelta);
+          }
+        }
+      };
+
+      const buttons = document.querySelectorAll("[data-calendar-task-complete]");
+      buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+          const taskId = button.dataset.taskId;
+          const dayId = button.dataset.dayId;
+          const energyValue = Number(button.dataset.energyValue) || 0;
+          const isOverdue = button.dataset.overdue === "true";
+          button.disabled = true;
+          button.classList.add("opacity-60");
+          try {
+            const response = await fetch("/calendar/tasks/complete-ajax", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({ task_id: taskId }),
+            });
+            if (!response.ok) {
+              throw new Error("Failed to mark task complete");
+            }
+            const listItem = button.closest("li");
+            if (listItem) {
+              listItem.remove();
+            }
+            updateSummary(dayId, -energyValue, isOverdue ? -1 : 0);
+            const taskList = document.querySelector(`[data-task-list="${dayId}"]`);
+            if (taskList && !taskList.querySelector("li")) {
+              const emptyMessage = document.querySelector(`[data-calendar-task-empty="${dayId}"]`);
+              if (emptyMessage) {
+                emptyMessage.classList.remove("hidden");
+              }
+            }
+          } catch (error) {
+            console.error(error);
+            button.disabled = false;
+            button.classList.remove("opacity-60");
+          }
+        });
+      });
+    });
+  </script>
 
 {% endblock %}
