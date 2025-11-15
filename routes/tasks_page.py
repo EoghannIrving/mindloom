@@ -30,6 +30,12 @@ from utils.tasks import (
     task_due_date,
     unique_sorted_values,
 )
+from task_selector import (
+    DEFAULT_EXECUTIVE_TOLERANCE,
+    MOOD_EXECUTIVE_TOLERANCE,
+    _executive_weight,
+    effective_energy_level,
+)
 
 
 def _task_due_date(task: dict) -> date | None:
@@ -58,13 +64,6 @@ logger = configure_logger(__name__, LOG_FILE)
 
 
 ENERGY_MAPPING = {"low": 1, "medium": 3, "high": 5}
-MOOD_CAPACITY_ADJUSTMENTS = {
-    "Sad": -1,
-    "Meh": -0.5,
-    "Okay": 0,
-    "Calm": 0.5,
-    "Joyful": 1,
-}
 DEFAULT_ENERGY_LEVEL = 3
 DEFAULT_STATUS_FILTER = "active"
 
@@ -186,7 +185,7 @@ def tasks_page(request: Request):
 
     due_tasks = _collect_due_tasks(tasks, today, reasons)
     achievable_tasks, over_limit_tasks = _score_due_tasks(
-        due_tasks, energy_summary["available_energy"]
+        due_tasks, energy_summary["available_energy"], energy_summary["mood"]
     )
 
     return templates.TemplateResponse(
@@ -241,8 +240,8 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
 
     raw_mood = str(entry.get("mood") or "Okay").capitalize()
     mood_value = raw_mood if raw_mood else "Okay"
-    adjustment = MOOD_CAPACITY_ADJUSTMENTS.get(mood_value, 0)
-    available_energy = max(0.5, energy_value + adjustment)
+    target_energy = effective_energy_level(energy_value, mood_value)
+    available_energy = float(target_energy)
 
     summary.update(
         {
@@ -257,6 +256,17 @@ def _summarize_energy_entry(entry: dict | None) -> dict:
         }
     )
     return summary
+
+
+def _executive_penalty(task: dict, mood: str | None) -> int:
+    """Return an executive load penalty based on the recorded mood."""
+
+    mood_key = (mood or "").strip().lower()
+    tolerance = MOOD_EXECUTIVE_TOLERANCE.get(mood_key, DEFAULT_EXECUTIVE_TOLERANCE)
+    exec_weight = _executive_weight(task)
+    if exec_weight is None:
+        return 0
+    return max(0, exec_weight - tolerance)
 
 
 def _collect_due_tasks(
@@ -280,7 +290,7 @@ def _collect_due_tasks(
 
 
 def _score_due_tasks(
-    tasks: list[dict], available_energy: float
+    tasks: list[dict], available_energy: float, mood: str | None
 ) -> tuple[list[dict], list[dict]]:
     """Split due tasks into achievable and over-limit buckets."""
 
@@ -288,9 +298,12 @@ def _score_due_tasks(
     over_limit: list[dict] = []
     for task in tasks:
         cost = resolve_energy_cost(task)
-        gap = available_energy - cost
+        variance = _executive_penalty(task, mood)
+        adjusted_cost = cost + variance
+        gap = available_energy - adjusted_cost
         annotated = dict(task)
         annotated["energy_cost"] = cost
+        annotated["executive_penalty"] = variance
         annotated["capacity_gap"] = gap
         if gap >= 0:
             achievable.append(annotated)

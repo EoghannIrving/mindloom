@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
+import logging
+from utils.tasks import resolve_energy_cost
 
 MOOD_ENERGY_TARGETS = {
     "sad": 1,
@@ -22,6 +24,8 @@ MOOD_EXECUTIVE_TOLERANCE = {
 }
 
 DEFAULT_EXECUTIVE_TOLERANCE = 1
+
+logger = logging.getLogger(__name__)
 
 
 def effective_energy_level(
@@ -62,11 +66,7 @@ def _due_date_value(task: Dict[str, Any]) -> date:
 
 
 def _energy_cost(task: Dict[str, Any]) -> Optional[int]:
-    try:
-        cost = task.get("energy_cost")
-        return int(cost)
-    except (TypeError, ValueError):
-        return None
+    return resolve_energy_cost(task)
 
 
 def _executive_weight(task: Dict[str, Any]) -> Optional[int]:
@@ -99,10 +99,7 @@ def select_next_task(
     for task in tasks:
         due = _due_date_value(task)
         cost = _energy_cost(task)
-        if cost is None:
-            energy_penalty = target_energy
-        else:
-            energy_penalty = max(target_energy - cost, 0)
+        energy_penalty = max(target_energy - cost, 0)
 
         exec_weight = _executive_weight(task)
         executive_penalty = (
@@ -110,7 +107,11 @@ def select_next_task(
         )
 
         total_penalty = energy_penalty + executive_penalty
-
+        adjusted_cost = (
+            cost + executive_penalty
+            if cost is not None
+            else target_energy + executive_penalty
+        )
         reasoning = {
             "due_date": due.isoformat() if due != date.max else None,
             "energy_penalty": energy_penalty,
@@ -132,6 +133,9 @@ def select_next_task(
                 ),
             )
         )
+
+    if not scored:
+        return None, None
 
     selected_task, reasoning, _ = min(scored, key=lambda item: item[2])
     return selected_task, reasoning

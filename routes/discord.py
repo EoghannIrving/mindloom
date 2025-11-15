@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
 from config import config
+from energy import latest_entry, read_entries
 from tasks import read_tasks
 from task_selector import select_next_task
 from utils.logging import configure_logger
@@ -85,7 +86,15 @@ def next_task(
         logger.info("No tasks available for selection")
         return NextTaskResponse(total_tasks=0)
 
-    selected, reasoning = select_next_task(filtered, mood, energy)
+    entry = latest_entry(read_entries())
+    energy_level = energy
+    mood_value = mood
+    if energy_level is None and entry:
+        energy_level = entry.get("energy")
+    if mood_value is None and entry:
+        mood_value = entry.get("mood")
+
+    selected, reasoning = select_next_task(filtered, mood_value, energy_level)
     logger.debug("Selected task: %s", selected)
     logger.debug("Selection reasoning: %s", reasoning)
 

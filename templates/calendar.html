@@ -1,21 +1,150 @@
 {% extends "base.html" %}
 {% block title %}Calendar{% endblock %}
 {% block content %}
-  <div class="max-w-xl mx-auto space-y-4">
-    <h1 class="text-2xl font-bold mb-4">Calendar Events</h1>
-    {% if events %}
-    <ul class="space-y-2">
-      {% for e in events %}
-      <li>
-        <span class="font-semibold">{{ e.start.strftime('%Y-%m-%d %H:%M') }}</span>
-        -
-        <span>{{ e.end.strftime('%H:%M') }}</span>
-        : {{ e.summary }}
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <p>No events loaded.</p>
-    {% endif %}
+  <div class="max-w-5xl mx-auto space-y-6 pb-10">
+    <section class="rounded-3xl border border-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 p-6 text-white shadow-2xl">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-wider text-indigo-100">Calendar</p>
+          <h1 class="text-3xl font-semibold text-white">Linked events</h1>
+          <p class="text-sm text-indigo-100">
+            Showing {{ range_days }}-day view from
+            <span class="font-medium text-white">{{ start_date.strftime('%b %d, %Y') }}</span>
+            through
+            <span class="font-medium text-white">{{ end_date.strftime('%b %d, %Y') }}</span>.
+          </p>
+        </div>
+        <div class="rounded-2xl border border-white/40 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white shadow-inner backdrop-blur">
+          {{ total_events }} {{ "event" if total_events == 1 else "events" }}
+        </div>
+      </div>
+      <div class="mt-6 grid gap-4 sm:grid-cols-3">
+        <div class="rounded-2xl border border-white/30 bg-white/10 px-4 py-3 text-white shadow-sm backdrop-blur">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Total events</p>
+          <p class="mt-1 text-3xl font-bold text-white">{{ total_events }}</p>
+          <p class="text-xs text-indigo-100">
+            {{ range_days }}-day window
+          </p>
+        </div>
+        <div class="rounded-2xl border border-white/30 bg-white/10 px-4 py-3 text-white shadow-sm backdrop-blur">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Busiest day</p>
+          {% if busiest_day %}
+          <p class="mt-1 text-2xl font-bold text-white">{{ busiest_day.count }}</p>
+          <p class="text-sm text-indigo-100">
+            {{ busiest_day.date.strftime('%A, %b %d') }}
+          </p>
+          {% else %}
+          <p class="mt-1 text-2xl font-bold text-white">—</p>
+          <p class="text-sm text-indigo-100">No events loaded</p>
+          {% endif %}
+        </div>
+        <div class="rounded-2xl border border-white/30 bg-white/10 px-4 py-3 text-white shadow-sm backdrop-blur">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Next up</p>
+          {% if next_event %}
+          <p class="mt-1 text-base font-semibold text-white">{{ next_event.summary or 'Untitled event' }}</p>
+          <p class="text-sm text-indigo-100">
+            {{ next_event.start.strftime('%A, %b %d') }} at {{ next_event.start.strftime('%H:%M') }}
+          </p>
+          {% else %}
+          <p class="mt-1 text-2xl font-bold text-white">—</p>
+          <p class="text-sm text-indigo-100">No events in range</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-lg">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Agenda</p>
+          <h2 class="text-xl font-semibold text-gray-900">Day-by-day breakdown</h2>
+        </div>
+        <p class="text-sm text-gray-500">All-day events show first; overlapping time slots align with lanes.</p>
+      </div>
+
+      <div class="space-y-4">
+        {% for day in calendar_days %}
+        <div class="rounded-2xl border border-gray-200 bg-slate-50/70 px-5 py-4 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-sm font-semibold text-gray-600">{{ day.date.strftime('%A, %b %d') }}</p>
+              <p class="text-xs text-gray-500">{{ day.date.strftime('%Y-%m-%d') }}</p>
+            </div>
+            <span class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-0.5 text-xs font-semibold uppercase tracking-wide text-indigo-600">
+              {{ day.count }} {{ "event" if day.count == 1 else "events" }}
+            </span>
+          </div>
+
+          {% if day.all_day_events %}
+          <div class="mt-3 flex flex-wrap gap-2">
+            {% for event in day.all_day_events %}
+            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+              {{ event.summary or 'All-day event' }}
+              {% if event.duration_days > 1 %}
+              · {{ event.duration_days }} days
+              {% endif %}
+            </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mt-3 space-y-2">
+            {% if day.timed_events %}
+            {% for event in day.timed_events %}
+            <div class="flex items-start gap-3">
+              <p class="w-16 text-xs text-gray-500">
+                {{ event.start.strftime('%H:%M') }} – {{ event.end.strftime('%H:%M') }}
+              </p>
+              <div class="flex-1">
+                <div class="relative">
+                  <div
+                    class="rounded-2xl border px-3 py-2 text-sm shadow-sm transition {{ 'border-rose-200 bg-rose-50' if event.overlaps else 'border-gray-200 bg-white' }}"
+                    style="margin-left: calc({{ event.lane_index }} * 0.75rem);"
+                  >
+                    <p class="font-semibold text-gray-900">{{ event.summary or 'Untitled event' }}</p>
+                    <p class="text-xs text-gray-500">
+                      Lane {{ event.lane_index + 1 }} of {{ event.total_lanes }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p class="text-sm text-gray-500">No timed events scheduled for this day.</p>
+            {% endif %}
+          </div>
+
+          {% if day.tasks_due %}
+          <div class="mt-3 rounded-2xl border border-dashed border-slate-200 bg-white/90 px-3 py-3 text-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Tasks due this day</p>
+            <ul class="mt-2 space-y-1">
+              {% for task in day.tasks_due[:3] %}
+              <li class="flex items-center justify-between gap-3">
+                <span class="font-medium text-slate-800">{{ task.title }}</span>
+                <span class="text-xs text-slate-500">
+                  {% if task.project %}{{ task.project }} · {% endif %}energy {{ task.energy_cost }}
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+            {% if day.tasks_total > 3 %}
+            <p class="mt-2 text-xs font-semibold text-indigo-600">
+              <a href="/daily-tasks">+{{ day.tasks_total - 3 }} more</a>
+            </p>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if day.has_overlaps %}
+          <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-rose-600">
+            Peak concurrency: {{ day.peak_overlap }} overlapping events.
+          </p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
   </div>
+
 {% endblock %}
