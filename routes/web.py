@@ -7,7 +7,6 @@ from pathlib import Path
 from datetime import date
 from fastapi import APIRouter, Request, Body, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 from config import config, PROJECT_ROOT
 from prompt_renderer import render_prompt
@@ -15,11 +14,12 @@ from tasks import read_tasks, task_completion_history, upcoming_tasks
 from energy import read_entries
 from calendar_integration import load_events
 from utils.logging import configure_logger
+from utils.template_helpers import create_templates
 from utils.tasks import build_option_values
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
+templates = create_templates()
 
 LOG_FILE = Path(config.LOG_DIR) / "web.log"
 logger = configure_logger(__name__, LOG_FILE)
@@ -123,6 +123,14 @@ def task_trends_page(request: Request):
             "completions": completions,
         },
     )
+
+
+@router.get("/offline", response_class=HTMLResponse)
+def offline_page(request: Request):
+    """Render the offline fallback page."""
+
+    logger.info("GET /offline")
+    return templates.TemplateResponse("offline.html", {"request": request})
 
 
 @router.post("/render-prompt")

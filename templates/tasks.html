@@ -28,7 +28,8 @@
       </div>
     </section>
 
-    <form method="post" class="space-y-6">
+    <form method="post" class="space-y-6" id="dailyTasksForm">
+      <input type="hidden" name="today" id="dailyTasksToday" value="{{ today_iso }}">
       <section class="space-y-3 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
         <div class="flex items-start justify-between gap-3">
           <div>
@@ -144,4 +145,27 @@
       </div>
     </form>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const now = new Date();
+      const tzOffsetMs = now.getTimezoneOffset() * 60_000;
+      const localDate = new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+      const params = new URLSearchParams(window.location.search);
+      const queryToday = params.get('today');
+      if (queryToday !== localDate) {
+        params.set('today', localDate);
+        const nextUrl = `${window.location.pathname}?${params.toString()}`;
+        window.location.replace(nextUrl);
+        return;
+      }
+      const todayInput = document.getElementById('dailyTasksToday');
+      const form = document.getElementById('dailyTasksForm');
+      if (!form || !todayInput) {
+        return;
+      }
+      form.addEventListener('submit', () => {
+        todayInput.value = localDate;
+      });
+    });
+  </script>
 {% endblock %}

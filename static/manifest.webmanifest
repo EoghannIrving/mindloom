@@ -1,0 +1,30 @@
+{
+  "name": "Mindloom",
+  "short_name": "Mindloom",
+  "description": "An offline-ready personal productivity assistant.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#111827",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/icons/screenshot-1280x720.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ]
+}

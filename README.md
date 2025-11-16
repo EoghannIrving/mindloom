@@ -27,6 +27,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
   [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
   configured.
 - Automatically pull calendar events from linked `.ics` files or Google Calendar when visiting the `/calendar` page, caching them in `data/calendar_cache.json`.
+- Enjoy Mindloom as an installable Progressive Web App: the manifest, service worker, and `/offline` fallback keep core pages cached even when you lose connectivity.
 - Visualize logged energy and mood trends for the current day, week, month, or year on the `/energy-trends` dashboard.
 - Track completed tasks, their energy cost, and whether they landed on time or late through `/task-trends`.
 - Backfill the task completion log with every historical `last_completed` entry via `python scripts/seed_task_completions.py`.

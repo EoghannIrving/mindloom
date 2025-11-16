@@ -11,17 +11,17 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 import yaml
 
-from config import config, PROJECT_ROOT
+from config import config
 from energy import MOOD_EMOJIS, latest_entry, read_entries
 from tasks import read_tasks, write_tasks, mark_tasks_complete, complete_task
 from planner import read_plan, parse_plan_reasons, _clean
 from parse_projects import write_tasks_to_projects
 from pydantic import BaseModel, Field
 from utils.logging import configure_logger
+from utils.template_helpers import create_templates
 from utils.tasks import (
     annotate_task,
     matches_search_query,
@@ -57,7 +57,7 @@ def _sort_tasks(tasks: list[dict], mode: str) -> list[dict]:
 
 
 router = APIRouter()
-templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
+templates = create_templates()
 
 LOG_FILE = Path(config.LOG_DIR) / "tasks_page.log"
 logger = configure_logger(__name__, LOG_FILE)
@@ -89,6 +89,17 @@ def _strip_runtime_fields(task: dict) -> dict:
     """Remove transient recurrence metadata before persisting."""
 
     return {k: v for k, v in task.items() if k not in {"next_due", "due_today"}}
+
+
+def _parse_iso_date(value: str | None) -> date | None:
+    """Return the parsed ISO date or ``None`` if the value is invalid."""
+
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 @router.post("/tasks", status_code=status.HTTP_201_CREATED)
@@ -175,7 +186,7 @@ def create_task(payload: TaskCreateRequest):
 def tasks_page(request: Request):
     """Display all saved tasks with checkboxes."""
     logger.info("GET /daily-tasks")
-    today = date.today()
+    today = _parse_iso_date(request.query_params.get("today")) or date.today()
     tasks = read_tasks()
     plan = read_plan()
     reasons = parse_plan_reasons(plan)
@@ -196,18 +207,23 @@ def tasks_page(request: Request):
             "over_limit_tasks": over_limit_tasks,
             "energy_summary": energy_summary,
             "today": today,
+            "today_iso": today.isoformat(),
         },
     )
 
 
 @router.post("/daily-tasks")
-def complete_tasks(task_id: List[int] = Form([])):
+def complete_tasks(task_id: List[int] = Form([]), today: str | None = Form(None)):
     """Mark selected tasks as complete and persist updates."""
     logger.info("POST /daily-tasks completed_count=%s", len(task_id))
     if task_id:
         logger.debug("POST /daily-tasks ids=%s", task_id)
     mark_tasks_complete([int(i) for i in task_id])
-    return RedirectResponse("/daily-tasks", status_code=303)
+    target_date = _parse_iso_date(today)
+    redirect_url = "/daily-tasks"
+    if target_date:
+        redirect_url = f"{redirect_url}?today={target_date.isoformat()}"
+    return RedirectResponse(redirect_url, status_code=303)
 
 
 def _latest_energy_entry(entries: list[dict] | None = None) -> dict | None:
@@ -374,7 +390,7 @@ def manage_tasks_page(request: Request):
     selected_area = request.query_params.get("area", "").strip()
     selected_type = request.query_params.get("type", "").strip()
     sort_mode = (request.query_params.get("sort") or "").strip() or "due_asc"
-    today = date.today()
+    today = _parse_iso_date(request.query_params.get("today")) or date.today()
 
     def _matches(task: dict) -> bool:
         if query:

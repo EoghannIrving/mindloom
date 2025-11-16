@@ -12,16 +12,18 @@ from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from calendar_integration import Event, load_events
-from config import config, PROJECT_ROOT
+from config import config
 from utils.logging import configure_logger
 from utils.tasks import resolve_energy_cost, task_due_date
 from tasks import mark_tasks_complete, read_tasks
 
+from utils.template_helpers import create_templates
+
+
 router = APIRouter()
-templates = Jinja2Templates(directory=PROJECT_ROOT / "templates")
+templates = create_templates()
 
 LOG_FILE = Path(config.LOG_DIR) / "calendar_page.log"
 logger = configure_logger(__name__, LOG_FILE)
@@ -128,6 +130,17 @@ def _serialize_due_task(task: dict, due_date: date | None, is_overdue: bool) -> 
     }
 
 
+def _parse_iso_date(value: str | None) -> date | None:
+    """Parse ISO date strings coming from the client."""
+
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
 def _parse_start_date(value: str | None) -> date | None:
     """Return a parsed ISO date or ``None`` if invalid."""
 
@@ -165,7 +178,9 @@ def calendar_page(request: Request):
     logger.info("GET /calendar")
     query_params = request.query_params
     today = date.today()
-    start = _parse_start_date(query_params.get("start_date")) or today
+    client_today = _parse_iso_date(query_params.get("today"))
+    effective_today = client_today or today
+    start = _parse_start_date(query_params.get("start_date")) or effective_today
     range_days = _parse_range_days(query_params.get("range"))
     end = start + timedelta(days=range_days - 1)
     events = sorted(load_events(start, end), key=lambda e: (e.start.date(), e.start))
@@ -183,7 +198,7 @@ def calendar_page(request: Request):
         due_date = task_due_date(task)
         if due_date:
             tasks_by_date[due_date].append(task)
-            if due_date < today:
+            if due_date < effective_today:
                 overdue_tasks.append((task, due_date))
 
     calendar_days: list[dict] = []
@@ -203,10 +218,10 @@ def calendar_page(request: Request):
 
         timed_events, peak_overlap, _, _ = _assign_event_lanes(timed_candidates)
         due_tasks = [
-            _serialize_due_task(task, current_day, current_day < today)
+            _serialize_due_task(task, current_day, current_day < effective_today)
             for task in tasks_by_date.get(current_day, [])
         ]
-        if current_day == today:
+        if current_day == effective_today:
             due_tasks.extend(
                 _serialize_due_task(task, due_date, True)
                 for task, due_date in overdue_tasks
@@ -284,7 +299,8 @@ def calendar_page(request: Request):
             "show_tasks": show_tasks,
             "focus_overlaps": focus_overlaps,
             "focus_tasks_due": focus_tasks_due,
-            "today": today,
+            "today": effective_today,
+            "today_iso": effective_today.isoformat(),
         },
     )
 

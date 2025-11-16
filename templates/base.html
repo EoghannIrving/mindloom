@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="{{ static_url(request, 'manifest.webmanifest') }}">
+  <link rel="apple-touch-icon" sizes="192x192" href="{{ static_url(request, 'icons/icon-192.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#111827">
   <title>{% block title %}Mindloom{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -247,19 +251,144 @@
       window.setFieldValidity = setFieldValidity;
     })();
   </script>
+  <style>
+    .nav-dropdown-menu {
+      pointer-events: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      z-index: 60;
+    }
+    [data-dropdown].open .nav-dropdown-menu,
+    [data-dropdown][data-open="true"] .nav-dropdown-menu {
+      pointer-events: auto;
+    }
+    [data-dropdown][data-open="true"] .nav-dropdown-menu {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
 </head>
 <body class="p-4">
-  <nav class="bg-gray-800 text-white px-4 py-2 mb-6">
-    <ul class="flex space-x-4">
-      <li><a href="/" class="hover:underline">Home</a></li>
-      <li><a href="/daily-tasks" class="hover:underline">Today's Tasks</a></li>
-      <li><a href="/manage-tasks" class="hover:underline">Manage Tasks</a></li>
-      <li><a href="/projects-page" class="hover:underline">Projects</a></li>
-      <li><a href="/energy-trends" class="hover:underline">Energy Trends</a></li>
-      <li><a href="/task-trends" class="hover:underline">Task Trends</a></li>
-      <li><a href="/calendar" class="hover:underline">Calendar</a></li>
-    </ul>
+  {% set current_path = request.url.path %}
+  {% macro nav_link(href, label) %}
+    {% set is_home = href == '/' %}
+    {% set is_active = (is_home and current_path == '/') or (not is_home and current_path.startswith(href)) %}
+    <a
+      href="{{ href }}"
+      class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition {{ 'bg-white text-gray-900 shadow' if is_active else 'text-white hover:bg-white/10' }}"
+    >
+      {{ label }}
+    </a>
+  {% endmacro %}
+
+  <nav class="mb-4 rounded-3xl border border-gray-900/20 bg-gray-900/80 px-4 py-3 text-white shadow-lg relative z-50">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-3 text-sm font-semibold uppercase tracking-wide text-white/70">
+        <img
+          src="{{ static_url(request, 'logo.png') }}"
+          alt="Mindloom logo"
+          class="h-10 w-auto rounded-full bg-white/10 p-1 shadow-lg"
+        />
+        <span class="sr-only">Mindloom</span>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <span class="sr-only">Primary navigation</span>
+        <li class="list-none">{{ nav_link('/', 'Home') }}</li>
+        <div class="relative" data-dropdown data-open="false">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Tasks
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div
+            class="nav-dropdown-menu invisible absolute left-0 top-full mt-1 rounded-2xl border border-white/20 bg-gray-900/90 p-2 opacity-0 shadow-lg transition"
+          >
+            <a href="/daily-tasks" class="block rounded-xl px-3 py-1 text-sm {{ 'bg-white text-gray-900' if current_path.startswith('/daily-tasks') else 'text-white hover:bg-white/10' }}">
+              Today's Tasks
+            </a>
+            <a href="/manage-tasks" class="mt-1 block rounded-xl px-3 py-1 text-sm {{ 'bg-white text-gray-900' if current_path.startswith('/manage-tasks') else 'text-white hover:bg-white/10' }}">
+              Manage Tasks
+            </a>
+          </div>
+        </div>
+        <li class="list-none">{{ nav_link('/projects-page', 'Projects') }}</li>
+        <div class="relative" data-dropdown data-open="false">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            Insights
+            <span aria-hidden="true">▾</span>
+          </button>
+          <div
+            class="nav-dropdown-menu invisible absolute left-0 top-full mt-1 w-40 rounded-2xl border border-white/20 bg-gray-900/90 p-2 opacity-0 shadow-lg transition"
+          >
+            <a href="/energy-trends" class="block rounded-xl px-3 py-1 text-sm {{ 'bg-white text-gray-900' if current_path.startswith('/energy-trends') else 'text-white hover:bg-white/10' }}">
+              Energy Trends
+            </a>
+            <a href="/task-trends" class="mt-1 block rounded-xl px-3 py-1 text-sm {{ 'bg-white text-gray-900' if current_path.startswith('/task-trends') else 'text-white hover:bg-white/10' }}">
+              Task Trends
+            </a>
+          </div>
+        </div>
+        <li class="list-none">{{ nav_link('/calendar', 'Calendar') }}</li>
+      </div>
+    </div>
   </nav>
+  <div class="mb-6">
+    {% block nav_breadcrumbs %}{% endblock %}
+  </div>
   {% block content %}{% endblock %}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-dropdown]').forEach((container) => {
+        const menu = container.querySelector('.nav-dropdown-menu');
+        if (!menu) {
+          return;
+        }
+        const show = () => container.setAttribute('data-open', 'true');
+        const hide = () => container.setAttribute('data-open', 'false');
+        let hideTimer;
+        const cancelHide = () => {
+          if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+          }
+        };
+        container.addEventListener('mouseenter', () => {
+          cancelHide();
+          show();
+        });
+        container.addEventListener('mouseleave', () => {
+          cancelHide();
+          hideTimer = window.setTimeout(hide, 150);
+        });
+        menu.addEventListener('mouseenter', () => {
+          cancelHide();
+        });
+        menu.addEventListener('mouseleave', () => {
+          hideTimer = window.setTimeout(hide, 150);
+        });
+      });
+    });
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swPath = '{{ static_url(request, "sw.js") }}';
+        navigator.serviceWorker
+          .register(swPath)
+          .then((registration) => {
+            console.info('Registered Mindloom service worker', registration.scope);
+          })
+          .catch((error) => {
+            console.warn('Mindloom service worker registration failed:', error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>

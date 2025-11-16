@@ -399,5 +399,19 @@
       });
     });
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      const tzOffsetMs = now.getTimezoneOffset() * 60_000;
+      const localDate = new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+      const params = new URLSearchParams(window.location.search);
+      const queryToday = params.get("today");
+      if (queryToday !== localDate) {
+        params.set("today", localDate);
+        const nextUrl = `${window.location.pathname}?${params.toString()}`;
+        window.location.replace(nextUrl);
+      }
+    });
+  </script>
 
 {% endblock %}

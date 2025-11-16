@@ -5,6 +5,7 @@
 import logging
 from pathlib import Path
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from routes import (
     projects,
@@ -16,7 +17,7 @@ from routes import (
     calendar_page,
     discord,
 )
-from config import config
+from config import config, PROJECT_ROOT
 
 LOG_FILE = Path(config.LOG_DIR) / "server.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -31,6 +32,7 @@ if not logger.handlers:
 
 logger.info("Initializing FastAPI app")
 app = FastAPI()
+app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
 app.include_router(projects.router)
 app.include_router(energy.router)
 app.include_router(web.router)

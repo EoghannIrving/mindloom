@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Offline – Mindloom{% endblock %}
+
+{% block content %}
+  <div class="mx-auto max-w-2xl rounded-3xl border border-dashed border-gray-900/20 bg-white/80 p-6 text-gray-900 shadow-xl">
+    <h1 class="text-2xl font-semibold">You're offline</h1>
+    <p class="mt-3 text-gray-700">
+      Mindloom is running locally, but the network is unavailable right now. You can still view cached pages and
+      revisit your tasks once connectivity returns.
+    </p>
+    <ul class="mt-6 space-y-2 text-sm text-gray-600">
+      <li>• Bookmarked pages will still display thanks to the service worker cache.</li>
+      <li>• Refresh the app when you regain access to sync tasks and load live data.</li>
+      <li>• This page will automatically try to reload when you reconnect.</li>
+    </ul>
+  </div>
+{% endblock %}
