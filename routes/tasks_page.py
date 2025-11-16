@@ -298,7 +298,9 @@ def _collect_due_tasks(
         if not due_date or due_date > today:
             continue
         task = dict(original)
+        task["due_date"] = due_date
         task["due_date_normalized"] = due_date.isoformat()
+        task["is_overdue"] = due_date < today
         title_key = _clean(str(task.get("title", "")))
         task["reason"] = reasons.get(title_key, "")
         due_tasks.append(task)

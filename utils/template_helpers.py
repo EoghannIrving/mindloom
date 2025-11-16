@@ -12,7 +12,8 @@ def static_url(request: Request, path: str) -> str:
 
     clean_path = path.lstrip("/")
     try:
-        return request.url_for("static", path=path)
+        resolved = request.url_for("static", path=path)
+        return resolved.path or f"/static/{clean_path}"
     except NoMatchFound:
         return f"/static/{clean_path}"
 
