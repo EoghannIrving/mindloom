@@ -269,7 +269,7 @@
     }
   </style>
 </head>
-<body class="p-4">
+<body class="px-4 pb-4 pt-0">
   {% set current_path = request.url.path %}
   {% macro nav_link(href, label) %}
     {% set is_home = href == '/' %}
@@ -282,7 +282,7 @@
     </a>
   {% endmacro %}
 
-  <nav class="mb-4 rounded-3xl border border-gray-900/20 bg-gray-900/80 px-4 py-3 text-white shadow-lg relative z-50">
+  <nav class="sticky top-0 mb-4 rounded-3xl border border-gray-900/20 bg-gray-900/80 px-4 py-3 text-white shadow-lg z-50">
     <div class="flex flex-wrap items-center gap-3">
       <div class="flex items-center gap-3 text-sm font-semibold uppercase tracking-wide text-white/70">
         <img
