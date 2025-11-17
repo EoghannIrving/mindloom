@@ -259,7 +259,7 @@
           <div>
             <p class="text-sm font-semibold text-slate-800">Bulk edit</p>
             <p class="text-xs text-slate-500">
-              <span data-selection-count>0</span> of {{ tasks|length }} selected
+              <span data-selection-count>0</span> of {{ total_tasks }} selected
             </p>
             <p class="text-xs text-slate-500">Choose a value then click the icon—each change saves immediately and reloads the list.</p>
           </div>
@@ -367,250 +367,19 @@
           </button>
         </div>
       </section>
-      <div class="divide-y divide-gray-200 pt-3" data-task-list>
-      {% for t in tasks %}
-      {% set status_styles = {
-        'complete': 'bg-green-100 text-green-800',
-        'active': 'bg-blue-100 text-blue-800',
-        'blocked': 'bg-red-100 text-red-800',
-        'waiting': 'bg-amber-100 text-amber-800'
-      } %}
-      {% set status_key = (t.status or 'active')|lower %}
-      {% set summary_styles = {
-        'complete': 'border border-green-200 bg-green-50/70',
-        'active': 'border border-blue-200 bg-blue-50/70',
-        'blocked': 'border border-rose-200 bg-rose-50/70',
-        'waiting': 'border border-amber-200 bg-amber-50/70'
-      } %}
-      {% set hover_styles = {
-        'complete': 'hover:bg-green-50/70',
-        'active': 'hover:bg-indigo-50/40',
-        'blocked': 'hover:bg-rose-50/70',
-        'waiting': 'hover:bg-amber-50/70'
-      } %}
-      <input type="hidden" name="delete-{{ t.id }}" value="" data-delete-input data-task-id="{{ t.id }}">
-      <details class="group bg-white/90 transition" data-task-details>
-        <summary
-          class="grid cursor-pointer gap-3 px-4 py-3 text-sm text-slate-600 transition focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center {{ summary_styles.get(status_key, 'border border-gray-200 bg-white/90') }} {{ hover_styles.get(status_key, 'hover:bg-indigo-50/40') }}"
-          aria-controls="task-body-{{ t.id }}"
-          aria-expanded="false"
-          data-task-summary
-          data-task-id="{{ t.id }}"
-          data-task-status="{{ status_key }}"
-        >
-          <div class="flex items-center">
-            <input
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              aria-label="Select {{ t.title or 'task' }}"
-              data-bulk-checkbox
-              data-task-id="{{ t.id }}"
-              onclick="event.stopPropagation()"
-            >
-          </div>
-          <div class="space-y-2">
-            <span class="text-sm font-semibold text-slate-900">{{ t.title or 'Untitled task' }}</span>
-            <div class="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-              <span class="flex items-center gap-1">
-                <span class="font-medium text-slate-600">Due</span>
-                <span>{{ t.due or 'No due date' }}</span>
-              </span>
-            </div>
-          </div>
-          <div class="flex flex-wrap justify-end gap-2 text-xs font-semibold">
-            <span
-              class="sr-only"
-              data-status-pill
-              data-task-id="{{ t.id }}"
-              aria-live="polite"
-            >
-              {{ (t.status or 'unknown')|title }}
-            </span>
-            {% if t.is_overdue %}
-              <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-700">
-                <span class="sr-only">Overdue</span>
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="3" y="5" width="18" height="16" rx="3" ry="3"></rect>
-                  <path d="M3 9h18"></path>
-                  <path d="M8 1v4"></path>
-                  <path d="M16 1v4"></path>
-                </svg>
-              </span>
-            {% elif t.is_due_today %}
-              <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-800">
-                <span class="sr-only">Due today</span>
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="3" y="5" width="18" height="16" rx="3" ry="3"></rect>
-                  <path d="M3 9h18"></path>
-                  <path d="M8 1v4"></path>
-                  <path d="M16 1v4"></path>
-                </svg>
-              </span>
-            {% endif %}
-            {% if t.area %}
-              <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.area }}</span>
-            {% endif %}
-            <button
-              type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
-              aria-label="Mark task complete"
-              data-complete-button
-              data-task-id="{{ t.id }}"
-            >
-              <span class="sr-only">Mark task complete</span>
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
-              aria-label="Delete task"
-              data-delete-button
-              data-task-id="{{ t.id }}"
-            >
-              <span class="sr-only">Delete task</span>
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18" />
-                <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
-                <path d="M9 6V4h6v2" />
-              </svg>
-            </button>
-          </div>
-        </summary>
-        <div id="task-body-{{ t.id }}" class="space-y-5 px-4 py-4">
-          <fieldset class="space-y-3">
-            <legend class="text-sm font-semibold text-gray-700">General Information</legend>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <div class="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                <label for="title-{{t.id}}" class="text-sm font-medium text-gray-700">Title</label>
-                <input
-                  id="title-{{t.id}}"
-                  type="text"
-                  name="title-{{t.id}}"
-                  value="{{ t.title or '' }}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Task title"
-                >
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="due-{{t.id}}" class="text-sm font-medium text-gray-700">Due date</label>
-                <input
-                  id="due-{{t.id}}"
-                  type="date"
-                  name="due-{{t.id}}"
-                  value="{{ t.due or '' }}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="status-{{t.id}}" class="text-sm font-medium text-gray-700">Status</label>
-                <select
-                  id="status-{{t.id}}"
-                  name="status-{{t.id}}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                    {% for opt in ["active", "complete"] %}
-                      <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="project-{{t.id}}" class="text-sm font-medium text-gray-700">Project</label>
-                <input
-                  id="project-{{t.id}}"
-                  type="text"
-                  name="project-{{t.id}}"
-                  value="{{ t.project or '' }}"
-                  list="projects"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Choose project"
-                >
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
-                <input
-                  id="area-{{t.id}}"
-                  type="text"
-                  name="area-{{t.id}}"
-                  value="{{ t.area or '' }}"
-                  list="areas"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Choose area"
-                >
-              </div>
-            </div>
-          </fieldset>
-          <fieldset class="space-y-3">
-            <legend class="text-sm font-semibold text-gray-700">Effort &amp; Recurrence</legend>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div class="flex flex-col gap-1">
-                <label for="effort-{{t.id}}" class="text-sm font-medium text-gray-700">Effort</label>
-                <select
-                  id="effort-{{t.id}}"
-                  name="effort-{{t.id}}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                    {% for opt in ["low", "medium", "high"] %}
-                      <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="energy_cost-{{t.id}}" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
-                <input
-                  id="energy_cost-{{t.id}}"
-                  type="number"
-                  name="energy_cost-{{t.id}}"
-                  value="{{ t.energy_cost or '' }}"
-                  min="1"
-                  max="5"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="executive_trigger-{{t.id}}" class="text-sm font-medium text-gray-700">Executive trigger</label>
-                <select
-                  id="executive_trigger-{{t.id}}"
-                  name="executive_trigger-{{t.id}}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                    {% for opt in ["low", "medium", "high"] %}
-                      <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
-                <select
-                  id="recurrence-{{t.id}}"
-                  name="recurrence-{{t.id}}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                    <option value="" {% if not t.recurrence %}selected{% endif %}></option>
-                    {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
-                      <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                  </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>
-                <input
-                  id="last_completed-{{t.id}}"
-                  type="date"
-                  name="last_completed-{{t.id}}"
-                  value="{{ t.last_completed or ''}}"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-              </div>
-            </div>
-          </fieldset>
-        </div>
-      </details>
-      {% endfor %}
+      <div
+        class="divide-y divide-gray-200 pt-3"
+        data-task-list
+        data-chunk-size="{{ chunk_size }}"
+        data-next-offset="{{ tasks|length }}"
+        data-total-tasks="{{ total_tasks }}"
+      >
+        {% include "partials/manage_tasks_list.html" %}
       </div>
+      <div class="py-4 text-center text-xs uppercase tracking-[0.2em] text-slate-400" data-task-loading hidden>
+        Loading more tasks…
+      </div>
+      <div data-task-load-trigger class="h-4"></div>
       <div class="sticky bottom-0 z-20 border-t border-gray-200 bg-white/95 px-4 py-2 backdrop-blur flex justify-end gap-3 rounded-b-3xl">
         <button
           type="submit"
@@ -640,29 +409,39 @@
     </button>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-task-details]').forEach((detailsEl) => {
-          const summary = detailsEl.querySelector('summary[aria-controls]');
-          if (!summary) return;
-          const controlsId = summary.getAttribute('aria-controls');
-          const controlled = controlsId ? document.getElementById(controlsId) : null;
-          if (!summary.id && controlsId) {
-            summary.id = `summary-${controlsId}`;
-          }
-          if (controlled) {
-            controlled.setAttribute('role', 'region');
-            controlled.setAttribute('aria-labelledby', summary.id);
-          }
-
-          const syncState = () => {
-            summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
-            if (controlled) {
-              controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
+        const initializeTaskDetails = (scope = document) => {
+          scope.querySelectorAll('[data-task-details]').forEach((detailsEl) => {
+            if (detailsEl.dataset.detailsInit === 'true') {
+              return;
             }
-          };
+            const summary = detailsEl.querySelector('summary[aria-controls]');
+            if (!summary) {
+              return;
+            }
+            const controlsId = summary.getAttribute('aria-controls');
+            const controlled = controlsId ? document.getElementById(controlsId) : null;
+            if (!summary.id && controlsId) {
+              summary.id = `summary-${controlsId}`;
+            }
+            if (controlled) {
+              controlled.setAttribute('role', 'region');
+              controlled.setAttribute('aria-labelledby', summary.id);
+            }
 
-          detailsEl.addEventListener('toggle', syncState);
-          syncState();
-        });
+            const syncState = () => {
+              summary.setAttribute('aria-expanded', detailsEl.open ? 'true' : 'false');
+              if (controlled) {
+                controlled.setAttribute('aria-hidden', detailsEl.open ? 'false' : 'true');
+              }
+            };
+
+            detailsEl.addEventListener('toggle', syncState);
+            syncState();
+            detailsEl.dataset.detailsInit = 'true';
+          });
+        };
+
+        initializeTaskDetails();
 
         const manageTasksForm = document.getElementById('manage-tasks-form');
         const newTaskForm = document.getElementById('newTaskForm');
@@ -774,7 +553,6 @@
         }
 
         if (manageTasksForm) {
-          const deleteButtons = manageTasksForm.querySelectorAll('[data-delete-button]');
           const submitManageTasksForm = () => {
             if (typeof manageTasksForm.requestSubmit === 'function') {
               manageTasksForm.requestSubmit();
@@ -782,145 +560,9 @@
               manageTasksForm.submit();
             }
           };
-          deleteButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              const taskId = button.getAttribute('data-task-id');
-              if (!taskId) {
-                return;
-              }
-              const deleteInput = manageTasksForm.querySelector(
-                `[data-delete-input][data-task-id="${taskId}"]`
-              );
-              if (deleteInput) {
-                deleteInput.value = '1';
-              }
-              const taskDetails = button.closest('[data-task-details]');
-              if (taskDetails) {
-                taskDetails.remove();
-              }
-            });
-          });
-
-          const bulkCheckboxes = manageTasksForm.querySelectorAll('[data-bulk-checkbox]');
-          const selectionCountEl = manageTasksForm.querySelector('[data-selection-count]');
           const toggleSelectButton = manageTasksForm.querySelector('[data-select-all]');
-          const updateSelectAllToggleLabel = () => {
-            if (!toggleSelectButton) {
-              return;
-            }
-            toggleSelectButton.textContent = areAllSelected() ? 'Deselect all' : 'Select all';
-          };
+          const selectionCountEl = manageTasksForm.querySelector('[data-selection-count]');
           const highlightClasses = ['ring-2', 'ring-indigo-400/60', 'bg-indigo-50/70'];
-          const setSummarySelection = (taskId, selected) => {
-            if (!taskId) {
-              return;
-            }
-            const summary = manageTasksForm.querySelector(
-              `[data-task-summary][data-task-id="${taskId}"]`
-            );
-            if (!summary) {
-              return;
-            }
-            if (selected) {
-              summary.classList.add(...highlightClasses);
-            } else {
-              summary.classList.remove(...highlightClasses);
-            }
-          };
-          const updateSelectionCount = () => {
-            const selectedCount = Array.from(bulkCheckboxes).filter((checkbox) => checkbox.checked).length;
-            if (selectionCountEl) {
-              selectionCountEl.textContent = selectedCount;
-            }
-            updateSelectAllToggleLabel();
-          };
-          bulkCheckboxes.forEach((checkbox) => {
-            checkbox.addEventListener('change', () => {
-              setSummarySelection(checkbox.getAttribute('data-task-id'), checkbox.checked);
-              updateSelectionCount();
-            });
-          });
-          const areAllSelected = () =>
-            bulkCheckboxes.length > 0 && Array.from(bulkCheckboxes).every((checkbox) => checkbox.checked);
-
-          const toggleSelection = (value) => {
-            bulkCheckboxes.forEach((checkbox) => {
-              checkbox.checked = value;
-              setSummarySelection(checkbox.getAttribute('data-task-id'), value);
-            });
-            updateSelectionCount();
-          };
-          if (toggleSelectButton) {
-            toggleSelectButton.addEventListener('click', (event) => {
-              event.preventDefault();
-              const allSelected = areAllSelected();
-              toggleSelection(!allSelected);
-            });
-          }
-          const getSelectedTaskIds = () =>
-            Array.from(bulkCheckboxes)
-              .filter((checkbox) => checkbox.checked)
-              .map((checkbox) => checkbox.getAttribute('data-task-id'))
-              .filter(Boolean);
-          const applyBulkField = (field, value, allowEmpty = false) => {
-            if (!field) {
-              return false;
-            }
-            const normalizedValue = value == null ? '' : String(value).trim();
-            if (!allowEmpty && !normalizedValue) {
-              return false;
-            }
-            let applied = false;
-            getSelectedTaskIds().forEach((taskId) => {
-              const targetInput = manageTasksForm.querySelector(`[name="${field}-${taskId}"]`);
-              if (!targetInput) {
-                return;
-              }
-              targetInput.value = normalizedValue;
-              targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-              targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-              applied = true;
-            });
-            return applied;
-          };
-          const applyAllButton = manageTasksForm.querySelector('[data-bulk-apply-all]');
-          const bulkFieldConfigs = [
-            { field: 'status', allowEmpty: false },
-            { field: 'project', allowEmpty: true },
-            { field: 'area', allowEmpty: true },
-            { field: 'effort', allowEmpty: false },
-            { field: 'due', allowEmpty: true },
-          ];
-          if (applyAllButton) {
-            applyAllButton.addEventListener('click', (event) => {
-              event.preventDefault();
-              let appliedAny = false;
-              bulkFieldConfigs.forEach(({ field, allowEmpty }) => {
-                const sourceControl = manageTasksForm.querySelector(`[data-bulk-target="${field}"]`);
-                if (!sourceControl) {
-                  return;
-                }
-                const allow = allowEmpty || sourceControl.hasAttribute('data-bulk-allow-empty');
-                const applied = applyBulkField(field, sourceControl.value, allow);
-                if (applied) {
-                  appliedAny = true;
-                }
-              });
-              if (appliedAny) {
-                submitManageTasksForm();
-              }
-            });
-          }
-          updateSelectionCount();
-
-          const recurrenceDays = {
-            daily: 1,
-            weekly: 7,
-            monthly: 30,
-            yearly: 365,
-          };
           const statusRowStyles = {
             complete: ['border', 'border-green-200', 'bg-green-50/70', 'hover:bg-green-50/70'],
             active: ['border', 'border-blue-200', 'bg-blue-50/70', 'hover:bg-indigo-50/40'],
@@ -945,12 +587,140 @@
             summary.classList.add(...styleClasses);
             summary.dataset.taskStatus = status;
           };
-          const completeButtons = manageTasksForm.querySelectorAll('[data-complete-button]');
-          completeButtons.forEach((button) => {
-            button.addEventListener('click', (event) => {
+          const setSummarySelection = (taskId, selected) => {
+            if (!taskId) {
+              return;
+            }
+            const summary = manageTasksForm.querySelector(
+              `[data-task-summary][data-task-id="${taskId}"]`
+            );
+            if (!summary) {
+              return;
+            }
+            if (selected) {
+              summary.classList.add(...highlightClasses);
+            } else {
+              summary.classList.remove(...highlightClasses);
+            }
+          };
+          const getBulkCheckboxes = () => manageTasksForm.querySelectorAll('[data-bulk-checkbox]');
+          const areAllSelected = () => {
+            const checkboxes = getBulkCheckboxes();
+            return checkboxes.length > 0 && Array.from(checkboxes).every((checkbox) => checkbox.checked);
+          };
+          const updateSelectAllToggleLabel = () => {
+            if (!toggleSelectButton) {
+              return;
+            }
+            toggleSelectButton.textContent = areAllSelected() ? 'Deselect all' : 'Select all';
+          };
+          const updateSelectionCount = () => {
+            const selectedCount = Array.from(getBulkCheckboxes()).filter((checkbox) => checkbox.checked).length;
+            if (selectionCountEl) {
+              selectionCountEl.textContent = selectedCount;
+            }
+            updateSelectAllToggleLabel();
+          };
+          const toggleSelection = (value) => {
+            getBulkCheckboxes().forEach((checkbox) => {
+              checkbox.checked = value;
+              setSummarySelection(checkbox.getAttribute('data-task-id'), value);
+            });
+            updateSelectionCount();
+          };
+          const getSelectedTaskIds = () =>
+            Array.from(getBulkCheckboxes())
+              .filter((checkbox) => checkbox.checked)
+              .map((checkbox) => checkbox.getAttribute('data-task-id'))
+              .filter(Boolean);
+          const applyBulkField = (field, value, allowEmpty = false) => {
+            if (!field) {
+              return false;
+            }
+            const normalizedValue = value == null ? '' : String(value).trim();
+            if (!allowEmpty && !normalizedValue) {
+              return false;
+            }
+            let applied = false;
+            getSelectedTaskIds().forEach((taskId) => {
+              const targetInput = manageTasksForm.querySelector(`[name="${field}-${taskId}"]`);
+              if (!targetInput) {
+                return;
+              }
+              targetInput.value = normalizedValue;
+              targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+              targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+              applied = true;
+            });
+            return applied;
+          };
+          const bulkFieldConfigs = [
+            { field: 'status', allowEmpty: false },
+            { field: 'project', allowEmpty: true },
+            { field: 'area', allowEmpty: true },
+            { field: 'effort', allowEmpty: false },
+            { field: 'due', allowEmpty: true },
+          ];
+          const applyAllButton = manageTasksForm.querySelector('[data-bulk-apply-all]');
+          if (applyAllButton) {
+            applyAllButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              let appliedAny = false;
+              bulkFieldConfigs.forEach(({ field, allowEmpty }) => {
+                const sourceControl = manageTasksForm.querySelector(`[data-bulk-target="${field}"]`);
+                if (!sourceControl) {
+                  return;
+                }
+                const allow = allowEmpty || sourceControl.hasAttribute('data-bulk-allow-empty');
+                const applied = applyBulkField(field, sourceControl.value, allow);
+                if (applied) {
+                  appliedAny = true;
+                }
+              });
+              if (appliedAny) {
+                submitManageTasksForm();
+              }
+            });
+          }
+          const recurrenceDays = {
+            daily: 1,
+            weekly: 7,
+            monthly: 30,
+            yearly: 365,
+          };
+          manageTasksForm.addEventListener('change', (event) => {
+            const target = event.target;
+            if (!target || !target.matches || !target.matches('[data-bulk-checkbox]')) {
+              return;
+            }
+            const taskId = target.getAttribute('data-task-id');
+            setSummarySelection(taskId, target.checked);
+            updateSelectionCount();
+          });
+          manageTasksForm.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('[data-delete-button]');
+            if (deleteButton) {
               event.preventDefault();
               event.stopPropagation();
-              const taskId = button.getAttribute('data-task-id');
+              const taskId = deleteButton.getAttribute('data-task-id');
+              if (taskId) {
+                const deleteInput = manageTasksForm.querySelector(`[data-delete-input][data-task-id="${taskId}"]`);
+                if (deleteInput) {
+                  deleteInput.value = '1';
+                }
+                const taskDetails = deleteButton.closest('[data-task-details]');
+                if (taskDetails) {
+                  taskDetails.remove();
+                  updateSelectionCount();
+                }
+              }
+              return;
+            }
+            const completeButton = event.target.closest('[data-complete-button]');
+            if (completeButton) {
+              event.preventDefault();
+              event.stopPropagation();
+              const taskId = completeButton.getAttribute('data-task-id');
               if (!taskId) {
                 return;
               }
@@ -959,7 +729,7 @@
               const localDate = [
                 today.getFullYear(),
                 String(today.getMonth() + 1).padStart(2, '0'),
-                String(today.getDate()).padStart(2, '0')
+                String(today.getDate()).padStart(2, '0'),
               ].join('-');
               const lastCompletedInput = document.getElementById(`last_completed-${taskId}`);
               if (lastCompletedInput) {
@@ -989,10 +759,82 @@
                 statusPill.textContent = isRecurring ? 'Active' : 'Complete';
               }
               updateSummaryStyle(taskId, nextStatus);
-              button.disabled = true;
+              completeButton.disabled = true;
               submitManageTasksForm();
-            });
+              return;
+            }
           });
+          if (toggleSelectButton) {
+            toggleSelectButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              const allSelected = areAllSelected();
+              toggleSelection(!allSelected);
+            });
+          }
+          updateSelectionCount();
+        }
+
+        const taskList = document.querySelector('[data-task-list]');
+        const taskLoadTrigger = document.querySelector('[data-task-load-trigger]');
+        const taskLoadingIndicator = document.querySelector('[data-task-loading]');
+        if (taskList && taskLoadTrigger) {
+          const chunkSize = Math.max(1, Number(taskList.dataset.chunkSize) || 1);
+          let nextOffset = Number(taskList.dataset.nextOffset) || 0;
+          const totalTasks = Number(taskList.dataset.totalTasks) || 0;
+          if (nextOffset >= totalTasks) {
+            taskLoadTrigger.remove();
+            if (taskLoadingIndicator) {
+              taskLoadingIndicator.setAttribute('hidden', '');
+            }
+          } else {
+            let isLoading = false;
+            let observer;
+            const loadMoreTasks = async () => {
+              if (isLoading || nextOffset >= totalTasks) {
+                return;
+              }
+              isLoading = true;
+              if (taskLoadingIndicator) {
+                taskLoadingIndicator.removeAttribute('hidden');
+              }
+              try {
+                const params = new URLSearchParams(window.location.search);
+                params.set('offset', String(nextOffset));
+                params.set('limit', String(chunkSize));
+                const response = await fetch(`/manage-tasks-chunk?${params.toString()}`);
+                ensureOkResponse(response);
+                const payload = await response.json();
+                if (payload?.html) {
+                  const wrapper = document.createElement('template');
+                  wrapper.innerHTML = payload.html;
+                  taskList.appendChild(wrapper.content);
+                  initializeTaskDetails(taskList);
+                }
+                nextOffset = payload?.nextOffset ?? nextOffset + chunkSize;
+                taskList.dataset.nextOffset = nextOffset;
+                if (!payload?.hasMore || nextOffset >= totalTasks) {
+                  observer?.disconnect();
+                  taskLoadTrigger.remove();
+                }
+              } catch (error) {
+                console.error('Unable to load more tasks', error);
+              } finally {
+                isLoading = false;
+                if (taskLoadingIndicator) {
+                  taskLoadingIndicator.setAttribute('hidden', '');
+                }
+              }
+            };
+            observer = new IntersectionObserver(
+              (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                  loadMoreTasks();
+                }
+              },
+              { rootMargin: '200px' }
+            );
+            observer.observe(taskLoadTrigger);
+          }
         }
 
         if (scrollToNewTaskBtn && newTaskForm) {
@@ -1007,6 +849,7 @@
         }
       });
     </script>
+
   </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {

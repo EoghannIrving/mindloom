@@ -10,7 +10,7 @@ from typing import List, Optional
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Request, Form, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import yaml
 
@@ -66,6 +66,8 @@ logger = configure_logger(__name__, LOG_FILE)
 ENERGY_MAPPING = {"low": 1, "medium": 3, "high": 5}
 DEFAULT_ENERGY_LEVEL = 3
 DEFAULT_STATUS_FILTER = "active"
+TASK_CHUNK_SIZE = 20
+MAX_CHUNK_SIZE = 60
 
 
 class TaskCreateRequest(BaseModel):
@@ -376,16 +378,12 @@ def _load_defined_projects(output_path: Path | str | None = None) -> list[str]:
     return projects
 
 
-@router.get("/manage-tasks", response_class=HTMLResponse)
-def manage_tasks_page(request: Request):
-    """Display editable list of all tasks."""
-    logger.info("GET /manage-tasks")
-    tasks = read_tasks()
+def _prepare_manage_tasks_context(request: Request) -> tuple[list[dict], dict]:
+    """Return filtered tasks and the shared template context."""
 
     query = request.query_params.get("q", "").strip()
     status_param_provided = "status" in request.query_params
-    selected_status = request.query_params.get("status", "")
-    selected_status = selected_status.strip()
+    selected_status = request.query_params.get("status", "").strip()
     if not status_param_provided and not selected_status:
         selected_status = DEFAULT_STATUS_FILTER
     selected_project = request.query_params.get("project", "").strip()
@@ -414,6 +412,7 @@ def manage_tasks_page(request: Request):
             return False
         return True
 
+    tasks = read_tasks()
     filtered_tasks = [
         annotate_task(dict(task), today) for task in tasks if _matches(task)
     ]
@@ -432,22 +431,73 @@ def manage_tasks_page(request: Request):
         ("status", "Status"),
     ]
 
-    return templates.TemplateResponse(
-        "manage_tasks.html",
+    context = {
+        "request": request,
+        "project_options": projects,
+        "area_options": areas,
+        "status_options": statuses,
+        "sort_options": sort_options,
+        "search_query": query,
+        "selected_status": selected_status,
+        "selected_project": selected_project,
+        "selected_area": selected_area,
+        "selected_type": selected_type,
+        "selected_sort": sort_mode,
+    }
+    return sorted_tasks, context
+
+
+@router.get("/manage-tasks", response_class=HTMLResponse)
+def manage_tasks_page(request: Request):
+    """Display editable list of all tasks."""
+
+    sorted_tasks, context = _prepare_manage_tasks_context(request)
+    initial_tasks = sorted_tasks[:TASK_CHUNK_SIZE]
+    context = dict(context)
+    context.update(
         {
-            "request": request,
-            "tasks": sorted_tasks,
-            "project_options": projects,
-            "area_options": areas,
-            "status_options": statuses,
-            "sort_options": sort_options,
-            "search_query": query,
-            "selected_status": selected_status,
-            "selected_project": selected_project,
-            "selected_area": selected_area,
-            "selected_type": selected_type,
-            "selected_sort": sort_mode,
-        },
+            "tasks": initial_tasks,
+            "total_tasks": len(sorted_tasks),
+            "chunk_size": TASK_CHUNK_SIZE,
+        }
+    )
+
+    return templates.TemplateResponse("manage_tasks.html", context)
+
+
+def _parse_non_negative_int(value: str | None, default: int) -> int:
+    """Parse an integer param, returning the default for invalid values."""
+
+    if value is None:
+        return default
+    try:
+        parsed = int(value)
+    except ValueError:
+        return default
+    return max(parsed, 0)
+
+
+@router.get("/manage-tasks-chunk")
+def manage_tasks_chunk(request: Request):
+    """Return the next batch of tasks for the manage tasks view."""
+
+    sorted_tasks, base_context = _prepare_manage_tasks_context(request)
+    total_tasks = len(sorted_tasks)
+    offset = _parse_non_negative_int(request.query_params.get("offset"), 0)
+    offset = min(offset, total_tasks)
+    limit = _parse_non_negative_int(request.query_params.get("limit"), TASK_CHUNK_SIZE)
+    limit = max(1, min(limit, MAX_CHUNK_SIZE))
+    chunk = sorted_tasks[offset : offset + limit]
+
+    template = templates.get_template("partials/manage_tasks_list.html")
+    html = template.render({**base_context, "tasks": chunk})
+    next_offset = offset + len(chunk)
+    return JSONResponse(
+        {
+            "html": html,
+            "nextOffset": next_offset,
+            "hasMore": next_offset < total_tasks,
+        }
     )
 
 

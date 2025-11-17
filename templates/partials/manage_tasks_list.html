@@ -1,0 +1,232 @@
+{% for t in tasks %}
+{% set status_styles = {
+  'complete': 'bg-green-100 text-green-800',
+  'active': 'bg-blue-100 text-blue-800',
+  'blocked': 'bg-red-100 text-red-800',
+  'waiting': 'bg-amber-100 text-amber-800'
+} %}
+{% set status_key = (t.status or 'active')|lower %}
+{% set summary_styles = {
+  'complete': 'border border-green-200 bg-green-50/70',
+  'active': 'border border-blue-200 bg-blue-50/70',
+  'blocked': 'border border-rose-200 bg-rose-50/70',
+  'waiting': 'border border-amber-200 bg-amber-50/70'
+} %}
+{% set hover_styles = {
+  'complete': 'hover:bg-green-50/70',
+  'active': 'hover:bg-indigo-50/40',
+  'blocked': 'hover:bg-rose-50/70',
+  'waiting': 'hover:bg-amber-50/70'
+} %}
+<input type="hidden" name="delete-{{ t.id }}" value="" data-delete-input data-task-id="{{ t.id }}">
+<details class="group bg-white/90 transition" data-task-details>
+  <summary
+    class="grid cursor-pointer gap-3 px-4 py-3 text-sm text-slate-600 transition focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-300 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center {{ summary_styles.get(status_key, 'border border-gray-200 bg-white/90') }} {{ hover_styles.get(status_key, 'hover:bg-indigo-50/40') }}"
+    aria-controls="task-body-{{ t.id }}"
+    aria-expanded="false"
+    data-task-summary
+    data-task-id="{{ t.id }}"
+    data-task-status="{{ status_key }}"
+  >
+    <div class="flex items-center">
+      <input
+        type="checkbox"
+        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+        aria-label="Select {{ t.title or 'task' }}"
+        data-bulk-checkbox
+        data-task-id="{{ t.id }}"
+        onclick="event.stopPropagation()"
+      >
+    </div>
+    <div class="space-y-2">
+      <span class="text-sm font-semibold text-slate-900">{{ t.title or 'Untitled task' }}</span>
+      <div class="grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+        <span class="flex items-center gap-1">
+          <span class="font-medium text-slate-600">Due</span>
+          <span>{{ t.due or 'No due date' }}</span>
+        </span>
+      </div>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2 text-xs font-semibold">
+      <span
+        class="sr-only"
+        data-status-pill
+        data-task-id="{{ t.id }}"
+        aria-live="polite"
+      >
+        {{ (t.status or 'unknown')|title }}
+      </span>
+      {% if t.is_overdue %}
+        <span class="rounded-full bg-rose-100 px-2 py-1 text-rose-600">Overdue</span>
+      {% elif t.is_due_today %}
+        <span class="rounded-full bg-amber-100 px-2 py-1 text-amber-600">Due today</span>
+      {% endif %}
+      {% if t.effort %}
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.effort }}</span>
+      {% endif %}
+      {% if t.project %}
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.project }}</span>
+      {% endif %}
+      {% if t.area %}
+        <span class="rounded-full bg-slate-100 px-2 py-1 text-slate-600">{{ t.area }}</span>
+      {% endif %}
+      <button
+        type="button"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+        aria-label="Mark task complete"
+        data-complete-button
+        data-task-id="{{ t.id }}"
+      >
+        <span class="sr-only">Mark task complete</span>
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
+        aria-label="Delete task"
+        data-delete-button
+        data-task-id="{{ t.id }}"
+      >
+        <span class="sr-only">Delete task</span>
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 6h18" />
+          <path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+          <path d="M9 6V4h6v2" />
+        </svg>
+      </button>
+    </div>
+  </summary>
+  <div id="task-body-{{ t.id }}" class="space-y-5 px-4 py-4">
+    <fieldset class="space-y-3">
+      <legend class="text-sm font-semibold text-gray-700">General Information</legend>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
+          <label for="title-{{t.id}}" class="text-sm font-medium text-gray-700">Title</label>
+          <input
+            id="title-{{t.id}}"
+            type="text"
+            name="title-{{t.id}}"
+            value="{{ t.title or '' }}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            placeholder="Task title"
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="due-{{t.id}}" class="text-sm font-medium text-gray-700">Due date</label>
+          <input
+            id="due-{{t.id}}"
+            type="date"
+            name="due-{{t.id}}"
+            value="{{ t.due or '' }}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="status-{{t.id}}" class="text-sm font-medium text-gray-700">Status</label>
+          <select
+            id="status-{{t.id}}"
+            name="status-{{t.id}}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+              {% for opt in ["active", "complete"] %}
+                <option value="{{ opt }}" {% if t.status == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="project-{{t.id}}" class="text-sm font-medium text-gray-700">Project</label>
+          <input
+            id="project-{{t.id}}"
+            type="text"
+            name="project-{{t.id}}"
+            value="{{ t.project or '' }}"
+            list="projects"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            placeholder="Choose project"
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="area-{{t.id}}" class="text-sm font-medium text-gray-700">Life area</label>
+          <input
+            id="area-{{t.id}}"
+            type="text"
+            name="area-{{t.id}}"
+            value="{{ t.area or '' }}"
+            list="areas"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+            placeholder="Choose area"
+          >
+        </div>
+      </div>
+    </fieldset>
+    <fieldset class="space-y-3">
+      <legend class="text-sm font-semibold text-gray-700">Effort &amp; Recurrence</legend>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1">
+          <label for="effort-{{t.id}}" class="text-sm font-medium text-gray-700">Effort</label>
+          <select
+            id="effort-{{t.id}}"
+            name="effort-{{t.id}}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+              {% for opt in ["low", "medium", "high"] %}
+                <option value="{{ opt }}" {% if t.effort == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="energy_cost-{{t.id}}" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+          <input
+            id="energy_cost-{{t.id}}"
+            type="number"
+            name="energy_cost-{{t.id}}"
+            value="{{ t.energy_cost or '' }}"
+            min="1"
+            max="5"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="executive_trigger-{{t.id}}" class="text-sm font-medium text-gray-700">Executive trigger</label>
+          <select
+            id="executive_trigger-{{t.id}}"
+            name="executive_trigger-{{t.id}}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+              {% for opt in ["low", "medium", "high"] %}
+                <option value="{{ opt }}" {% if t.executive_trigger == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
+          <select
+            id="recurrence-{{t.id}}"
+            name="recurrence-{{t.id}}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+              <option value="" {% if not t.recurrence %}selected{% endif %}></option>
+              {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
+                <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>
+          <input
+            id="last_completed-{{t.id}}"
+            type="date"
+            name="last_completed-{{t.id}}"
+            value="{{ t.last_completed or ''}}"
+            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          >
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</details>
+{% endfor %}
