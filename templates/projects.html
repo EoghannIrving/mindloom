@@ -2,7 +2,25 @@
 {% block title %}Projects · Mindloom{% endblock %}
 {% block content %}
   <div class="max-w-5xl mx-auto space-y-6">
+    <style>
+      .page-anchor {
+        scroll-margin-top: 5.5rem;
+      }
+      details[data-collapsible-section] summary {
+        cursor: pointer;
+      }
+      details[data-collapsible-section] summary::-webkit-details-marker {
+        display: none;
+      }
+      .summary-indicator svg {
+        transition: transform 0.2s ease;
+      }
+      details[data-collapsible-section][open] .summary-indicator svg {
+        transform: rotate(180deg);
+      }
+    </style>
     <section
+      id="projects-top"
       class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
       <div class="space-y-2">
         <h1 class="text-3xl font-bold">Project management</h1>
@@ -14,201 +32,369 @@
         Use the tools below to generate fresh project files, parse existing notes, and consolidate overlapping workstreams.
       </p>
     </section>
+    <div class="space-y-4">
+      <div class="rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm space-y-3">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-wider text-gray-500">Vault projects</p>
+            <p class="text-3xl font-semibold text-gray-900">
+              {{ project_summary.total if project_summary else 0 }}
+            </p>
+          </div>
+          <div class="text-xs text-gray-500">
+            {{ project_list|length }} {{ 'project' if project_list|length == 1 else 'projects' }}
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold text-gray-700">
+          {% for label, count in project_status_counts.items() %}
+          <span class="rounded-full border border-gray-200 bg-gray-50 px-3 py-1">
+            {{ label }}: {{ count }}
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+      <nav
+        class="rounded-2xl border border-gray-200 bg-white/90 p-4 shadow-sm sticky top-4 z-30"
+        aria-label="Project page navigation">
+        <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Jump to</p>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <a href="#create-project" data-section-link
+            class="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-1 font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100">
+            Create
+          </a>
+          <a href="#manage-projects" data-section-link
+            class="rounded-full border border-gray-200 bg-white px-4 py-1 font-semibold text-gray-700 transition hover:bg-gray-50">
+            Manage
+          </a>
+          <a href="#merge-projects" data-section-link
+            class="rounded-full border border-indigo-200 bg-white px-4 py-1 font-semibold text-indigo-600 transition hover:bg-indigo-50">
+            Merge
+          </a>
+        </div>
+        <p class="mt-2 text-xs text-gray-500">
+          Use these sections for the most common workflows without scrolling the entire page.
+        </p>
+      </nav>
+    </div>
 
-    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
-      <header>
-        <h2 class="text-xl font-semibold text-gray-800">Create a project</h2>
-        <p class="text-sm text-gray-600">Generate a fresh markdown file complete with optional checklist items.</p>
-      </header>
-      <details class="group rounded-xl border border-gray-200 bg-white/90 p-5 shadow-sm" open>
-        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
-          <span>New Project</span>
-          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <div class="mt-4 space-y-4 text-sm text-gray-600">
-          <p class="text-xs text-gray-500">
-            Create a markdown project in your vault with optional checklist items. Title, slug, status, area and effort are
-            required.
-          </p>
-          <form id="newProjectForm" class="space-y-4" novalidate>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div class="flex flex-col gap-1">
-                <label for="projectTitle" class="text-sm font-medium text-gray-700">Title</label>
-                <input id="projectTitle" name="projectTitle" type="text" required
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Project title" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="projectSlug" class="text-sm font-medium text-gray-700">Slug / file path</label>
-                <input id="projectSlug" name="projectSlug" type="text" required
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="projects/new-idea" />
-                <span class="text-xs text-gray-500">The `.md` extension is added automatically if omitted.</span>
-              </div>
+    <details id="create-project" data-collapsible-section class="page-anchor rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm">
+      <summary class="text-gray-900">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-800">Create a project</h2>
+              <p class="text-sm text-gray-600">Generate a fresh markdown file complete with optional checklist items.</p>
             </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div class="flex flex-col gap-1">
-                <label for="projectStatus" class="text-sm font-medium text-gray-700">Status</label>
-                <select id="projectStatus" name="projectStatus" required
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                  <option value="active">active</option>
-                  <option value="paused">paused</option>
-                  <option value="complete">complete</option>
-                </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="projectArea" class="text-sm font-medium text-gray-700">Area</label>
-                <input id="projectArea" name="projectArea" type="text" required
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Life area" />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="projectEffort" class="text-sm font-medium text-gray-700">Effort</label>
-                <select id="projectEffort" name="projectEffort" required
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                  <option value="low">low</option>
-                  <option value="medium" selected>medium</option>
-                  <option value="high">high</option>
-                </select>
-              </div>
+            <span class="summary-indicator flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"></path>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </summary>
+      <div class="mt-4 space-y-4 text-sm text-gray-600">
+        <div id="projectEditingBanner" class="hidden rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-2 text-xs text-indigo-700">
+          Editing <span id="projectEditingSlug" class="font-semibold text-indigo-900"></span>
+        </div>
+        <p class="text-xs text-gray-500">
+          Create a markdown project in your vault with optional checklist items. Title, slug, status, area and effort are required.
+        </p>
+        <form id="newProjectForm" class="space-y-4" novalidate>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="flex flex-col gap-1">
+              <label for="projectTitle" class="text-sm font-medium text-gray-700">Title</label>
+              <input id="projectTitle" name="projectTitle" type="text" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Project title" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="projectSlug" class="text-sm font-medium text-gray-700">Slug / file path</label>
+              <input id="projectSlug" name="projectSlug" type="text" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="projects/new-idea" />
+              <span class="text-xs text-gray-500">The `.md` extension is added automatically if omitted.</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4">
+            <div class="flex flex-col gap-1">
+              <label for="projectDescription" class="text-sm font-medium text-gray-700">Description</label>
+              <textarea id="projectDescription" name="projectDescription" rows="3" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Describe the project objectives, context, or desired outcome."></textarea>
+              <span class="text-xs text-gray-500">This content goes into the body of the markdown file.</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="flex flex-col gap-1">
+              <label for="projectStatus" class="text-sm font-medium text-gray-700">Status</label>
+              <select id="projectStatus" name="projectStatus" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                <option value="active">active</option>
+                <option value="paused">paused</option>
+                <option value="complete">complete</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="projectArea" class="text-sm font-medium text-gray-700">Area</label>
+              <input id="projectArea" name="projectArea" type="text" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Life area" />
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="projectEffort" class="text-sm font-medium text-gray-700">Effort</label>
+              <select id="projectEffort" name="projectEffort" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                <option value="low">low</option>
+                <option value="medium" selected>medium</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+          </div>
+          <div class="space-y-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 p-4 text-sm text-gray-600">
+            <div class="flex items-center justify-between text-xs uppercase tracking-wide text-gray-500">
+              <span>Optional metadata</span>
+              <span class="text-xs text-gray-400">Used for reviews &amp; automation</span>
             </div>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div class="flex flex-col gap-1">
                 <label for="projectDue" class="text-sm font-medium text-gray-700">Due date</label>
-                <input id="projectDue" name="projectDue" type="date"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <input id="projectDue" name="projectDue" type="date" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <span class="text-[11px] text-gray-500">Target completion date for this project.</span>
               </div>
               <div class="flex flex-col gap-1">
                 <label for="projectRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
-                <select id="projectRecurrence" name="projectRecurrence"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                <select id="projectRecurrence" name="projectRecurrence" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
                   <option value=""></option>
                   <option value="daily">daily</option>
                   <option value="weekly">weekly</option>
                   <option value="monthly">monthly</option>
                   <option value="yearly">yearly</option>
                 </select>
+                <span class="text-[11px] text-gray-500">How often it recurs, if applicable.</span>
               </div>
               <div class="flex flex-col gap-1">
                 <label for="projectLastCompleted" class="text-sm font-medium text-gray-700">Last completed</label>
-                <input id="projectLastCompleted" name="projectLastCompleted" type="date"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <input id="projectLastCompleted" name="projectLastCompleted" type="date" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <span class="text-[11px] text-gray-500">Record the most recent completion date.</span>
               </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div class="flex flex-col gap-1">
                 <label for="projectExecutiveTrigger" class="text-sm font-medium text-gray-700">Executive trigger</label>
-                <select id="projectExecutiveTrigger" name="projectExecutiveTrigger"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                  <option value=""></option>
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
+                <input id="projectExecutiveTrigger" name="projectExecutiveTrigger" type="text" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <span class="text-[11px] text-gray-500">Capture the prompt that launches this project.</span>
               </div>
               <div class="flex flex-col gap-1">
                 <label for="projectLastReviewed" class="text-sm font-medium text-gray-700">Last reviewed</label>
-                <input id="projectLastReviewed" name="projectLastReviewed" type="date"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <input id="projectLastReviewed" name="projectLastReviewed" type="date" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                <span class="text-[11px] text-gray-500">Track the most recent review date.</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="projectChecklist" class="text-sm font-medium text-gray-700">Checklist</label>
+                <textarea id="projectChecklist" name="projectChecklist" rows="4" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="- [ ] First task"></textarea>
+                <span class="text-[11px] text-gray-500">One task per line, optional `- [ ]` or `- [x]` prefix.</span>
               </div>
             </div>
-            <div class="flex flex-col gap-1">
-              <label for="projectChecklist" class="text-sm font-medium text-gray-700">Initial checklist</label>
-              <textarea id="projectChecklist" name="projectChecklist" rows="3"
-                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="One task per line"></textarea>
-              <span class="text-xs text-gray-500">Checklist items become tasks in the new file.</span>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              <span>Use YAML front matter to track status, due dates, and strategy.</span>
             </div>
-            <div id="newProjectFeedback" class="hidden text-sm"></div>
-            <div class="flex flex-wrap justify-end gap-2">
-              <button type="reset"
-                class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200">
-                Clear
-              </button>
-              <button id="createProjectBtn" type="submit"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
-                Create project
-              </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+              <input id="projectEnqueueTasks" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-200" />
+              <label for="projectEnqueueTasks">Enqueue tasks after saving</label>
             </div>
-          </form>
-        </div>
-      </details>
-    </section>
+            <span class="text-xs text-gray-400">This only affects newly created projects.</span>
+          </div>
+          <div id="newProjectFeedback" class="hidden text-sm"></div>
+          <div class="flex items-center justify-end gap-2">
+            <button type="reset" class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200">Clear</button>
+            <button type="button" id="cancelEditBtn" class="hidden inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200">Cancel edit</button>
+            <button id="createProjectBtn" type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">Create project</button>
+          </div>
+        </form>
+      </div>
+    </details>
 
     <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
       <header>
         <h2 class="text-xl font-semibold text-gray-800">Project tooling</h2>
-        <p class="text-sm text-gray-500">Parse and export project data from your vault.</p>
+        <p class="text-sm text-gray-500">Parse new markdown projects, export tasks, and write updates back to your vault.</p>
       </header>
-      <div class="flex flex-col gap-2 sm:flex-row">
+      <div class="flex flex-wrap gap-2 text-sm">
         <button id="parseBtn"
-          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-          Parse
+          class="rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 transition hover:border-indigo-300 hover:bg-indigo-50">
+          Parse projects
         </button>
         <button id="tasksBtn"
-          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-          Save Tasks
+          class="rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 transition hover:border-indigo-300 hover:bg-indigo-50">
+          Save tasks
         </button>
         <button id="writeTasksBtn"
-          class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
-          Write Tasks
+          class="rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 transition hover:border-indigo-300 hover:bg-indigo-50">
+          Write tasks
         </button>
       </div>
       <pre id="parseResult"
-        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-24 text-gray-500 data-placeholder"
+        data-placeholder-class="text-gray-500" data-active-class="text-gray-700">Results will appear here…</pre>
       <pre id="tasksResult"
-        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-24 text-gray-500 data-placeholder"
+        data-placeholder-class="text-gray-500" data-active-class="text-gray-700">Results will appear here…</pre>
       <pre id="writeTasksResult"
-        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-        data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
+        class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-24 text-gray-500 data-placeholder"
+        data-placeholder-class="text-gray-500" data-active-class="text-gray-700">Results will appear here…</pre>
     </section>
 
-    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-4">
-      <header>
-        <h2 class="text-xl font-semibold text-gray-800">Merge projects</h2>
-        <p class="text-sm text-gray-500">
-          Move all tasks and content from one project into another and optionally delete the source file.
-        </p>
-      </header>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div class="flex flex-col gap-1">
-          <label for="mergeSourceProject" class="text-sm font-medium text-gray-700">Source project</label>
-          <select id="mergeSourceProject" name="mergeSourceProject" required
-            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-            <option value="">Select source project</option>
-            {% for project in project_options %}
-            <option value="{{ project }}">{{ project }}</option>
-            {% endfor %}
-          </select>
+    <details id="manage-projects" data-collapsible-section class="page-anchor rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm">
+      <summary class="text-gray-900">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-800">Manage existing projects</h2>
+              <p class="text-sm text-gray-500">Load a project to edit its metadata or checklist without touching the vault manually.</p>
+            </div>
+            <span class="summary-indicator flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"></path>
+              </svg>
+            </span>
+          </div>
         </div>
-        <div class="flex flex-col gap-1">
-          <label for="mergeTargetProject" class="text-sm font-medium text-gray-700">Target project</label>
-          <select id="mergeTargetProject" name="mergeTargetProject" required
-            class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-            <option value="">Select target project</option>
-            {% for project in project_options %}
-            <option value="{{ project }}">{{ project }}</option>
-            {% endfor %}
-          </select>
+      </summary>
+      <div class="mt-4 space-y-3">
+        {% if project_list %}
+        <div id="projectList" class="space-y-3">
+          {% for project in project_list %}
+          <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p class="text-base font-semibold text-gray-800">{{ project.title or project.slug }}</p>
+                <p class="text-xs text-gray-500">{{ project.path }}</p>
+              </div>
+              <button type="button" data-load-project-slug="{{ project.slug }}" class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100">
+                Load for editing
+              </button>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              {% if project.status %}
+              <span class="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">Status: {{ project.status }}</span>
+              {% endif %}
+              {% if project.area %}
+              <span class="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">Area: {{ project.area }}</span>
+              {% endif %}
+              {% if project.effort %}
+              <span class="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">Effort: {{ project.effort }}</span>
+              {% endif %}
+              {% if project.due %}
+              <span class="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">Due: {{ project.due }}</span>
+              {% endif %}
+              <span class="rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5">{{ project.tasks|length }} tasks</span>
+            </div>
+            <p class="mt-3 text-sm text-gray-600">
+              {{ project.summary or 'No summary yet. Add body content to capture context.' }}
+            </p>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No project files detected yet. Create one above to get started.</p>
+        {% endif %}
+      </div>
+    </details>
+
+    <details id="merge-projects" data-collapsible-section class="page-anchor rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm">
+      <summary class="text-gray-900">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-800">Merge projects</h2>
+              <p class="text-sm text-gray-500">Move all tasks and content from one project into another and optionally delete the source file.</p>
+            </div>
+            <span class="summary-indicator flex items-center gap-1 text-xs uppercase tracking-wide text-gray-500">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6"></path>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </summary>
+      <div class="mt-4 space-y-4">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="space-y-2">
+            <label for="mergeSourceProject" class="text-sm font-medium text-gray-700">Source project</label>
+            <input id="mergeSourceFilter" type="text" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Type to filter projects" autocomplete="off" />
+            <select id="mergeSourceProject" name="mergeSourceProject" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <option value="">Select source project</option>
+              {% for project in project_options %}
+              <option value="{{ project }}">{{ project }}</option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-gray-400">Filtering hides irrelevant entries without changing the selection.</p>
+          </div>
+          <div class="space-y-2">
+            <label for="mergeTargetProject" class="text-sm font-medium text-gray-700">Target project</label>
+            <input id="mergeTargetFilter" type="text" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="Type to filter projects" autocomplete="off" />
+            <select id="mergeTargetProject" name="mergeTargetProject" required class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <option value="">Select target project</option>
+              {% for project in project_options %}
+              <option value="{{ project }}">{{ project }}</option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-gray-400">Filters stay active as you type.</p>
+          </div>
+        </div>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+          <input id="mergeDeleteSource" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-200" />
+          Delete source project after merge
+        </label>
+        <div id="mergeProjectsFeedback" class="hidden text-sm"></div>
+        <div class="flex justify-end">
+          <button id="mergeProjectsBtn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
+            Merge projects
+          </button>
         </div>
       </div>
-      <label class="inline-flex items-center gap-2 text-sm text-gray-600">
-        <input id="mergeDeleteSource" type="checkbox" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-200" />
-        Delete source project after merge
-      </label>
-      <div id="mergeProjectsFeedback" class="hidden text-sm"></div>
-      <div class="flex justify-end">
-        <button id="mergeProjectsBtn"
-          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
-          Merge projects
-        </button>
+    </details>
+    <div
+      class="fixed bottom-4 right-4 z-40 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/90 p-3 shadow-lg backdrop-blur hover:shadow-2xl focus-within:outline focus-within:outline-2 focus-within:outline-indigo-400 lg:hidden"
+      aria-label="Quick project navigation"
+    >
+      <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Jump to</span>
+      <div class="flex flex-col gap-2">
+        <a href="#create-project"
+          class="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100">
+          Create
+        </a>
+        <a href="#manage-projects"
+          class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
+          Manage
+        </a>
+        <a href="#merge-projects"
+          class="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50">
+          Merge
+        </a>
       </div>
-    </section>
+    </div>
+
   </div>
 
   <script>
+    (function () {
+      const openSection = (hash) => {
+        if (!hash) {
+          return;
+        }
+        const target = document.querySelector(hash);
+        if (target instanceof HTMLDetailsElement) {
+          target.open = true;
+        }
+      };
+      document.querySelectorAll('[data-section-link]').forEach((link) => {
+        link.addEventListener('click', () => {
+          const hash = link.getAttribute('href');
+          if (hash) {
+            openSection(hash);
+          }
+        });
+      });
+      window.addEventListener('hashchange', () => openSection(window.location.hash));
+      document.addEventListener('DOMContentLoaded', () => {
+        openSection(window.location.hash);
+      });
+    })();
+
     const projectTitleInput = document.getElementById('projectTitle');
     const projectSlugInput = document.getElementById('projectSlug');
     const projectStatusSelect = document.getElementById('projectStatus');
@@ -219,10 +405,15 @@
     const projectLastCompletedInput = document.getElementById('projectLastCompleted');
     const projectExecutiveTriggerSelect = document.getElementById('projectExecutiveTrigger');
     const projectLastReviewedInput = document.getElementById('projectLastReviewed');
+    const projectDescriptionInput = document.getElementById('projectDescription');
     const projectChecklistInput = document.getElementById('projectChecklist');
     const projectForm = document.getElementById('newProjectForm');
     const projectFeedbackEl = document.getElementById('newProjectFeedback');
     const createProjectBtn = document.getElementById('createProjectBtn');
+    const projectEditingBanner = document.getElementById('projectEditingBanner');
+    const projectEditingSlug = document.getElementById('projectEditingSlug');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    let currentEditSlug = null;
 
     const requiredProjectFields = [
       { element: projectTitleInput, message: 'Project title is required.' },
@@ -252,6 +443,133 @@
         .replace(/[^a-z0-9/]+/g, '-')
         .replace(/-{2,}/g, '-')
         .replace(/^-+|-+$/g, '');
+    }
+
+    function encodeSlugForPath(slug) {
+      if (!slug) {
+        return '';
+      }
+      return slug
+        .split('/')
+        .map((segment) => encodeURIComponent(segment))
+        .join('/');
+    }
+
+    function enterEditMode(slug) {
+      currentEditSlug = slug;
+      if (projectEditingBanner) {
+        projectEditingBanner.classList.remove('hidden');
+      }
+      if (projectEditingSlug) {
+        projectEditingSlug.textContent = slug;
+      }
+      if (projectSlugInput) {
+        projectSlugInput.value = slug;
+        projectSlugInput.setAttribute('readonly', 'readonly');
+        projectSlugManuallyEdited = true;
+      }
+      if (cancelEditBtn) {
+        cancelEditBtn.classList.remove('hidden');
+      }
+      if (createProjectBtn) {
+        createProjectBtn.textContent = 'Save changes';
+      }
+    }
+
+    function exitEditMode() {
+      currentEditSlug = null;
+      if (projectEditingBanner) {
+        projectEditingBanner.classList.add('hidden');
+      }
+      if (projectEditingSlug) {
+        projectEditingSlug.textContent = '';
+      }
+      if (projectSlugInput) {
+        projectSlugInput.removeAttribute('readonly');
+      }
+      if (cancelEditBtn) {
+        cancelEditBtn.classList.add('hidden');
+      }
+      if (createProjectBtn) {
+        createProjectBtn.textContent = 'Create project';
+      }
+      projectSlugManuallyEdited = false;
+    }
+
+    async function loadProjectForEdit(slug) {
+      if (!slug) {
+        return;
+      }
+      try {
+        const encodedSlug = encodeSlugForPath(slug);
+        const res = await fetch(`/projects/${encodedSlug}`);
+        ensureOkResponse(res);
+        const data = await res.json();
+        if (projectTitleInput) {
+          projectTitleInput.value = data.title || '';
+        }
+        if (projectSlugInput) {
+          projectSlugInput.value = data.slug || slug;
+        }
+        if (projectStatusSelect && data.status) {
+          projectStatusSelect.value = data.status;
+        }
+        if (projectAreaInput) {
+          projectAreaInput.value = data.area || '';
+        }
+        if (projectEffortSelect && data.effort) {
+          projectEffortSelect.value = data.effort;
+        }
+        if (projectDueInput) {
+          projectDueInput.value = data.due || '';
+        }
+        if (projectRecurrenceSelect) {
+          projectRecurrenceSelect.value = data.recurrence || '';
+        }
+        if (projectLastCompletedInput) {
+          projectLastCompletedInput.value = data.last_completed || '';
+        }
+        if (projectExecutiveTriggerSelect) {
+          projectExecutiveTriggerSelect.value = data.executive_trigger || '';
+        }
+        if (projectLastReviewedInput) {
+          projectLastReviewedInput.value = data.last_reviewed || '';
+        }
+        if (projectChecklistInput) {
+          projectChecklistInput.value = (data.tasks || []).join('\n');
+        }
+        if (projectDescriptionInput) {
+          projectDescriptionInput.value = data.description || '';
+        }
+        projectSlugManuallyEdited = true;
+        enterEditMode(data.slug || slug);
+      } catch (error) {
+        updateFeedback(projectFeedbackEl, 'Unable to load that project for editing.', 'error');
+        console.error('Failed to load project for edit', error);
+      }
+    }
+
+    function filterSelectOptions(select, filterValue) {
+      if (!select) {
+        return;
+      }
+      const needle = (filterValue || '').toLowerCase().trim();
+      select.querySelectorAll('option').forEach((option) => {
+        if (!option.value) {
+          option.hidden = false;
+          return;
+        }
+        option.hidden = Boolean(needle && !option.textContent.toLowerCase().includes(needle));
+      });
+    }
+
+    function wireSelectFilter(filterInput, select) {
+      if (!filterInput || !select) {
+        return;
+      }
+      filterInput.addEventListener('input', () => {
+        filterSelectOptions(select, filterInput.value);
+      });
     }
 
     if (projectTitleInput && projectSlugInput) {
@@ -293,20 +611,28 @@
             return null;
           }
 
-          const slugValue = sanitizeSlug(projectSlugInput.value);
-          if (!slugValue) {
-            setFieldValidity(projectSlugInput, false);
-            updateFeedback(projectFeedbackEl, 'Slug cannot be empty after sanitization.', 'error');
-            return null;
+          let slugValue = '';
+          if (!currentEditSlug) {
+            slugValue = sanitizeSlug(projectSlugInput.value);
+            if (!slugValue) {
+              setFieldValidity(projectSlugInput, false);
+              updateFeedback(projectFeedbackEl, 'Slug cannot be empty after sanitization.', 'error');
+              return null;
+            }
+            slugValue = slugValue.endsWith('.md') ? slugValue : `${slugValue}.md`;
+          } else {
+            slugValue = currentEditSlug;
           }
 
           const payload = {
             title: projectTitleInput.value.trim(),
-            slug: slugValue.endsWith('.md') ? slugValue : `${slugValue}.md`,
             status: projectStatusSelect.value,
             area: projectAreaInput.value.trim(),
             effort: projectEffortSelect.value,
           };
+          if (!currentEditSlug) {
+            payload.slug = slugValue;
+          }
 
           const optionalFields = [
             { element: projectDueInput, key: 'due' },
@@ -325,35 +651,53 @@
             }
           });
 
-          if (projectChecklistInput && projectChecklistInput.value.trim()) {
-            const tasks = projectChecklistInput.value
-              .split('\n')
-              .map((line) => line.trim())
-              .filter((line) => line.length > 0)
-              .map((title) => ({ title }));
-            if (tasks.length) {
-              payload.tasks = tasks;
+          if (projectDescriptionInput) {
+            const descValue = projectDescriptionInput.value || '';
+            if (currentEditSlug) {
+              payload.description = descValue;
+            } else if (descValue.trim()) {
+              payload.description = descValue;
             }
           }
 
-          const res = await fetch('/projects', {
-            method: 'POST',
+          const checklistLines = projectChecklistInput
+            ? projectChecklistInput.value
+                .split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0)
+            : [];
+          if (currentEditSlug) {
+            payload.tasks_text = checklistLines.join('\n');
+          } else if (checklistLines.length) {
+            payload.tasks = checklistLines.map((title) => ({ title }));
+          }
+
+          const endpoint = currentEditSlug
+            ? `/projects/${encodeSlugForPath(currentEditSlug)}`
+            : '/projects';
+          const method = currentEditSlug ? 'PUT' : 'POST';
+          const res = await fetch(endpoint, {
+            method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           });
           ensureOkResponse(res);
           const data = await res.json();
-          updateFeedback(
-            projectFeedbackEl,
-            `Created “${data.title || payload.title}” at ${data.path || payload.slug}.`,
-            'success',
-          );
-          projectForm.reset();
-          projectSlugManuallyEdited = false;
-          if (projectSlugInput) {
-            projectSlugInput.value = '';
+          if (currentEditSlug) {
+            updateFeedback(
+              projectFeedbackEl,
+              `Updated “${data.title || payload.title}”.`,
+              'success',
+            );
+          } else {
+            updateFeedback(
+              projectFeedbackEl,
+              `Created “${data.title || payload.title}” at ${data.path || payload.slug}.`,
+              'success',
+            );
           }
-          if (projectTitleInput) {
+          projectForm.reset();
+          if (!currentEditSlug && projectTitleInput) {
             projectTitleInput.focus();
           }
           return data;
@@ -367,9 +711,12 @@
 
       projectForm.addEventListener('reset', () => {
         clearFeedback(projectFeedbackEl);
-        projectSlugManuallyEdited = false;
+        exitEditMode();
         if (projectSlugInput) {
           projectSlugInput.value = '';
+        }
+        if (projectDescriptionInput) {
+          projectDescriptionInput.value = '';
         }
         setTimeout(() => {
           if (projectTitleInput && projectSlugInput && projectTitleInput.value) {
@@ -390,7 +737,7 @@
           ensureOkResponse(res);
           const data = await res.json();
           setPreContent('parseResult', JSON.stringify(data, null, 2));
-        }
+        },
       });
     }
 
@@ -405,7 +752,7 @@
           ensureOkResponse(res);
           const data = await res.json();
           setPreContent('tasksResult', JSON.stringify(data, null, 2));
-        }
+        },
       });
     }
 
@@ -420,15 +767,36 @@
           ensureOkResponse(res);
           const data = await res.json();
           setPreContent('writeTasksResult', JSON.stringify(data, null, 2));
-        }
+        },
       });
     }
 
+    if (cancelEditBtn && projectForm) {
+      cancelEditBtn.addEventListener('click', () => {
+        projectForm.reset();
+      });
+    }
+    document.querySelectorAll('[data-load-project-slug]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const slug = button.dataset.loadProjectSlug;
+        if (slug) {
+          loadProjectForEdit(slug);
+        }
+      });
+    });
+
     const mergeSourceSelect = document.getElementById('mergeSourceProject');
     const mergeTargetSelect = document.getElementById('mergeTargetProject');
+    const mergeSourceFilter = document.getElementById('mergeSourceFilter');
+    const mergeTargetFilter = document.getElementById('mergeTargetFilter');
     const mergeDeleteCheckbox = document.getElementById('mergeDeleteSource');
     const mergeFeedbackEl = document.getElementById('mergeProjectsFeedback');
     const mergeBtn = document.getElementById('mergeProjectsBtn');
+
+    wireSelectFilter(mergeSourceFilter, mergeSourceSelect);
+    wireSelectFilter(mergeTargetFilter, mergeTargetSelect);
+    filterSelectOptions(mergeSourceSelect);
+    filterSelectOptions(mergeTargetSelect);
 
     [mergeSourceSelect, mergeTargetSelect].forEach((select) => {
       if (select) {
@@ -459,6 +827,14 @@
             setFieldValidity(mergeTargetSelect, false);
             updateFeedback(mergeFeedbackEl, 'Source and target must be different projects.', 'error');
             return null;
+          }
+
+          if (mergeDeleteCheckbox && mergeDeleteCheckbox.checked) {
+            const confirmed = window.confirm('Deleting the source project removes it permanently. Continue?');
+            if (!confirmed) {
+              updateFeedback(mergeFeedbackEl, 'Merge canceled; source project preserved.', 'info');
+              return null;
+            }
           }
 
           const payload = {

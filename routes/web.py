@@ -9,6 +9,7 @@ from fastapi import APIRouter, Request, Body, HTTPException
 from fastapi.responses import HTMLResponse
 
 from config import config, PROJECT_ROOT
+from parse_projects import parse_all_projects
 from prompt_renderer import render_prompt
 from tasks import read_tasks, task_completion_history, upcoming_tasks
 from energy import read_entries
@@ -62,29 +63,31 @@ def projects_page(request: Request):
     """Render the projects management interface."""
     logger.info("GET /projects-page")
     options = _load_project_area_options()
+    raw_projects = parse_all_projects()
+    vault_name = Path(config.VAULT_PATH).name
+    project_list = []
+    for project in raw_projects:
+        path_value = project.get("path", "")
+        slug_path = Path(path_value)
+        if slug_path.parts and slug_path.parts[0] == vault_name:
+            slug_value = str(slug_path.relative_to(vault_name))
+        else:
+            slug_value = str(slug_path)
+        entry = dict(project)
+        entry["slug"] = slug_value
+        project_list.append(entry)
+    status_counts = {}
+    for project in project_list:
+        status_label = (project.get("status") or "Unspecified").title()
+        status_counts[status_label] = status_counts.get(status_label, 0) + 1
     return templates.TemplateResponse(
         "projects.html",
         {
             "request": request,
+            "project_list": project_list,
+            "project_summary": {"total": len(project_list)},
+            "project_status_counts": status_counts,
             **options,
-        },
-    )
-
-
-@router.get("/energy-trends", response_class=HTMLResponse)
-def energy_trends_page(request: Request):
-    """Render the energy and mood trends dashboard."""
-
-    logger.info("GET /energy-trends")
-    entries = sorted(
-        read_entries(),
-        key=lambda entry: entry.get("recorded_at") or entry.get("date") or "",
-    )
-    return templates.TemplateResponse(
-        "energy_trends.html",
-        {
-            "request": request,
-            "entries": entries,
         },
     )
 

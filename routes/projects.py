@@ -12,6 +12,10 @@ from pydantic import BaseModel, Field, field_validator
 
 from parse_projects import (
     _task_to_line,
+    TASK_LINE_PATTERN,
+    VALID_KEYS,
+    extract_frontmatter,
+    extract_tasks,
     merge_project_files,
     parse_all_projects,
     save_tasks_yaml,
@@ -26,9 +30,20 @@ from utils.vault import normalize_slug_path, resolve_slug_path
 router = APIRouter()
 PROJECTS_FILE = Path(config.OUTPUT_PATH)
 TASKS_FILE = Path(config.TASKS_PATH)
+VAULT_ROOT = Path(config.VAULT_PATH)
 
 LOG_FILE = Path(config.LOG_DIR) / "projects.log"
 logger = configure_logger(__name__, LOG_FILE)
+PROJECT_FRONTMATTER_KEYS = [
+    "status",
+    "area",
+    "effort",
+    "due",
+    "recurrence",
+    "last_completed",
+    "executive_trigger",
+    "last_reviewed",
+]
 
 
 class ProjectTask(BaseModel):
@@ -58,6 +73,7 @@ class ProjectCreateRequest(BaseModel):
     executive_trigger: Optional[str] = None
     last_reviewed: Optional[str] = None
     tasks: Optional[List[ProjectTask]] = None
+    description: Optional[str] = None
 
     @field_validator("slug")
     @classmethod
@@ -85,6 +101,91 @@ class ProjectMergeRequest(BaseModel):
         vault_root = Path(config.VAULT_PATH)
         normalized = normalize_slug_path(value, vault_root)
         return str(normalized)
+
+
+class ProjectUpdateRequest(BaseModel):
+    """Payload schema for updating project metadata and tasks."""
+
+    title: Optional[str] = None
+    status: Optional[str] = None
+    area: Optional[str] = None
+    effort: Optional[str] = None
+    due: Optional[str] = None
+    recurrence: Optional[str] = None
+    last_completed: Optional[str] = None
+    executive_trigger: Optional[str] = None
+    last_reviewed: Optional[str] = None
+    tasks_text: Optional[str] = None
+    description: Optional[str] = None
+
+
+def _normalize_task_lines(raw: str) -> List[str]:
+    lines: List[str] = []
+    for entry in raw.splitlines():
+        trimmed = entry.strip()
+        if not trimmed:
+            continue
+        if not TASK_LINE_PATTERN.match(trimmed):
+            trimmed = f"- [ ] {trimmed}"
+        lines.append(trimmed)
+    return lines
+
+
+def _extract_description_lines(body: str) -> List[str]:
+    lines: List[str] = []
+    seen_title = False
+    for line in body.splitlines():
+        stripped = line.lstrip()
+        if not seen_title and stripped.startswith("# "):
+            seen_title = True
+            continue
+        if not seen_title:
+            continue
+        if TASK_LINE_PATTERN.match(line):
+            break
+        lines.append(line)
+    # Trim leading/trailing blank lines
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return lines
+
+
+def _compose_description_lines(
+    title_value: str, description_override: Optional[str], body: str
+) -> List[str]:
+    description_lines: List[str]
+    if description_override is not None:
+        description_lines = description_override.splitlines()
+    else:
+        description_lines = _extract_description_lines(body)
+    result = [f"# {title_value}"]
+    if description_lines:
+        result.append("")
+        result.extend(description_lines)
+    return result
+
+
+def _assemble_project_content(
+    frontmatter: dict, desc_lines: List[str], task_lines: List[str]
+) -> str:
+    frontmatter_yaml = yaml.safe_dump(frontmatter, sort_keys=False).strip()
+    sections = ["---", frontmatter_yaml, "---"]
+    desc_text = "\n".join(desc_lines).strip()
+    if desc_text:
+        sections.extend(["", desc_text])
+    if task_lines:
+        sections.extend(["", *task_lines])
+    return "\n".join(sections).rstrip() + "\n"
+
+
+def _extract_title_from_body(body: str, fallback: str) -> str:
+    for line in body.splitlines():
+        candidate = line.strip()
+        if candidate.startswith("# "):
+            return candidate[2:].strip() or fallback
+    return fallback
 
 
 @router.get("/projects")
@@ -123,6 +224,74 @@ def get_projects(
 
     logger.info("Returning %d projects", len(projects))
     return projects
+
+
+@router.get("/projects/{slug:path}")
+def get_project(slug: str):
+    """Return a single project's metadata and checklist."""
+    logger.info("GET /projects/%s", slug)
+    try:
+        project_path = resolve_slug_path(slug, VAULT_ROOT)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if not project_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project file not found"
+        )
+    content = project_path.read_text(encoding="utf-8")
+    frontmatter, body = extract_frontmatter(content)
+    tasks = extract_tasks(body)
+    title = _extract_title_from_body(body, project_path.stem)
+    description_lines = _extract_description_lines(body)
+    description = "\n".join(description_lines) if description_lines else ""
+    return {
+        "title": title,
+        "slug": str(project_path.relative_to(VAULT_ROOT)),
+        "path": str(project_path.relative_to(VAULT_ROOT.parent)),
+        "tasks": tasks,
+        "description": description,
+        **frontmatter,
+    }
+
+
+@router.put("/projects/{slug:path}")
+def update_project(slug: str, payload: ProjectUpdateRequest):
+    """Update an existing project's metadata or checklist."""
+    logger.info("PUT /projects/%s", slug)
+    try:
+        project_path = resolve_slug_path(slug, VAULT_ROOT)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if not project_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Project file not found"
+        )
+
+    content = project_path.read_text(encoding="utf-8")
+    frontmatter, body = extract_frontmatter(content)
+    existing_title = _extract_title_from_body(body, project_path.stem)
+    updates = {
+        key: getattr(payload, key)
+        for key in PROJECT_FRONTMATTER_KEYS
+        if getattr(payload, key) is not None
+    }
+    frontmatter.update(updates)
+    title_value = payload.title or existing_title
+    desc_lines = _compose_description_lines(title_value, payload.description, body)
+    task_lines = (
+        _normalize_task_lines(payload.tasks_text)
+        if payload.tasks_text is not None
+        else extract_tasks(body)
+    )
+    new_content = _assemble_project_content(frontmatter, desc_lines, task_lines)
+    project_path.write_text(new_content, encoding="utf-8")
+    logger.info("Updated project %s", project_path)
+    return {
+        "title": payload.title or existing_title,
+        "slug": str(project_path.relative_to(VAULT_ROOT)),
+        "path": str(project_path.relative_to(VAULT_ROOT.parent)),
+        "tasks": len(task_lines),
+    }
 
 
 @router.post("/parse-projects")
@@ -186,19 +355,9 @@ def create_project(payload: ProjectCreateRequest):
             detail="Project file already exists",
         )
 
-    frontmatter_keys = [
-        "status",
-        "area",
-        "effort",
-        "due",
-        "recurrence",
-        "last_completed",
-        "executive_trigger",
-        "last_reviewed",
-    ]
     frontmatter = {
         key: getattr(payload, key)
-        for key in frontmatter_keys
+        for key in PROJECT_FRONTMATTER_KEYS
         if getattr(payload, key) is not None
     }
 
@@ -207,8 +366,12 @@ def create_project(payload: ProjectCreateRequest):
     for task in payload.tasks or []:
         task_lines.append(_task_to_line(task.model_dump(exclude_none=True)))
 
-    parts = ["---", frontmatter_yaml, "---", "", f"# {payload.title}", ""]
-    parts.extend(task_lines)
+    desc_lines = _compose_description_lines(payload.title, payload.description, "")
+    parts = ["---", frontmatter_yaml, "---", ""]
+    parts.extend(desc_lines)
+    if task_lines:
+        parts.append("")
+        parts.extend(task_lines)
     content = "\n".join(parts).rstrip() + "\n"
 
     target_path.parent.mkdir(parents=True, exist_ok=True)
