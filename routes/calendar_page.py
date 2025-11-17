@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import os
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -27,6 +29,26 @@ templates = create_templates()
 
 LOG_FILE = Path(config.LOG_DIR) / "calendar_page.log"
 logger = configure_logger(__name__, LOG_FILE)
+
+CACHE_REFRESH_INTERVAL_SECONDS = max(
+    60, int(os.getenv("CALENDAR_CACHE_REFRESH_INTERVAL_SECONDS", "300"))
+)
+CACHE_REFRESH_RANGE_DAYS = max(
+    1, int(os.getenv("CALENDAR_CACHE_REFRESH_RANGE_DAYS", "7"))
+)
+
+
+async def _calendar_cache_refresher() -> None:
+    """Keep the calendar cache warm so the UI stays snappy."""
+
+    while True:
+        start = date.today()
+        end = start + timedelta(days=CACHE_REFRESH_RANGE_DAYS - 1)
+        try:
+            await asyncio.to_thread(load_events, start, end)
+        except Exception:
+            logger.exception("Background calendar cache refresh failed")
+        await asyncio.sleep(CACHE_REFRESH_INTERVAL_SECONDS)
 
 
 def _is_all_day_event(event: Event) -> bool:
@@ -339,3 +361,14 @@ def complete_calendar_task_ajax(task_id: int = Form(...)):
 
     updated = mark_tasks_complete([task_id])
     return {"completed": updated}
+
+
+@router.on_event("startup")
+async def _launch_calendar_cache_refresher() -> None:
+    """Ensure a background task keeps the calendar cache fresh."""
+
+    logger.info(
+        "Starting calendar cache refresher (every %s seconds)",
+        CACHE_REFRESH_INTERVAL_SECONDS,
+    )
+    asyncio.create_task(_calendar_cache_refresher())

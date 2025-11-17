@@ -6,9 +6,9 @@ import json
 import logging
 import os
 from dataclasses import asdict, dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Iterable, List
 from zoneinfo import ZoneInfo
 
 try:
@@ -34,8 +34,11 @@ ICS_PATHS = [
     if p
 ]
 TIME_ZONE = os.getenv("TIME_ZONE", getattr(config, "TIME_ZONE", "UTC"))
+DEFAULT_TZ = ZoneInfo(TIME_ZONE)
 GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
 GOOGLE_CREDENTIALS_PATH = os.getenv("GOOGLE_CREDENTIALS_PATH")
+GOOGLE_CACHE_TTL_SECONDS = int(os.getenv("CALENDAR_GOOGLE_CACHE_TTL_SECONDS", "300"))
+GOOGLE_CACHE_TTL = timedelta(seconds=GOOGLE_CACHE_TTL_SECONDS)
 
 LOG_FILE = Path(config.LOG_DIR) / "calendar.log"
 LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -128,7 +131,7 @@ if Calendar is None:
 
     class Calendar:  # pragma: no cover - fallback when dependency missing
         def __init__(self, text: str | None = None) -> None:
-            tz = ZoneInfo(TIME_ZONE)
+            tz = DEFAULT_TZ
             self.events = _parse_simple_calendar(text or "", tz)
 
     logger.warning("ICS dependency not available; using simple parser fallback.")
@@ -146,50 +149,143 @@ class Event:
     html_link: str = ""
 
 
-def _read_ics_events() -> List[Event]:
-    tz = ZoneInfo(TIME_ZONE)
-    events: List[Event] = []
-    for path in ICS_PATHS:
-        if not path.exists():
-            logger.info("ICS path %s does not exist", path)
-            continue
+def _load_cache() -> dict[str, Any]:
+    try:
+        raw = CACHE_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        logger.warning("Failed to decode calendar cache; rebuilding")
+        return {}
+    if isinstance(data, list):
+        return {"events": data, "meta": {}}
+    if isinstance(data, dict):
+        return data
+    return {}
 
-        file_paths: List[Path]
+
+def _write_cache(payload: dict[str, Any]) -> None:
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = CACHE_PATH.with_suffix(".tmp")
+    with open(temp_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, default=str, ensure_ascii=False)
+    temp_path.replace(CACHE_PATH)
+
+
+def _collect_ics_file_paths() -> list[Path]:
+    files: list[Path] = []
+    for path in ICS_PATHS:
         if path.is_dir():
-            file_paths = sorted(p for p in path.glob("*.ics") if p.is_file())
-            if not file_paths:
+            dir_files = sorted(p for p in path.glob("*.ics") if p.is_file())
+            if not dir_files:
                 logger.info("ICS directory %s has no .ics files", path)
                 continue
+            files.extend(dir_files)
+        elif path.exists():
+            files.append(path)
         else:
-            file_paths = [path]
+            logger.info("ICS path %s does not exist", path)
+    return files
 
-        for file_path in file_paths:
-            logger.info("Parsing %s", file_path)
-            text = file_path.read_text(encoding="utf-8")
-            cal = Calendar(text)
-            for item in cal.events:
-                if hasattr(item, "begin"):
-                    start = item.begin.to(TIME_ZONE).datetime
-                    end = item.end.to(TIME_ZONE).datetime
-                    summary = item.name or ""
-                else:
-                    start = getattr(item, "start", None)
-                    end = getattr(item, "end", None)
-                    summary = getattr(item, "summary", "") or ""
-                location = getattr(item, "location", "") or ""
-                description = getattr(item, "description", "") or ""
-                html_link = getattr(item, "url", "") or ""
-                if start and end:
-                    events.append(
-                        Event(
-                            summary,
-                            start.astimezone(tz),
-                            end.astimezone(tz),
-                            location=location,
-                            description=description,
-                            html_link=html_link,
-                        )
+
+def _collect_file_metadata(file_paths: Iterable[Path]) -> dict[str, float]:
+    metadata: dict[str, float] = {}
+    for file_path in file_paths:
+        try:
+            metadata[str(file_path)] = file_path.stat().st_mtime
+        except OSError as exc:
+            logger.info("Unable to stat %s: %s", file_path, exc)
+    return metadata
+
+
+def _parse_cached_datetime(value: str | None) -> datetime | None:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    tz = DEFAULT_TZ
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=tz)
+    return parsed.astimezone(tz)
+
+
+def _parse_cached_date(value: str | None) -> date | None:
+    if not value or not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _events_from_cache(records: Iterable[dict[str, Any]]) -> list[Event]:
+    events: list[Event] = []
+    for record in records:
+        start = _parse_cached_datetime(record.get("start"))
+        end = _parse_cached_datetime(record.get("end"))
+        if not (start and end):
+            continue
+        events.append(
+            Event(
+                record.get("summary", "") or "",
+                start,
+                end,
+                location=record.get("location", "") or "",
+                description=record.get("description", "") or "",
+                html_link=record.get("html_link", "") or "",
+            )
+        )
+    return events
+
+
+def _is_google_cache_valid(start: date, end: date, google_meta: dict[str, Any]) -> bool:
+    if not google_meta:
+        return False
+    cached_start = _parse_cached_date(google_meta.get("range_start"))
+    cached_end = _parse_cached_date(google_meta.get("range_end"))
+    if cached_start != start or cached_end != end:
+        return False
+    fetched_at = _parse_cached_datetime(google_meta.get("fetched_at"))
+    if not fetched_at:
+        return False
+    now = datetime.now(DEFAULT_TZ)
+    return now - fetched_at <= GOOGLE_CACHE_TTL
+
+
+def _read_ics_events(file_paths: Iterable[Path]) -> List[Event]:
+    tz = DEFAULT_TZ
+    events: List[Event] = []
+    for file_path in file_paths:
+        logger.info("Parsing %s", file_path)
+        text = file_path.read_text(encoding="utf-8")
+        cal = Calendar(text)
+        for item in cal.events:
+            if hasattr(item, "begin"):
+                start = item.begin.to(TIME_ZONE).datetime
+                end = item.end.to(TIME_ZONE).datetime
+                summary = item.name or ""
+            else:
+                start = getattr(item, "start", None)
+                end = getattr(item, "end", None)
+                summary = getattr(item, "summary", "") or ""
+            location = getattr(item, "location", "") or ""
+            description = getattr(item, "description", "") or ""
+            html_link = getattr(item, "url", "") or ""
+            if start and end:
+                events.append(
+                    Event(
+                        summary,
+                        start.astimezone(tz),
+                        end.astimezone(tz),
+                        location=location,
+                        description=description,
+                        html_link=html_link,
                     )
+                )
     return events
 
 
@@ -199,7 +295,7 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
         logger.info("Google Calendar not configured or dependencies missing")
         return []
 
-    tz = ZoneInfo(TIME_ZONE)
+    tz = DEFAULT_TZ
     try:
         creds = Credentials.from_service_account_file(
             GOOGLE_CREDENTIALS_PATH,
@@ -275,10 +371,44 @@ def _read_google_calendar_events(start: date, end: date) -> List[Event]:
 def load_events(start: date, end: date) -> List[Event]:
     """Return events between ``start`` and ``end`` inclusive."""
     logger.info("Loading events between %s and %s", start, end)
-    events = [e for e in _read_ics_events() if start <= e.start.date() <= end]
-    events.extend(_read_google_calendar_events(start, end))
-    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with open(CACHE_PATH, "w", encoding="utf-8") as handle:
-        json.dump([asdict(e) for e in events], handle, default=str, ensure_ascii=False)
+    cache = _load_cache()
+    meta = cache.get("meta", {}) or {}
+    file_paths = _collect_ics_file_paths()
+    file_metadata = _collect_file_metadata(file_paths)
+    cached_ics_meta = meta.get("ics_files", {})
+    cached_ics_records = meta.get("ics_events")
+    needs_ics_reload = file_metadata != cached_ics_meta or cached_ics_records is None
+    if needs_ics_reload:
+        cached_ics_events = _read_ics_events(file_paths)
+    else:
+        cached_ics_events = _events_from_cache(cached_ics_records or [])
+    ics_events = [
+        event for event in cached_ics_events if start <= event.start.date() <= end
+    ]
+
+    google_meta = meta.get("google", {}) or {}
+    now = datetime.now(DEFAULT_TZ)
+    if _is_google_cache_valid(start, end, google_meta):
+        google_events = _events_from_cache(google_meta.get("events", []))
+        google_meta_payload = google_meta
+    else:
+        google_events = _read_google_calendar_events(start, end)
+        google_meta_payload = {
+            "range_start": start.isoformat(),
+            "range_end": end.isoformat(),
+            "fetched_at": now.isoformat(),
+            "events": [asdict(event) for event in google_events],
+        }
+
+    events = ics_events + google_events
+    cache_payload = {
+        "events": [asdict(event) for event in events],
+        "meta": {
+            "ics_files": file_metadata,
+            "ics_events": [asdict(event) for event in cached_ics_events],
+            "google": google_meta_payload,
+        },
+    }
+    _write_cache(cache_payload)
     logger.info("Cached %d events to %s", len(events), CACHE_PATH)
     return events

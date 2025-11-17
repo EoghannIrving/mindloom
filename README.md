@@ -26,7 +26,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Request a single task suggestion via the `/suggest-task` endpoint when
   [ActivationEngine](https://github.com/EoghannIrving/ActivationEngine) is
   configured.
-- Automatically pull calendar events from linked `.ics` files or Google Calendar when visiting the `/calendar` page, caching them in `data/calendar_cache.json`.
+- Automatically pull calendar events from linked `.ics` files or Google Calendar when visiting the `/calendar` page, caching parsed feeds and metadata in `data/calendar_cache.json` and refreshing them via a background job so the calendar UI stays responsive.
 - Enjoy Mindloom as an installable Progressive Web App: the manifest, service worker, and `/offline` fallback keep core pages cached even when you lose connectivity.
 - Visualize logged energy and mood trends for the current day, week, month, or year on the `/energy-trends` dashboard.
 - Track completed tasks, their energy cost, and whether they landed on time or late through `/task-trends`.
@@ -100,6 +100,8 @@ Supported keys:
      entries with the system path separator (`:` on Unix, `;` on Windows).
    - `TIME_ZONE` sets the IANA time zone for event parsing.
    - `ACTIVATION_ENGINE_URL` endpoint for the optional task suggestion service.
+   - `CALENDAR_CACHE_REFRESH_INTERVAL_SECONDS` controls how often the calendar cache refreshes in the background (seconds, default 300).
+   - `CALENDAR_CACHE_REFRESH_RANGE_DAYS` sets how many days each background refresh warms (default 7).
 4. *(Optional)* Enable Google Calendar access:
    - Create a Google Cloud service account and enable the Calendar API.
    - Share your calendar with the service account's email address.
