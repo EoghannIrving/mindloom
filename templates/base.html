@@ -282,7 +282,7 @@
     </a>
   {% endmacro %}
 
-  <nav class="sticky top-0 mb-4 rounded-3xl border border-gray-900/20 bg-gray-900/80 px-4 py-3 text-white shadow-lg z-50">
+  <nav class="sticky top-0 relative mb-4 rounded-3xl border border-gray-900/20 bg-gray-900/80 px-4 py-3 text-white shadow-lg z-50">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3 text-sm font-semibold uppercase tracking-wide text-white/70">
         <img
@@ -304,7 +304,7 @@
       </button>
       <div
         id="primaryNavGroup"
-        class="mt-3 hidden flex-col gap-3 lg:mt-0 lg:flex lg:flex-row lg:flex-wrap lg:items-center lg:w-auto lg:flex-1 lg:justify-end"
+        class="absolute left-3 right-3 top-full z-40 mt-2 hidden flex-col gap-3 rounded-3xl border border-white/20 bg-gray-900/90 p-4 shadow-lg lg:static lg:mt-0 lg:right-auto lg:left-auto lg:flex lg:flex-row lg:flex-wrap lg:items-center lg:w-auto lg:flex-1 lg:justify-end lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none"
       >
       <span class="sr-only">Primary navigation</span>
       <div class="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
