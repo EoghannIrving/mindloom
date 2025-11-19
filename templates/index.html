@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Mindloom{% endblock %}
 {% block content %}
-  <div class="max-w-5xl mx-auto space-y-6">
+  <div class="max-w-5xl mx-auto space-y-6 py-6">
     <section
       class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
       <div class="space-y-2">
@@ -71,130 +71,165 @@
         data-placeholder-class="text-indigo-200" data-active-class="text-white">Results will appear here…</pre>
     </section>
 
-    <div class="space-y-4">
-      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
-        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
-          <span>Prompts &amp; Templates</span>
-          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <div class="mt-4 space-y-3 text-sm text-gray-600">
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <select id="promptSelect"
-              class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-              {% for p in prompt_files %}
-              <option value="{{ p }}">{{ p }}</option>
+    <section class="space-y-6">
+      <div class="space-y-6 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+        <div class="space-y-4 rounded-3xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 p-6 text-white">
+          <div class="space-y-1">
+            <p class="text-xs font-semibold uppercase tracking-wide">Due {{ today.strftime("%A, %B %d, %Y") }}</p>
+            <h2 class="text-2xl font-bold tracking-tight">Today's Tasks</h2>
+            <p class="text-sm text-indigo-100 max-w-3xl">
+              Prioritized by your current energy and mood so you tackle the hardest achievable work first.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-white/30 bg-white/10 p-5 backdrop-blur">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl text-emerald-900">
+                {{ energy_summary.emoji }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-white">
+                  Energy {{ energy_summary.energy }} · {{ energy_summary.mood }}
+                </p>
+                <p class="text-xs text-indigo-100">
+                  Available capacity {{ energy_summary.available_display | round(1) }} / 5
+                </p>
+              </div>
+            </div>
+            <p class="mt-4 text-xs text-indigo-100">{{ energy_summary.message }}</p>
+          </div>
+        </div>
+
+        <form method="post" action="/daily-tasks" class="space-y-6" id="dailyTasksForm">
+          <input type="hidden" name="today" id="dailyTasksToday" value="{{ today_iso }}">
+          <section class="space-y-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-900">Ready for today</h3>
+                <p class="text-xs text-slate-500">
+                  Sorted hardest first while keeping you within your current energy limit.
+                </p>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {{ achievable_tasks | length }} tasks
+              </span>
+            </div>
+            {% if achievable_tasks %}
+            <ul class="space-y-3">
+              {% for task in achievable_tasks %}
+              <li class="flex items-start gap-3 rounded-2xl p-4 {% if task.is_overdue %}border border-rose-300 bg-rose-50/70{% else %}border border-slate-200 bg-slate-50/80{% endif %}">
+                <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                    {% if task.is_overdue %}
+                    <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
+                      Overdue
+                    </span>
+                    {% endif %}
+                    <span class="text-xs font-mono uppercase text-slate-500">
+                      Energy {{ task.energy_cost }}
+                    </span>
+                  </div>
+                  <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {% if task.project %}
+                    <span>Project {{ task.project }}</span>
+                    {% endif %}
+                    {% if task.area %}
+                    <span>Area {{ task.area }}</span>
+                    {% endif %}
+                    <span>
+                      Leaves {{ task.capacity_gap | round(1) }} energy
+                    </span>
+                    {% if task.executive_penalty and task.executive_penalty > 0 %}
+                    <span class="text-rose-500">
+                      Exec penalty {{ task.executive_penalty }}
+                    </span>
+                    {% endif %}
+                  </div>
+                  {% if task.reason %}
+                  <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
+                  {% endif %}
+                </div>
+              </li>
               {% endfor %}
-            </select>
-            <textarea id="promptVars" placeholder='{"energy":5}'
-              class="flex-1 min-h-[48px] rounded-lg border border-gray-200 bg-white px-3 py-2 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"></textarea>
-          </div>
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <button id="renderPrompt"
-              class="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">Render</button>
-            <button id="askBtn"
-              class="rounded-lg border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 transition hover:bg-purple-100">Send to Mindloom</button>
-          </div>
-          <pre id="promptResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
-        </div>
-      </details>
+            </ul>
+            {% else %}
+            <p class="text-sm text-slate-500">
+              Nothing due today fits within your current energy level. Take a breather or adjust your energy log.
+            </p>
+            {% endif %}
+          </section>
 
-      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
-        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
-          <span>Record Energy</span>
-          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <div class="mt-4 space-y-3 text-sm text-gray-600">
-          <p class="text-sm text-gray-500">Update your energy, mood, and time blocks above, then record a snapshot for your log.</p>
-          <div>
-            <button id="recordBtn"
-              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Record</button>
-          </div>
-          <pre id="recordResult"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
-        </div>
-      </details>
+          <section class="space-y-3 rounded-3xl border border-rose-200 bg-rose-50/80 p-6">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-900">Exceeds your limit</h3>
+                <p class="text-xs text-slate-500">
+                  Too costly for now—saved here for when you feel ready.
+                </p>
+              </div>
+              <span class="text-xs font-semibold uppercase tracking-wide text-rose-500">
+                {{ over_limit_tasks | length }} blocked
+              </span>
+            </div>
+            {% if over_limit_tasks %}
+            <ul class="space-y-3">
+              {% for task in over_limit_tasks %}
+              <li class="flex items-start gap-3 rounded-2xl border p-4 {% if task.is_overdue %}border-rose-400 bg-rose-50/80{% else %}border-rose-200 bg-white{% endif %}">
+                <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-rose-300 text-rose-500 focus:ring-rose-500">
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                    {% if task.is_overdue %}
+                    <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
+                      Overdue
+                    </span>
+                    {% endif %}
+                    <span class="text-xs font-mono uppercase text-slate-500">
+                      Energy {{ task.energy_cost }}
+                    </span>
+                  </div>
+                  <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {% if task.project %}
+                    <span>Project {{ task.project }}</span>
+                    {% endif %}
+                    {% if task.area %}
+                    <span>Area {{ task.area }}</span>
+                    {% endif %}
+                    <span>
+                      Exceeds limit by {{ (-task.capacity_gap) | round(1) }}
+                    </span>
+                    {% if task.executive_penalty and task.executive_penalty > 0 %}
+                    <span class="text-rose-500">
+                      Exec penalty {{ task.executive_penalty }}
+                    </span>
+                    {% endif %}
+                  </div>
+                  {% if task.reason %}
+                  <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
+                  {% endif %}
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-sm text-rose-600">
+              All due tasks fall within your current capacity. Keep the momentum going.
+            </p>
+            {% endif %}
+          </section>
 
-      <details class="group rounded-2xl border border-gray-200 bg-white/70 p-5 shadow-sm">
-        <summary class="cursor-pointer select-none text-base font-semibold text-gray-700 flex items-center justify-between">
-          <span>Data</span>
-          <span class="ml-2 text-xs uppercase tracking-wide text-gray-400 group-open:rotate-180 transition-transform">▼</span>
-        </summary>
-        <div class="mt-4 space-y-3 text-sm text-gray-600">
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <button id="loadProjects"
-              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Load Projects</button>
-            <button id="loadEnergy"
-              class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">Load Energy</button>
+          <div class="flex justify-end">
+            <button type="submit" class="flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              Mark Complete
+            </button>
           </div>
-          <pre id="projects"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
-          <pre id="energyData"
-            class="rounded-xl bg-gray-100 p-3 text-xs font-mono whitespace-pre-wrap overflow-auto min-h-32 text-gray-400 data-placeholder"
-            data-placeholder-class="text-gray-400" data-active-class="text-gray-700">Results will appear here…</pre>
-        </div>
-      </details>
-    </div>
+        </form>
+      </div>
+    </section>
   </div>
 
-
 <script>
-const recordBtn = document.getElementById('recordBtn');
-if (recordBtn) {
-  recordBtn.onclick = performActionWithFeedback(recordBtn, {
-    loadingText: 'Recording…',
-    preId: 'recordResult',
-    errorMessage: 'Unable to record energy',
-    action: async () => {
-      const payload = {
-        energy: parseInt(document.getElementById('energy').value),
-        mood: document.getElementById('mood').value,
-      };
-      const res = await fetch('/energy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      ensureOkResponse(res);
-      const data = await res.json();
-      setPreContent('recordResult', JSON.stringify(data, null, 2));
-    }
-  });
-}
-
-const loadProjectsBtn = document.getElementById('loadProjects');
-if (loadProjectsBtn) {
-  loadProjectsBtn.onclick = performActionWithFeedback(loadProjectsBtn, {
-    loadingText: 'Loading…',
-    preId: 'projects',
-    errorMessage: 'Unable to load projects',
-    action: async () => {
-      const res = await fetch('/projects');
-      ensureOkResponse(res);
-      const data = await res.json();
-      setPreContent('projects', JSON.stringify(data, null, 2));
-    }
-  });
-}
-
-const loadEnergyBtn = document.getElementById('loadEnergy');
-if (loadEnergyBtn) {
-  loadEnergyBtn.onclick = performActionWithFeedback(loadEnergyBtn, {
-    loadingText: 'Loading…',
-    preId: 'energyData',
-    errorMessage: 'Unable to load energy data',
-    action: async () => {
-      const res = await fetch('/energy');
-      ensureOkResponse(res);
-      const data = await res.json();
-      setPreContent('energyData', JSON.stringify(data, null, 2));
-    }
-  });
-}
-
 const plannerModeSelect = document.getElementById('plannerMode');
 const projectFilterSelect = document.getElementById('projectFilter');
 const areaFilterSelect = document.getElementById('areaFilter');
@@ -497,126 +532,6 @@ if (focusAskBtn) {
   });
 }
 
-async function renderPromptAction() {
-  const select = document.getElementById('promptSelect');
-  const varsText = document.getElementById('promptVars').value || '{}';
-  let variables = {};
-  try {
-    variables = JSON.parse(varsText);
-  } catch {
-    alert('Invalid JSON in variables');
-    return;
-  }
-  const warnings = [];
-  try {
-    const tasksRes = await fetch('/tasks');
-    ensureOkResponse(tasksRes);
-    const tasksData = await tasksRes.json();
-    if (!select.value.endsWith('morning_planner.txt')) {
-      variables.tasks = tasksData;
-    }
-  } catch (e) {
-    warnings.push(`⚠️ Unable to load tasks data. ${e.message || ''}`.trim());
-  }
-  try {
-    const energyRes = await fetch('/energy');
-    ensureOkResponse(energyRes);
-    const energyData = await energyRes.json();
-    const latest = energyData[energyData.length - 1];
-    if (latest) {
-      if (!('energy' in variables)) {
-        variables.energy = latest.energy;
-      }
-      if (!('mood' in variables)) {
-        variables.mood = latest.mood;
-      }
-    }
-  } catch (e) {
-    warnings.push(`⚠️ Unable to load energy data. ${e.message || ''}`.trim());
-  }
-  const payload = { template: select.value, variables };
-  const res = await fetch('/render-prompt', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  ensureOkResponse(res);
-  const data = await res.json();
-  const resultContent = data.result ? data.result : JSON.stringify(data, null, 2);
-  if (warnings.length) {
-    const combined = [...warnings, '', resultContent].join('\n');
-    setPreContent('promptResult', combined.replace(/\n/g, String.fromCharCode(10)));
-    return;
-  }
-  if (data.result) {
-    setPreContent('promptResult', data.result);
-  } else {
-    setPreContent('promptResult', JSON.stringify(data, null, 2));
-  }
-}
-
-const renderPromptBtn = document.getElementById('renderPrompt');
-if (renderPromptBtn) {
-  renderPromptBtn.onclick = performActionWithFeedback(renderPromptBtn, {
-    loadingText: 'Rendering…',
-    preId: 'promptResult',
-    errorMessage: 'Unable to render prompt',
-    action: renderPromptAction
-  });
-}
-
-const promptSelect = document.getElementById('promptSelect');
-if (promptSelect) {
-  promptSelect.onchange = () => {
-    if (promptSelect.value.endsWith('morning_planner.txt')) {
-      renderPromptAction().catch((error) => {
-        console.error('Unable to auto-render prompt', error);
-        displayInlineError('promptResult', 'Unable to render prompt', error);
-      });
-    }
-  };
-}
-
-const askBtn = document.getElementById('askBtn');
-if (askBtn) {
-  askBtn.onclick = performActionWithFeedback(askBtn, {
-    loadingText: 'Sending…',
-    preId: 'askResult',
-    errorMessage: 'Unable to process request',
-    action: async () => {
-      const select = document.getElementById('promptSelect');
-      if (select.value.endsWith('morning_planner.txt')) {
-        const mode = plannerModeSelect ? plannerModeSelect.value : 'next_task';
-        await requestPlan(mode);
-        return;
-      }
-
-      const promptResultEl = document.getElementById('promptResult');
-      if (isPlaceholder(promptResultEl)) {
-        alert('Render a prompt first');
-        return;
-      }
-      const prompt = promptResultEl.textContent.trim();
-      if (!prompt) {
-        alert('Render a prompt first');
-        return;
-      }
-      const res = await fetch('/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      ensureOkResponse(res);
-      const data = await res.json();
-      if (data.response) {
-        setPreContent('askResult', data.response);
-      } else {
-        setPreContent('askResult', JSON.stringify(data, null, 2));
-      }
-    }
-  });
-}
-
 async function prefillEnergyMoodFromLatestEntry() {
   try {
     const res = await fetch('/energy');
@@ -639,7 +554,19 @@ async function prefillEnergyMoodFromLatestEntry() {
   }
 }
 
+function setDailyTasksTodayInput() {
+  const todayInput = document.getElementById('dailyTasksToday');
+  if (!todayInput) {
+    return;
+  }
+  const now = new Date();
+  const tzOffsetMs = now.getTimezoneOffset() * 60_000;
+  const localDate = new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+  todayInput.value = localDate;
+}
+
 prefillEnergyMoodFromLatestEntry();
+setDailyTasksTodayInput();
 </script>
 
 {% endblock %}

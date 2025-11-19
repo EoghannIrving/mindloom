@@ -14,9 +14,16 @@ from prompt_renderer import render_prompt
 from tasks import read_tasks, task_completion_history, upcoming_tasks
 from energy import read_entries
 from calendar_integration import load_events
+from planner import read_plan, parse_plan_reasons
 from utils.logging import configure_logger
 from utils.template_helpers import create_templates
 from utils.tasks import build_option_values
+from routes.tasks_page import (
+    _collect_due_tasks,
+    _score_due_tasks,
+    _summarize_energy_entry,
+    _latest_energy_entry,
+)
 
 
 router = APIRouter()
@@ -42,17 +49,24 @@ def _load_project_area_options():
 def index(request: Request):
     """Return the basic web interface."""
     logger.info("GET /")
-    prompts_dir = PROJECT_ROOT / "prompts"
-    prompt_files = [
-        p.relative_to(prompts_dir).as_posix() for p in prompts_dir.rglob("*.txt")
-    ]
-    _due_soon_tasks = upcoming_tasks()
     options = _load_project_area_options()
+    today = date.today()
+    tasks = read_tasks()
+    reasons = parse_plan_reasons(read_plan())
+    due_tasks = _collect_due_tasks(tasks, today, reasons)
+    energy_summary = _summarize_energy_entry(_latest_energy_entry(read_entries()))
+    achievable_tasks, over_limit_tasks = _score_due_tasks(
+        due_tasks, energy_summary["available_energy"], energy_summary["mood"]
+    )
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "prompt_files": prompt_files,
+            "today": today,
+            "today_iso": today.isoformat(),
+            "energy_summary": energy_summary,
+            "achievable_tasks": achievable_tasks,
+            "over_limit_tasks": over_limit_tasks,
             **options,
         },
     )
