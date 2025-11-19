@@ -6,7 +6,6 @@ const PRECACHE_URLS = [
   '/projects-page',
   '/energy-trends',
   '/task-trends',
-  '/daily-tasks',
   '/manage-tasks',
   '/calendar',
   '/static/manifest.webmanifest',

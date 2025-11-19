@@ -184,36 +184,6 @@ def create_task(payload: TaskCreateRequest):
     return task
 
 
-@router.get("/daily-tasks", response_class=HTMLResponse)
-def tasks_page(request: Request):
-    """Display all saved tasks with checkboxes."""
-    logger.info("GET /daily-tasks")
-    today = _parse_iso_date(request.query_params.get("today")) or date.today()
-    tasks = read_tasks()
-    plan = read_plan()
-    reasons = parse_plan_reasons(plan)
-    energy_entries = read_entries()
-    latest_entry = _latest_energy_entry(energy_entries)
-    energy_summary = _summarize_energy_entry(latest_entry)
-
-    due_tasks = _collect_due_tasks(tasks, today, reasons)
-    achievable_tasks, over_limit_tasks = _score_due_tasks(
-        due_tasks, energy_summary["available_energy"], energy_summary["mood"]
-    )
-
-    return templates.TemplateResponse(
-        "tasks.html",
-        {
-            "request": request,
-            "achievable_tasks": achievable_tasks,
-            "over_limit_tasks": over_limit_tasks,
-            "energy_summary": energy_summary,
-            "today": today,
-            "today_iso": today.isoformat(),
-        },
-    )
-
-
 @router.post("/daily-tasks")
 def complete_tasks(task_id: List[int] = Form([]), today: str | None = Form(None)):
     """Mark selected tasks as complete and persist updates."""
@@ -222,7 +192,7 @@ def complete_tasks(task_id: List[int] = Form([]), today: str | None = Form(None)
         logger.debug("POST /daily-tasks ids=%s", task_id)
     mark_tasks_complete([int(i) for i in task_id])
     target_date = _parse_iso_date(today)
-    redirect_url = "/daily-tasks"
+    redirect_url = "/"
     if target_date:
         redirect_url = f"{redirect_url}?today={target_date.isoformat()}"
     return RedirectResponse(redirect_url, status_code=303)

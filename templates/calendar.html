@@ -323,7 +323,7 @@
             </p>
             {% if day.tasks_total > 3 %}
             <p class="mt-2 text-xs font-semibold text-indigo-600">
-              <a href="/daily-tasks">+{{ day.tasks_total - 3 }} more</a>
+              <a href="/?today={{ day.date.isoformat() }}">+{{ day.tasks_total - 3 }} more</a>
             </p>
             {% endif %}
           </div>

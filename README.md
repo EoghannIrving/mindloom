@@ -13,7 +13,7 @@ Mindloom is an offline-first personal assistant aimed at organizing projects and
 - Save tasks via the `/save-tasks` API endpoint or the web interface.
 - Write modified tasks back to markdown via the `/write-tasks` API endpoint or the web interface.
 - Retrieve saved tasks through the `/tasks` API endpoint.
-- Mark tasks complete via the `/daily-tasks` web page, which automatically pulls today’s due tasks, ranks the achievable ones by your logged energy/mood, and lists anything that exceeds your capacity separately.
+- Mark tasks complete via the `/` home page, which automatically pulls today’s due tasks, ranks the achievable ones by your logged energy/mood, and lists anything that exceeds your capacity separately.
 - Edit all task fields via the `/manage-tasks` page.
 - Create new vault projects and individual tasks directly from the web interface.
 - Task matching ignores punctuation so titles like `Check garden hose.` still
@@ -132,13 +132,13 @@ The script writes detailed logs to `data/logs/parse_projects.log`.
 Other components log to files in the `data/logs` directory as well.
 The service runs on `http://localhost:8000` by default.
 
-Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and mood, and render prompt templates. Visit `/daily-tasks` to check off overdue and today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
+Open `http://localhost:8000/` in a browser for a simple web interface to parse projects, record energy and mood, and render prompt templates. Visit the home page (`/`) to check off overdue and today’s tasks (the page now sorts due tasks by your current energy/mood and surfaces over-limit items separately), `/manage-tasks` to edit them and `/calendar` to view loaded events.
 
 ### Add projects and tasks from the UI
 
 - The **New Project** accordion on the home page accepts a title, slug, metadata (status, area, effort and optional dates) and an initial checklist. Submitting the form posts to `/projects` and reports success inline.
 - The **Manage Tasks → New Task** form lets you enter a title, pick the target project or area, tweak status/effort metadata and send the task to `/tasks`. After a successful submission the list automatically refreshes so the new entry is visible immediately.
-The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to `/daily-tasks` unless you switch the **Focus** selector to **Next task**. In that mode the planner stays on the page and shows the recommended task. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
+The prompts section accepts optional JSON variables and automatically injects the contents of `data/tasks.yaml`, a `completed_tasks` list, and the latest energy entry. Selecting **morning_planner.txt** now renders the template automatically. Clicking **Ask** with that template chosen calls the `/plan` endpoint, writes `data/morning_plan.yaml` and takes you to the home page unless you switch the **Focus** selector to **Next task**. In that mode the planner stays on the page and shows the recommended task. Other templates still require clicking **Render** first and **Ask** sends the prompt to ChatGPT via `/ask`.
 You can also query ChatGPT from the command line by posting a JSON payload with a `prompt` key to the `/ask` endpoint.
 
 Generate a daily plan using incomplete tasks and today's energy entry. You can
@@ -156,7 +156,7 @@ redirecting the UI:
 curl -X POST 'http://localhost:8000/plan?mode=next_task'
 ```
 When `mode=plan`, the response is stored in `data/morning_plan.yaml` and its
-recommendations are surfaced on `/daily-tasks` through inline reason notes.
+recommendations are surfaced on the home page through inline reason notes.
 Tasks with an `energy_cost` higher than your latest logged energy are removed
 before generating the prompt. Using `template=plan_intensity_selector`
 returns a task selection based on the chosen intensity, while
@@ -175,7 +175,7 @@ python record_energy.py 3 Joyful
 ```
 Energy is scored 1-5 and mood accepts Sad, Meh, Okay, Calm, or Joyful.
 Every invocation appends a timestamped check-in to `data/energy_log.yaml`, so you can
-capture multiple entries per day while the planner and `/daily-tasks` always use the
+capture multiple entries per day while the planner and the home page always use the
 most recent one. Requesting a next-task suggestion via `/plan?mode=next_task`
 (the UI's Next task button) now records the mood and energy you supplied, so
 those recommendations become part of the logged history as well.

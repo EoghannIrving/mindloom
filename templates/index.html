@@ -517,7 +517,7 @@ async function requestPlan(mode) {
   } else {
     setPreContent(askResultEl, JSON.stringify(data, null, 2));
   }
-  window.location.href = '/daily-tasks';
+  window.location.href = '/' + (window.location.search || '');
 }
 
 if (focusAskBtn) {

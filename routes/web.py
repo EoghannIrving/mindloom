@@ -20,9 +20,10 @@ from utils.template_helpers import create_templates
 from utils.tasks import build_option_values
 from routes.tasks_page import (
     _collect_due_tasks,
+    _latest_energy_entry,
+    _parse_iso_date,
     _score_due_tasks,
     _summarize_energy_entry,
-    _latest_energy_entry,
 )
 
 
@@ -50,7 +51,7 @@ def index(request: Request):
     """Return the basic web interface."""
     logger.info("GET /")
     options = _load_project_area_options()
-    today = date.today()
+    today = _parse_iso_date(request.query_params.get("today")) or date.today()
     tasks = read_tasks()
     reasons = parse_plan_reasons(read_plan())
     due_tasks = _collect_due_tasks(tasks, today, reasons)
