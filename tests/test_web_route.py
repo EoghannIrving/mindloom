@@ -100,7 +100,6 @@ def test_projects_page_includes_management_controls(
     assert response.status_code == 200
     html = response.text
     assert 'id="newProjectForm"' in html
-    assert 'id="parseBtn"' in html
     assert 'id="mergeProjectsBtn"' in html
     assert 'id="mergeSourceProject"' in html
 

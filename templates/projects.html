@@ -32,67 +32,6 @@
         Use the tools below to generate fresh project files, parse existing notes, and consolidate overlapping workstreams.
       </p>
     </section>
-    <section class="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm space-y-5">
-      <div class="space-y-2">
-        <p class="text-xs uppercase tracking-wider text-gray-500">Vault automation</p>
-        <h2 class="text-2xl font-semibold text-gray-900">Parse and sync your vault</h2>
-        <p class="text-sm text-gray-600">
-          Trigger project parsing or synchronize the saved task cache without leaving this page.
-        </p>
-      </div>
-      <div class="space-y-4">
-        <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-4">
-            <div class="text-sm text-gray-600">
-              Rebuild `projects.yaml` by parsing every markdown file in your vault.
-            </div>
-            <button
-              id="parseBtn"
-              type="button"
-              class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
-              Parse vault
-            </button>
-          </div>
-          <pre
-            id="parseResult"
-            class="min-h-[4rem] rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-500 whitespace-pre-wrap overflow-auto data-placeholder"
-            data-placeholder-class="text-gray-500"
-            data-active-class="text-gray-900">Parse results will appear here.</pre>
-        </div>
-        <div class="rounded-2xl border border-gray-200 bg-white px-4 py-4 shadow-sm space-y-4">
-          <div class="space-y-2 text-sm text-gray-600">
-            <p class="font-semibold text-gray-800">Task helpers</p>
-            <p>Save parsed tasks to `data/tasks.yaml` or write them back into your project notes.</p>
-          </div>
-          <div class="flex flex-wrap gap-3">
-            <button
-              id="tasksBtn"
-              type="button"
-              class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
-              Save tasks
-            </button>
-            <button
-              id="writeTasksBtn"
-              type="button"
-              class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500">
-              Write tasks to projects
-            </button>
-          </div>
-          <div class="grid gap-3 md:grid-cols-2">
-            <pre
-              id="tasksResult"
-              class="min-h-[4rem] rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-500 whitespace-pre-wrap overflow-auto data-placeholder"
-              data-placeholder-class="text-gray-500"
-              data-active-class="text-gray-900">Save task output will appear here.</pre>
-            <pre
-              id="writeTasksResult"
-              class="min-h-[4rem] rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-500 whitespace-pre-wrap overflow-auto data-placeholder"
-              data-placeholder-class="text-gray-500"
-              data-active-class="text-gray-900">Write task output will appear here.</pre>
-          </div>
-        </div>
-      </div>
-    </section>
     <div class="space-y-4">
       <div class="rounded-2xl border border-gray-200 bg-white/90 p-6 shadow-sm space-y-3">
         <div class="flex flex-wrap items-end justify-between gap-4">
