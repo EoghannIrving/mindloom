@@ -11,6 +11,12 @@
         </p>
       </div>
       <form method="get" class="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur space-y-6">
+        {% if selected_due_on %}
+        <input type="hidden" name="due_on" value="{{ selected_due_on }}" />
+        <div class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-100/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
+          Filtering tasks due on or before {{ selected_due_on }}
+        </div>
+        {% endif %}
         <div class="space-y-1">
           <label for="task-search" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Search</label>
           <input

@@ -33,7 +33,7 @@ async def ask_chatgpt(
 ) -> str:
     """Send a prompt to OpenAI ChatGPT and return the response text."""
     if not config.OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY is not configured")
+        raise OpenAIClientError("OPENAI_API_KEY is not configured")
 
     messages = [{"role": "user", "content": prompt}]
     prompt_length = len(prompt)

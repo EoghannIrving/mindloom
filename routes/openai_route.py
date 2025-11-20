@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Literal, NoReturn, Optional, Tuple
 from pydantic import BaseModel
 
 from calendar_integration import load_events
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from openai_client import OpenAIClientError, ask_chatgpt
 from prompt_renderer import render_prompt
@@ -17,6 +17,7 @@ from config import PROJECT_ROOT, config
 from task_selector import effective_energy_level, select_next_task
 from utils.logging import configure_logger
 from utils.tasks import filter_tasks_by_metadata, normalize_filter_value
+from utils.auth import enforce_api_key
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ def _raise_language_model_error(context: str, exc: Exception, detail: str) -> No
 
 
 @router.post("/ask")
-async def ask_endpoint(data: dict = Body(...)):
+async def ask_endpoint(data: dict = Body(...), _: None = Depends(enforce_api_key)):
     """Send the provided prompt to ChatGPT and return the response."""
     prompt: str = data.get("prompt", "")
     if not prompt:
@@ -97,6 +98,7 @@ async def plan_endpoint(
         None,
         description="Optional energy and mood data to persist before planning",
     ),
+    _: None = Depends(enforce_api_key),
 ) -> PlanResponse:
     """Generate a plan or task selection based on the chosen template."""
     selected_mode = focus or mode or "plan"
@@ -345,7 +347,9 @@ async def plan_endpoint(
 
 
 @router.post("/goal-breakdown")
-async def goal_breakdown_endpoint(data: dict = Body(...)):
+async def goal_breakdown_endpoint(
+    data: dict = Body(...), _: None = Depends(enforce_api_key)
+):
     """Expand a high-level goal into actionable tasks."""
     goal_text: str = data.get("goal", "")
     if not goal_text:

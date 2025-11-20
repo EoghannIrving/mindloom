@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Request, Form, status
+from fastapi import APIRouter, Depends, Request, Form, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 import yaml
@@ -36,6 +36,7 @@ from task_selector import (
     _executive_weight,
     effective_energy_level,
 )
+from utils.auth import enforce_api_key
 
 
 def _task_due_date(task: dict) -> date | None:
@@ -105,7 +106,7 @@ def _parse_iso_date(value: str | None) -> date | None:
 
 
 @router.post("/tasks", status_code=status.HTTP_201_CREATED)
-def create_task(payload: TaskCreateRequest):
+def create_task(payload: TaskCreateRequest, _: None = Depends(enforce_api_key)):
     """Create a task, assigning the next available identifier."""
 
     logger.info(
@@ -185,7 +186,11 @@ def create_task(payload: TaskCreateRequest):
 
 
 @router.post("/daily-tasks")
-def complete_tasks(task_id: List[int] = Form([]), today: str | None = Form(None)):
+def complete_tasks(
+    task_id: List[int] = Form([]),
+    today: str | None = Form(None),
+    _: None = Depends(enforce_api_key),
+):
     """Mark selected tasks as complete and persist updates."""
     logger.info("POST /daily-tasks completed_count=%s", len(task_id))
     if task_id:
@@ -361,6 +366,7 @@ def _prepare_manage_tasks_context(request: Request) -> tuple[list[dict], dict]:
     selected_type = request.query_params.get("type", "").strip()
     sort_mode = (request.query_params.get("sort") or "").strip() or "due_asc"
     today = _parse_iso_date(request.query_params.get("today")) or date.today()
+    due_on = _parse_iso_date(request.query_params.get("due_on"))
 
     def _matches(task: dict) -> bool:
         if query:
@@ -380,6 +386,10 @@ def _prepare_manage_tasks_context(request: Request) -> tuple[list[dict], dict]:
             return False
         if selected_type and str(task.get("type", "")) != selected_type:
             return False
+        if due_on:
+            due_date = task_due_date(task)
+            if not due_date or due_date > due_on:
+                return False
         return True
 
     tasks = read_tasks()
@@ -413,6 +423,7 @@ def _prepare_manage_tasks_context(request: Request) -> tuple[list[dict], dict]:
         "selected_area": selected_area,
         "selected_type": selected_type,
         "selected_sort": sort_mode,
+        "selected_due_on": due_on.isoformat() if due_on else "",
     }
     return sorted_tasks, context
 
@@ -472,7 +483,7 @@ def manage_tasks_chunk(request: Request):
 
 
 @router.post("/manage-tasks")
-async def save_tasks(request: Request):
+async def save_tasks(request: Request, _: None = Depends(enforce_api_key)):
     """Persist edited task fields back to tasks.yaml."""
     logger.info("POST /manage-tasks")
     form = await request.form()
@@ -548,7 +559,7 @@ async def save_tasks(request: Request):
 
     filters = {
         name: form.get(name)
-        for name in ("q", "status", "project", "area", "type", "sort")
+        for name in ("q", "status", "project", "area", "type", "sort", "due_on")
     }
     query = {key: value for key, value in filters.items() if value}
     redirect_url = request.url_for("manage_tasks_page")

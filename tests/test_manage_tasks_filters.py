@@ -130,3 +130,29 @@ def test_manage_tasks_includes_projects_from_yaml(
 
     assert response.status_code == 200
     assert f'value="{project_path}"' in response.text
+
+
+def test_manage_tasks_due_on_filter(monkeypatch: pytest.MonkeyPatch):
+    """Filtering by due_on returns tasks due that day or earlier."""
+
+    demo_tasks = [
+        {"id": 1, "title": "Overdue", "status": "active", "due": "2024-04-15"},
+        {"id": 2, "title": "Same-day", "status": "active", "due": "2024-04-20"},
+        {"id": 3, "title": "Future", "status": "active", "due": "2024-04-22"},
+        {"id": 4, "title": "No date", "status": "active"},
+    ]
+
+    monkeypatch.setattr(
+        tasks_page, "read_tasks", lambda: [dict(task) for task in demo_tasks]
+    )
+
+    client = TestClient(app)
+    response = client.get("/manage-tasks?due_on=2024-04-20")
+
+    assert response.status_code == 200
+    body = response.text
+
+    assert "Overdue" in body
+    assert "Same-day" in body
+    assert "Future" not in body
+    assert "No date" not in body

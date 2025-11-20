@@ -5,7 +5,7 @@
 from pathlib import Path
 
 from datetime import date
-from fastapi import APIRouter, Request, Body, HTTPException
+from fastapi import APIRouter, Depends, Request, Body, HTTPException
 from fastapi.responses import HTMLResponse
 
 from config import config, PROJECT_ROOT
@@ -25,6 +25,7 @@ from routes.tasks_page import (
     _score_due_tasks,
     _summarize_energy_entry,
 )
+from utils.auth import enforce_api_key
 
 
 router = APIRouter()
@@ -152,7 +153,7 @@ def offline_page(request: Request):
 
 
 @router.post("/render-prompt")
-def render_prompt_endpoint(data: dict = Body(...)):
+def render_prompt_endpoint(data: dict = Body(...), _: None = Depends(enforce_api_key)):
     """Render a prompt template with optional variables."""
     template_name = data.get("template")
     if not isinstance(template_name, str) or not template_name.strip():

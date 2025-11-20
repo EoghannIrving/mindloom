@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import yaml
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, field_validator
 
 from parse_projects import (
@@ -26,6 +26,7 @@ from tasks import read_tasks, read_tasks_raw, write_tasks
 from config import config
 from utils.logging import configure_logger
 from utils.vault import normalize_slug_path, resolve_slug_path
+from utils.auth import enforce_api_key
 
 router = APIRouter()
 PROJECTS_FILE = Path(config.OUTPUT_PATH)
@@ -255,7 +256,9 @@ def get_project(slug: str):
 
 
 @router.put("/projects/{slug:path}")
-def update_project(slug: str, payload: ProjectUpdateRequest):
+def update_project(
+    slug: str, payload: ProjectUpdateRequest, _: None = Depends(enforce_api_key)
+):
     """Update an existing project's metadata or checklist."""
     logger.info("PUT /projects/%s", slug)
     try:
@@ -295,7 +298,7 @@ def update_project(slug: str, payload: ProjectUpdateRequest):
 
 
 @router.post("/parse-projects")
-def parse_projects_endpoint():
+def parse_projects_endpoint(_: None = Depends(enforce_api_key)):
     """Parse vault markdown files and update the projects YAML."""
     logger.info("POST /parse-projects")
     projects = parse_all_projects()
@@ -306,7 +309,7 @@ def parse_projects_endpoint():
 
 
 @router.post("/save-tasks")
-def save_tasks_endpoint():
+def save_tasks_endpoint(_: None = Depends(enforce_api_key)):
     """Parse projects and write data/tasks.yaml."""
     logger.info("POST /save-tasks")
     projects = parse_all_projects()
@@ -316,7 +319,7 @@ def save_tasks_endpoint():
 
 
 @router.post("/write-tasks")
-def write_tasks_endpoint():
+def write_tasks_endpoint(_: None = Depends(enforce_api_key)):
     """Write modified tasks.yaml entries back to project files."""
     logger.info("POST /write-tasks")
     tasks = read_tasks(TASKS_FILE)
@@ -335,7 +338,7 @@ def get_tasks():
 
 
 @router.post("/projects", status_code=status.HTTP_201_CREATED)
-def create_project(payload: ProjectCreateRequest):
+def create_project(payload: ProjectCreateRequest, _: None = Depends(enforce_api_key)):
     """Create a new project markdown file in the configured vault."""
 
     logger.info("POST /projects slug_length=%s", len(payload.slug))
@@ -403,7 +406,7 @@ def _resolve_slug(slug: str, vault_root: Path) -> Path:
 
 
 @router.post("/projects/merge")
-def merge_projects(payload: ProjectMergeRequest):
+def merge_projects(payload: ProjectMergeRequest, _: None = Depends(enforce_api_key)):
     """Merge two markdown project files and update derived data."""
 
     logger.info(

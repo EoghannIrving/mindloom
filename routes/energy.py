@@ -4,12 +4,13 @@
 
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from energy import read_entries, record_entry
 from config import config
 from utils.logging import configure_logger
+from utils.auth import enforce_api_key
 
 router = APIRouter()
 
@@ -25,7 +26,7 @@ class EnergyInput(BaseModel):  # pylint: disable=too-few-public-methods
 
 
 @router.post("/energy")
-def add_energy(data: EnergyInput):
+def add_energy(data: EnergyInput, _: None = Depends(enforce_api_key)):
     """Record today's energy and mood."""
     logger.info("POST /energy payload_received")
     entry = record_entry(data.energy, data.mood)

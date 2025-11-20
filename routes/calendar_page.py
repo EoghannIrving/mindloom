@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Iterable
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from calendar_integration import Event, load_events
@@ -22,6 +22,7 @@ from utils.tasks import resolve_energy_cost, task_due_date
 from tasks import mark_tasks_complete, read_tasks
 
 from utils.template_helpers import create_templates
+from utils.auth import enforce_api_key
 
 
 router = APIRouter()
@@ -337,6 +338,7 @@ def complete_calendar_task(
     show_tasks: str = Form("1"),
     focus_overlaps: str = Form("0"),
     focus_tasks_due: str = Form("0"),
+    _: None = Depends(enforce_api_key),
 ):
     mark_tasks_complete([task_id])
     params = {
@@ -356,7 +358,9 @@ def complete_calendar_task(
 
 
 @router.post("/calendar/tasks/complete-ajax")
-def complete_calendar_task_ajax(task_id: int = Form(...)):
+def complete_calendar_task_ajax(
+    task_id: int = Form(...), _: None = Depends(enforce_api_key)
+):
     """Mark a single calendar task complete, returning a simple JSON payload."""
 
     updated = mark_tasks_complete([task_id])
