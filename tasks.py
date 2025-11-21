@@ -48,16 +48,27 @@ def _next_due(task: Dict, today: date) -> date:
     if not days:
         return today
 
-    last_completed = task.get("last_completed")
-    if last_completed:
-        completed_date = date.fromisoformat(str(last_completed))
-        return completed_date + timedelta(days=days)
+    def _parse_date(value: str | date | None) -> date | None:
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
 
-    due_value = task.get("due")
-    if due_value:
-        return date.fromisoformat(str(due_value))
+    due_date = _parse_date(task.get("due"))
+    last_completed_date = _parse_date(task.get("last_completed"))
 
-    return today
+    recurrence_date = (
+        last_completed_date + timedelta(days=days) if last_completed_date else today
+    )
+    if due_date and (not last_completed_date or due_date > last_completed_date):
+        # Respect a manually entered due date for the current cycle.
+        return due_date
+
+    return recurrence_date
 
 
 def complete_task(task: Dict, today: date | None = None) -> None:
