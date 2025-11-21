@@ -2,9 +2,30 @@
 {% block title %}Edit Tasks{% endblock %}
 {% block content %}
   <div class="max-w-5xl mx-auto space-y-8 lg:grid lg:grid-cols-[minmax(18rem,22rem)_1fr] lg:gap-8 lg:space-y-0">
+    <div class="lg:hidden">
+      <div class="flex items-center justify-between gap-4 rounded-3xl border border-gray-200 bg-white/90 px-4 py-3 shadow-sm">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Filters</p>
+          <p class="text-xs text-slate-500">Show or hide the filter drawer while you browse tasks.</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-full border border-indigo-200 bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+          aria-controls="manage-filters-panel"
+          aria-expanded="false"
+          data-filter-toggle
+        >
+          <span data-filter-toggle-label>Show filters</span>
+        </button>
+      </div>
+    </div>
     <aside class="space-y-8 lg:space-y-6">
       <div class="space-y-6 lg:sticky lg:top-6 lg:self-start lg:z-20">
-        <section class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
+        <section
+          id="manage-filters-panel"
+          class="hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6 lg:block"
+          data-mobile-filter-panel
+        >
           <div class="space-y-2">
             <h1 class="text-3xl font-bold">Curate your task list</h1>
             <p class="text-lg text-indigo-100">
@@ -141,98 +162,114 @@
             </button>
           </div>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <div class="flex flex-col gap-2">
-            <label for="bulkStatus" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
-            <div class="flex gap-2">
-              <select
-                id="bulkStatus"
-                data-bulk-target="status"
-                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="">Set status</option>
-                {% for opt in status_options %}
-                  <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="bulkProject" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</label>
-            <div class="flex gap-2">
-              <input
-                id="bulkProject"
-                type="text"
-                list="projects"
-                data-bulk-target="project"
-                data-bulk-allow-empty
-                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Type to filter"
-              >
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="bulkArea" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Area</label>
-            <div class="flex gap-2">
-              <input
-                id="bulkArea"
-                type="text"
-                list="areas"
-                data-bulk-target="area"
-                data-bulk-allow-empty
-                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Type to filter"
-              >
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="bulkEffort" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Effort</label>
-            <div class="flex gap-2">
-              <select
-                id="bulkEffort"
-                data-bulk-target="effort"
-                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="">Set effort</option>
-                {% for opt in ["low", "medium", "high"] %}
-                  <option value="{{ opt }}">{{ opt }}</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label for="bulkDue" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Due date</label>
-            <div class="flex gap-2">
-              <input
-                id="bulkDue"
-                type="date"
-                data-bulk-target="due"
-                data-bulk-allow-empty
-                class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              >
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 flex justify-end">
+        <div class="lg:hidden">
           <button
             type="button"
-            data-bulk-apply-all
-            class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+            class="flex w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-700 transition hover:border-slate-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+            aria-controls="bulk-edit-panel"
+            aria-expanded="false"
+            data-bulk-toggle
           >
-            Apply selected changes
-            <svg
-              class="h-3.5 w-3.5"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 11l3 3 7-7" />
+            <span data-bulk-toggle-label>Show bulk edit options</span>
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
+        </div>
+        <div data-bulk-panel id="bulk-edit-panel" class="hidden space-y-3 lg:block">
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="flex flex-col gap-2">
+              <label for="bulkStatus" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</label>
+              <div class="flex gap-2">
+                <select
+                  id="bulkStatus"
+                  data-bulk-target="status"
+                  class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="">Set status</option>
+                  {% for opt in status_options %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="bulkProject" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</label>
+              <div class="flex gap-2">
+                <input
+                  id="bulkProject"
+                  type="text"
+                  list="projects"
+                  data-bulk-target="project"
+                  data-bulk-allow-empty
+                  class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Type to filter"
+                >
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="bulkArea" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Area</label>
+              <div class="flex gap-2">
+                <input
+                  id="bulkArea"
+                  type="text"
+                  list="areas"
+                  data-bulk-target="area"
+                  data-bulk-allow-empty
+                  class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Type to filter"
+                >
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="bulkEffort" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Effort</label>
+              <div class="flex gap-2">
+                <select
+                  id="bulkEffort"
+                  data-bulk-target="effort"
+                  class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="">Set effort</option>
+                  {% for opt in ["low", "medium", "high"] %}
+                    <option value="{{ opt }}">{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="bulkDue" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Due date</label>
+              <div class="flex gap-2">
+                <input
+                  id="bulkDue"
+                  type="date"
+                  data-bulk-target="due"
+                  data-bulk-allow-empty
+                  class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                >
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex justify-end">
+            <button
+              type="button"
+              data-bulk-apply-all
+              class="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+            >
+              Apply selected changes
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 11l3 3 7-7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
       <div
@@ -270,7 +307,7 @@
     <button
       type="button"
       data-open-new-task-modal
-      class="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 lg:hidden"
+      class="fixed bottom-20 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 lg:hidden"
       aria-label="Open new task modal"
     >
       + New Task
@@ -310,6 +347,23 @@
         };
 
         initializeTaskDetails();
+
+        const filterToggleButton = document.querySelector('[data-filter-toggle]');
+        const mobileFilterPanel = document.querySelector('[data-mobile-filter-panel]');
+        if (filterToggleButton && mobileFilterPanel) {
+          const filterToggleLabel = filterToggleButton.querySelector('[data-filter-toggle-label]');
+          const updateFilterToggle = (open) => {
+            filterToggleButton.setAttribute('aria-expanded', String(open));
+            if (filterToggleLabel) {
+              filterToggleLabel.textContent = open ? 'Hide filters' : 'Show filters';
+            }
+          };
+          updateFilterToggle(false);
+          filterToggleButton.addEventListener('click', () => {
+            const panelHidden = mobileFilterPanel.classList.toggle('hidden');
+            updateFilterToggle(!panelHidden);
+          });
+        }
 
         const manageTasksForm = document.getElementById('manage-tasks-form');
 
@@ -446,7 +500,10 @@
           const recurrenceDays = {
             daily: 1,
             weekly: 7,
+            "bi-weekly": 14,
             monthly: 30,
+            quarterly: 91,
+            "bi-annual": 182,
             yearly: 365,
           };
           manageTasksForm.addEventListener('change', (event) => {
@@ -533,6 +590,22 @@
             });
           }
           updateSelectionCount();
+          const bulkToggle = manageTasksForm.querySelector('[data-bulk-toggle]');
+          const bulkPanel = manageTasksForm.querySelector('[data-bulk-panel]');
+          if (bulkToggle && bulkPanel) {
+            const bulkToggleLabel = bulkToggle.querySelector('[data-bulk-toggle-label]');
+            const updateBulkToggle = (open) => {
+              bulkToggle.setAttribute('aria-expanded', String(open));
+              if (bulkToggleLabel) {
+                bulkToggleLabel.textContent = open ? 'Hide bulk edit options' : 'Show bulk edit options';
+              }
+            };
+            updateBulkToggle(false);
+            bulkToggle.addEventListener('click', () => {
+              const panelHidden = bulkPanel.classList.toggle('hidden');
+              updateBulkToggle(!panelHidden);
+            });
+          }
         }
 
         const taskList = document.querySelector('[data-task-list]');

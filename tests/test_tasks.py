@@ -22,6 +22,7 @@ from tasks import (
     read_task_completions,
     record_task_completion,
     task_completion_history,
+    complete_task,
 )
 
 
@@ -106,6 +107,48 @@ def test_mark_recurring_task_updates_due(tmp_path: Path):
     expected_due = (today + timedelta(days=1)).isoformat()
     assert updated[0]["due"] == expected_due
     assert updated[0]["next_due"] == expected_due
+
+
+def test_mark_biweekly_task_updates_due(tmp_path: Path):
+    """Completing a bi-weekly recurring task should jump two weeks ahead."""
+    path = tmp_path / "tasks.yaml"
+    today = date.today()
+    tasks = [
+        {
+            "id": 4,
+            "title": "biweekly",
+            "status": "active",
+            "recurrence": "bi-weekly",
+            "due": today.isoformat(),
+        }
+    ]
+    write_tasks(tasks, path)
+    mark_tasks_complete([4], path)
+    updated = read_tasks(path)
+    expected_due = (today + timedelta(days=14)).isoformat()
+    assert updated[0]["due"] == expected_due
+    assert updated[0]["next_due"] == expected_due
+
+
+def test_recurrence_days_supports_new_intervals():
+    """RECURRENCE_DAYS should expose the added cadences."""
+    assert RECURRENCE_DAYS["bi-weekly"] == 14
+    assert RECURRENCE_DAYS["quarterly"] == 91
+    assert RECURRENCE_DAYS["bi-annual"] == 182
+
+
+def test_monthly_calendar_recurrence_preserves_day():
+    """Monthly recurrences should use calendar math (Jan 31 → Feb 29)."""
+    task = {
+        "id": 10,
+        "title": "monthly-cal",
+        "status": "active",
+        "recurrence": "monthly",
+        "due": "2024-01-31",
+    }
+    complete_task(task, today=date(2024, 1, 31))
+    assert task["due"] == date(2024, 2, 29).isoformat()
+    assert task["status"] == "active"
 
 
 def test_mark_recurring_task_stays_active(tmp_path: Path):

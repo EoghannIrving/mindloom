@@ -210,7 +210,7 @@
             class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           >
               <option value="" {% if not t.recurrence %}selected{% endif %}></option>
-              {% for opt in ["daily", "weekly", "monthly", "yearly"] %}
+              {% for opt in ["daily", "weekly", "bi-weekly", "monthly", "quarterly", "bi-annual", "yearly"] %}
                 <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
             </select>

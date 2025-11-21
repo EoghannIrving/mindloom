@@ -9,6 +9,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Dict, List
 
+from dateutil.relativedelta import relativedelta
+
 import yaml
 
 from config import config
@@ -36,16 +38,43 @@ if not logger.handlers:
 RECURRENCE_DAYS = {
     "daily": 1,
     "weekly": 7,
+    "bi-weekly": 14,
     "monthly": 30,
+    "quarterly": 91,
+    "bi-annual": 182,
     "yearly": 365,
 }
+
+CALENDAR_RECURRENCE_DELTAS = {
+    "monthly": relativedelta(months=1),
+    "quarterly": relativedelta(months=3),
+    "bi-annual": relativedelta(months=6),
+    "yearly": relativedelta(years=1),
+}
+
+
+def _advance_for_recurrence(base: date, recurrence: str) -> date | None:
+    if not base:
+        return None
+    key = str(recurrence or "").lower()
+    if not key:
+        return None
+
+    calendar_delta = CALENDAR_RECURRENCE_DELTAS.get(key)
+    if calendar_delta:
+        return base + calendar_delta
+
+    days = RECURRENCE_DAYS.get(key)
+    if days:
+        return base + timedelta(days=days)
+
+    return None
 
 
 def _next_due(task: Dict, today: date) -> date:
     """Return the next due date for a recurring task."""
     recurrence = str(task.get("recurrence", "")).lower()
-    days = RECURRENCE_DAYS.get(recurrence)
-    if not days:
+    if not recurrence:
         return today
 
     def _parse_date(value: str | date | None) -> date | None:
@@ -61,14 +90,12 @@ def _next_due(task: Dict, today: date) -> date:
     due_date = _parse_date(task.get("due"))
     last_completed_date = _parse_date(task.get("last_completed"))
 
-    recurrence_date = (
-        last_completed_date + timedelta(days=days) if last_completed_date else today
-    )
+    recurrence_date = _advance_for_recurrence(last_completed_date or today, recurrence)
     if due_date and (not last_completed_date or due_date > last_completed_date):
         # Respect a manually entered due date for the current cycle.
         return due_date
 
-    return recurrence_date
+    return recurrence_date or today
 
 
 def complete_task(task: Dict, today: date | None = None) -> None:
