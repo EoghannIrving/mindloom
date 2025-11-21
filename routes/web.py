@@ -108,6 +108,14 @@ def projects_page(request: Request):
     )
 
 
+@router.get("/reminders", response_class=HTMLResponse)
+def reminders_page(request: Request):
+    """Render the reminder preferences management interface."""
+
+    logger.info("GET /reminders")
+    return templates.TemplateResponse("reminders.html", {"request": request})
+
+
 @router.get("/energy-trends", response_class=HTMLResponse)
 def energy_trends_page(request: Request):
     """Render the energy and mood trends dashboard."""

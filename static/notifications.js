@@ -52,6 +52,43 @@
     'Ready for another or taking a break?',
   ];
 
+  const REMINDER_HELP_TEXT = {
+    momentumThresholdMinutes:
+      'Wait this many minutes after the last “next task” request before the momentum reminder fires again.',
+    momentumSnoozeMinutes:
+      'Reset that timer for this many minutes when you snooze the momentum reminder.',
+    checkinMinMinutes:
+      'Minimum time between check-in prompts while a task stays marked as active.',
+    checkinMaxMinutes:
+      'Maximum random delay that can be applied before the next check-in reminder pops up.',
+    completionCooldownMinutes:
+      'How many minutes must pass after a completion reminder before another can show.',
+  };
+
+  const SAMPLE_CONFIGS = {
+    gentle: {
+      momentumThresholdMinutes: 120,
+      momentumSnoozeMinutes: 45,
+      checkinMinMinutes: 30,
+      checkinMaxMinutes: 60,
+      completionCooldownMinutes: 10,
+    },
+    focused: {
+      momentumThresholdMinutes: 45,
+      momentumSnoozeMinutes: 20,
+      checkinMinMinutes: 15,
+      checkinMaxMinutes: 30,
+      completionCooldownMinutes: 4,
+    },
+    sprint: {
+      momentumThresholdMinutes: 15,
+      momentumSnoozeMinutes: 10,
+      checkinMinMinutes: 7,
+      checkinMaxMinutes: 18,
+      completionCooldownMinutes: 2,
+    },
+  };
+
   const storageAvailable = (() => {
     try {
       const key = '__mindloom-test__';
@@ -249,6 +286,13 @@
       this.ui.settingInputs = Array.from(
         document.querySelectorAll('[data-reminder-setting]'),
       );
+      this.ui.sampleButtons = Array.from(
+        document.querySelectorAll('[data-sample-config]'),
+      );
+      this.ui.helpButtons = Array.from(document.querySelectorAll('[data-help-key]'));
+      this.ui.helpPopup = document.getElementById('reminderHelpPopup');
+      this.ui.helpContent = document.getElementById('reminderHelpContent');
+      this.ui.helpClose = document.querySelector('[data-close-help]');
     }
 
     bindUI() {
@@ -275,6 +319,8 @@
         });
       });
       this.bindSettingControls();
+      this.bindSampleButtons();
+      this.bindHelpButtons();
     }
 
     bindSettingControls() {
@@ -284,6 +330,26 @@
       this.ui.settingInputs.forEach((input) => {
         input.addEventListener('change', () => this.handleSettingChange(input));
       });
+    }
+
+    bindSampleButtons() {
+      if (!this.ui.sampleButtons) {
+        return;
+      }
+      this.ui.sampleButtons.forEach((button) => {
+        button.addEventListener('click', () => this.applySampleConfig(button));
+      });
+    }
+
+    bindHelpButtons() {
+      if (this.ui.helpButtons) {
+        this.ui.helpButtons.forEach((button) => {
+          button.addEventListener('click', () => this.showHelp(button));
+        });
+      }
+      if (this.ui.helpClose) {
+        this.ui.helpClose.addEventListener('click', () => this.closeHelp());
+      }
     }
 
     handleSettingChange(input) {
@@ -305,6 +371,26 @@
       this.evaluateReminders(true);
     }
 
+    applySampleConfig(button) {
+      const key = button?.dataset?.sampleConfig;
+      if (!key) {
+        return;
+      }
+      const config = SAMPLE_CONFIGS[key];
+      if (!config) {
+        return;
+      }
+      const label = button.dataset.sampleConfigLabel || key;
+      this.state.settings = {
+        ...this.state.settings,
+        ...config,
+      };
+      this.store.update({ settings: this.state.settings });
+      this.updateSettingsUI();
+      this.evaluateReminders(true);
+      this.showInlineToast(`Applied ${label}.`, []);
+    }
+
     updateSettingsUI() {
       if (!this.ui.settingInputs) {
         return;
@@ -323,6 +409,23 @@
           input.value = String(value);
         }
       });
+    }
+
+    showHelp(button) {
+      if (!this.ui.helpPopup || !this.ui.helpContent) {
+        return;
+      }
+      const key = button.dataset.helpKey;
+      const text = button.dataset.helpText || REMINDER_HELP_TEXT[key] || 'No help available.';
+      this.ui.helpContent.textContent = text;
+      this.ui.helpPopup.classList.remove('hidden');
+    }
+
+    closeHelp() {
+      if (!this.ui.helpPopup) {
+        return;
+      }
+      this.ui.helpPopup.classList.add('hidden');
     }
 
     syncStopForNowToggle() {
@@ -422,7 +525,7 @@
       }
       this.presentCheckinReminder(activeTask);
       this.state.activeTask.lastNotificationAt = now;
-      this.state.activeTask.checkinNextAt = now + randomCheckinDelay();
+      this.state.activeTask.checkinNextAt = now + this.getRandomCheckinDelay();
       this.store.setActiveTask(this.state.activeTask);
       this.renderActiveTask();
     }
