@@ -53,7 +53,9 @@ Tasks are stored in `data/tasks.yaml` with the following fields:
 - `due_today` (computed)
 
 Recurring tasks populate `next_due` and `due_today` based on the
-`recurrence` interval and the `last_completed` date.
+`recurrence` interval and the `last_completed` date. Monthly, quarterly, bi-annual,
+and yearly recurrences now respect calendar intervals so the same day-of-month is
+retained (with end-of-month adjustments for shorter months).
 
 ### Field definitions
 
@@ -61,6 +63,7 @@ Recurring tasks populate `next_due` and `due_today` based on the
 - **energy_cost** – numeric 1–5 rating of how taxing the task will be for the individual.
 - **executive_trigger** – tasks that are high-friction starts.
 - **project** – path of the project this task originated from.
+- **recurrence** – cadence for repeating tasks (values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`).
 
 _A future update will add `activation_difficulty` for high-friction starts._
 
@@ -81,7 +84,7 @@ Rules:
 Supported keys:
 
 - `due` – due date in `YYYY-MM-DD` format
-- `recur` – recurrence rule
+- `recur` – recurrence rule (supported values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`)
 - `effort` – estimated effort (`low`, `med`, `high`)
 - `energy` – energy cost from 1–5
 - `last` – date last completed
