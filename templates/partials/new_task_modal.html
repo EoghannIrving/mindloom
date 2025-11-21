@@ -69,6 +69,22 @@
                 </button>
               </div>
             </div>
+            <div class="flex flex-col gap-1">
+              <label for="newTaskProject" class="text-sm font-medium text-gray-700">Project</label>
+              <input
+                id="newTaskProject"
+                name="newTaskProject"
+                type="text"
+                list="newTaskProjects"
+                required
+                aria-describedby="newTaskProjectHelp"
+                class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="Pick or type the project"
+              />
+              <p id="newTaskProjectHelp" class="text-xs text-gray-500">
+                Every task must belong to a project so we can track it in the right context.
+              </p>
+            </div>
             <div id="newTaskFeedback" class="hidden text-sm"></div>
           </div>
           <details
@@ -82,19 +98,29 @@
               <span class="text-xs font-medium text-gray-500 group-open:hidden">Show</span>
               <span class="hidden text-xs font-medium text-gray-500 group-open:inline">Hide</span>
             </summary>
+            <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
+              <span class="text-xs text-gray-500">Need guidance for effort, energy, or executive trigger?</span>
+              <div class="relative inline-flex">
+                <button
+                  type="button"
+                  class="peer inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                  aria-describedby="newTaskOptionsHelp"
+                >
+                  <span aria-hidden="true">?</span>
+                  <span class="sr-only">Show guidance for the advanced task options</span>
+                </button>
+                <div
+                  id="newTaskOptionsHelp"
+                  role="tooltip"
+                  class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 w-64 -translate-x-1/2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xxs text-gray-700 shadow-lg opacity-0 transition duration-150 peer-hover:opacity-100 peer-focus:opacity-100"
+                >
+                  Effort captures the time/complexity (low, medium, high), energy rates how draining it feels from
+                  1–5, and the executive trigger flags how much friction there is to getting started.
+                </div>
+              </div>
+            </div>
             <div class="mt-4 space-y-4">
               <div class="grid gap-4 md:grid-cols-2">
-                <div class="flex flex-col gap-1">
-                  <label for="newTaskProject" class="text-sm font-medium text-gray-700">Project</label>
-                  <input
-                    id="newTaskProject"
-                    name="newTaskProject"
-                    type="text"
-                    list="newTaskProjects"
-                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Optional project"
-                  />
-                </div>
                 <div class="flex flex-col gap-1">
                   <label for="newTaskArea" class="text-sm font-medium text-gray-700">Area</label>
                   <input
@@ -106,10 +132,61 @@
                     placeholder="Optional life area"
                   />
                 </div>
+                <div class="flex flex-col gap-1">
+                  <div class="flex items-center justify-between gap-2">
+                    <label for="newTaskExecutiveTrigger" class="text-sm font-medium text-gray-700">Executive trigger</label>
+                    <div class="relative inline-flex">
+                      <button
+                        type="button"
+                        class="peer inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                        aria-describedby="newTaskExecutiveTriggerHelp"
+                      >
+                        <span aria-hidden="true">?</span>
+                        <span class="sr-only">Explain executive trigger</span>
+                      </button>
+                      <div
+                        id="newTaskExecutiveTriggerHelp"
+                        role="tooltip"
+                        class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 w-64 -translate-x-1/2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xxs text-gray-700 shadow-lg opacity-0 transition duration-150 peer-focus:opacity-100 peer-hover:opacity-100"
+                      >
+                        Executive trigger captures how much friction there is to starting the task (low, medium, high).
+                      </div>
+                    </div>
+                  </div>
+                  <select
+                    id="newTaskExecutiveTrigger"
+                    name="newTaskExecutiveTrigger"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value=""></option>
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                </div>
               </div>
               <div class="grid gap-4 md:grid-cols-3">
                 <div class="flex flex-col gap-1">
-                  <label for="newTaskEffort" class="text-sm font-medium text-gray-700">Effort</label>
+                  <div class="flex items-center justify-between gap-2">
+                    <label for="newTaskEffort" class="text-sm font-medium text-gray-700">Effort</label>
+                    <div class="relative inline-flex">
+                      <button
+                        type="button"
+                        class="peer inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                        aria-describedby="newTaskEffortHelp"
+                      >
+                        <span aria-hidden="true">?</span>
+                        <span class="sr-only">Explain effort</span>
+                      </button>
+                      <div
+                        id="newTaskEffortHelp"
+                        role="tooltip"
+                        class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 w-64 -translate-x-1/2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xxs text-gray-700 shadow-lg opacity-0 transition duration-150 peer-focus:opacity-100 peer-hover:opacity-100"
+                      >
+                        Effort focuses on how much time or complexity the task requires (low, medium, high).
+                      </div>
+                    </div>
+                  </div>
                   <select
                     id="newTaskEffort"
                     name="newTaskEffort"
@@ -148,7 +225,26 @@
               </div>
               <div class="grid gap-4 md:grid-cols-2">
                 <div class="flex flex-col gap-1">
-                  <label for="newTaskEnergy" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+                  <div class="flex items-center justify-between gap-2">
+                    <label for="newTaskEnergy" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+                    <div class="relative inline-flex">
+                      <button
+                        type="button"
+                        class="peer inline-flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                        aria-describedby="newTaskEnergyHelp"
+                      >
+                        <span aria-hidden="true">?</span>
+                        <span class="sr-only">Explain energy cost</span>
+                      </button>
+                      <div
+                        id="newTaskEnergyHelp"
+                        role="tooltip"
+                        class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 w-64 -translate-x-1/2 rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xxs text-gray-700 shadow-lg opacity-0 transition duration-150 peer-focus:opacity-100 peer-hover:opacity-100"
+                      >
+                        Energy describes how draining the task feels; 1 is easy, 5 is exhausting, and blank lets us infer a value.
+                      </div>
+                    </div>
+                  </div>
                   <input
                     id="newTaskEnergy"
                     name="newTaskEnergy"
@@ -199,6 +295,7 @@
     const titleField = document.getElementById('newTaskTitle');
     const projectField = document.getElementById('newTaskProject');
     const areaField = document.getElementById('newTaskArea');
+    const executiveTriggerField = document.getElementById('newTaskExecutiveTrigger');
     const effortField = document.getElementById('newTaskEffort');
     const statusField = document.getElementById('newTaskStatus');
     const dueField = document.getElementById('newTaskDue');
@@ -217,12 +314,15 @@
 
     const requiredFields = [
       { element: titleField, message: 'Task title is required.' },
+      { element: projectField, message: 'Project is required.' },
     ];
 
     const fieldMap = {
       title: titleField,
       project: projectField,
       area: areaField,
+      executiveTrigger: executiveTriggerField,
+      executive_trigger: executiveTriggerField,
       effort: effortField,
       status: statusField,
       due: dueField,
@@ -331,6 +431,7 @@
           const optionalFields = [
             { element: projectField, key: 'project' },
             { element: areaField, key: 'area' },
+            { element: executiveTriggerField, key: 'executive_trigger' },
             { element: recurrenceField, key: 'recurrence' },
           ];
           optionalFields.forEach(({ element, key }) => {
