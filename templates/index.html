@@ -145,6 +145,92 @@
       </div>
     </section>
 
+    <section class="space-y-3 rounded-3xl border border-slate-200 bg-slate-50/80 p-6 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-lg font-semibold text-slate-900">Reminder preferences</h3>
+          <p class="text-xs text-slate-500">
+            Customize how quickly reminders trigger and how long they stay silent.
+          </p>
+        </div>
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          Saves automatically
+        </span>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2">
+        <label class="flex flex-col gap-1 text-xs text-slate-500">
+          Idle before momentum reminder
+          <div class="flex items-center gap-2">
+            <input
+              data-reminder-setting="momentumThresholdMinutes"
+              type="number"
+              min="5"
+              step="5"
+              placeholder="90"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none"
+            />
+            <span class="text-slate-400">minutes</span>
+          </div>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-slate-500">
+          Momentum snooze duration
+          <div class="flex items-center gap-2">
+            <input
+              data-reminder-setting="momentumSnoozeMinutes"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="30"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none"
+            />
+            <span class="text-slate-400">minutes</span>
+          </div>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-slate-500">
+          Check-in min delay
+          <div class="flex items-center gap-2">
+            <input
+              data-reminder-setting="checkinMinMinutes"
+              type="number"
+              min="5"
+              step="5"
+              placeholder="20"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none"
+            />
+            <span class="text-slate-400">minutes</span>
+          </div>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-slate-500">
+          Check-in max delay
+          <div class="flex items-center gap-2">
+            <input
+              data-reminder-setting="checkinMaxMinutes"
+              type="number"
+              min="5"
+              step="5"
+              placeholder="40"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none"
+            />
+            <span class="text-slate-400">minutes</span>
+          </div>
+        </label>
+        <label class="flex flex-col gap-1 text-xs text-slate-500">
+          Completion cooldown
+          <div class="flex items-center gap-2">
+            <input
+              data-reminder-setting="completionCooldownMinutes"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="5"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-400 focus:outline-none"
+            />
+            <span class="text-slate-400">minutes</span>
+          </div>
+        </label>
+      </div>
+    </section>
+
     <section class="space-y-6">
       <div class="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">

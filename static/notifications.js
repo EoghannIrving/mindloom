@@ -2,12 +2,15 @@
   'use strict';
 
   const STORAGE_KEY = 'mindloom-reminder-state';
-  const MOMENTUM_THRESHOLD_MS = 90 * 60 * 1000;
-  const MOMENTUM_SNOOZE_MS = 30 * 60 * 1000;
-  const CHECKIN_MIN_DELAY_MS = 20 * 60 * 1000;
-  const CHECKIN_MAX_DELAY_MS = 40 * 60 * 1000;
-  const COMPLETION_WINDOW_MS = 5 * 60 * 1000;
   const COMPLETION_LIMIT = 2;
+
+  const DEFAULT_SETTINGS = {
+    momentumThresholdMinutes: 90,
+    momentumSnoozeMinutes: 30,
+    checkinMinMinutes: 20,
+    checkinMaxMinutes: 40,
+    completionCooldownMinutes: 5,
+  };
 
   const DEFAULT_ACTIVE_TASK = {
     id: null,
@@ -20,19 +23,22 @@
     lastNotificationAt: null,
   };
 
-  const DEFAULT_STATE = {
-    lastNextTaskRequest: null,
-    lastMomentumPrompt: null,
-    lastCompletionPrompt: null,
-    completionRecords: [],
-    stopForNow: false,
-    activeTask: null,
-    checkinSnoozedDay: '',
-    snoozes: {
-      momentumUntil: null,
-    },
-    lastSessionEnded: null,
-  };
+  function createDefaultState() {
+    return {
+      lastNextTaskRequest: null,
+      lastMomentumPrompt: null,
+      lastCompletionPrompt: null,
+      completionRecords: [],
+      stopForNow: false,
+      activeTask: null,
+      checkinSnoozedDay: '',
+      snoozes: {
+        momentumUntil: null,
+      },
+      lastSessionEnded: null,
+      settings: { ...DEFAULT_SETTINGS },
+    };
+  }
 
   const MOMENTUM_MESSAGES = [
     'Want to pick up where you left off?',
@@ -64,21 +70,26 @@
     }
 
     load() {
+      const defaultState = createDefaultState();
       if (!storageAvailable) {
-        return { ...DEFAULT_STATE };
+        return defaultState;
       }
       try {
         const raw = window.localStorage.getItem(this.key);
         if (!raw) {
-          return { ...DEFAULT_STATE };
+          return defaultState;
         }
         const parsed = JSON.parse(raw);
         const state = {
-          ...DEFAULT_STATE,
+          ...defaultState,
           ...parsed,
           snoozes: {
-            ...DEFAULT_STATE.snoozes,
+            ...defaultState.snoozes,
             ...(parsed.snoozes || {}),
+          },
+          settings: {
+            ...defaultState.settings,
+            ...(parsed.settings || {}),
           },
         };
         if (parsed.activeTask) {
@@ -99,7 +110,7 @@
         return state;
       } catch (error) {
         console.warn('Mindloom reminder state load failed:', error);
-        return { ...DEFAULT_STATE };
+        return defaultState;
       }
     }
 
@@ -115,16 +126,20 @@
     }
 
     update(values) {
-      this.state = {
-        ...this.state,
-        ...values,
-      };
-      if (values.snoozes) {
+      const { snoozes, settings, ...rest } = values;
+      if (snoozes) {
         this.state.snoozes = {
           ...this.state.snoozes,
-          ...values.snoozes,
+          ...snoozes,
         };
       }
+      if (settings) {
+        this.state.settings = {
+          ...this.state.settings,
+          ...settings,
+        };
+      }
+      Object.assign(this.state, rest);
       this.save();
       return this.state;
     }
@@ -172,9 +187,21 @@
     return date.toISOString().slice(0, 10);
   }
 
-  function randomCheckinDelay() {
-    const range = CHECKIN_MAX_DELAY_MS - CHECKIN_MIN_DELAY_MS;
-    return CHECKIN_MIN_DELAY_MS + Math.floor(Math.random() * range);
+  function toMs(minutes) {
+    const parsed = Number(minutes);
+    if (!Number.isFinite(parsed)) {
+      return 0;
+    }
+    return Math.max(0, parsed) * 60_000;
+  }
+
+  function randomCheckinDelay(minMs, maxMs) {
+    const low = Math.min(minMs, maxMs);
+    const high = Math.max(minMs, maxMs);
+    if (high <= low) {
+      return Math.max(low, 0);
+    }
+    return low + Math.floor(Math.random() * (high - low));
   }
 
   class ReminderController {
@@ -189,6 +216,7 @@
     init() {
       this.queryElements();
       this.bindUI();
+      this.updateSettingsUI();
       this.syncStopForNowToggle();
       this.renderActiveTask();
       this.recordIdleSession();
@@ -218,6 +246,9 @@
       this.ui.reminderToastMessage = document.getElementById('reminderToastMessage');
       this.ui.reminderToastActions = document.getElementById('reminderToastActions');
       this.ui.snoozeCheckinButton = document.querySelector('[data-snooze-checkin]');
+      this.ui.settingInputs = Array.from(
+        document.querySelectorAll('[data-reminder-setting]'),
+      );
     }
 
     bindUI() {
@@ -242,6 +273,55 @@
             this.handleActiveTaskAction(action);
           }
         });
+      });
+      this.bindSettingControls();
+    }
+
+    bindSettingControls() {
+      if (!this.ui.settingInputs) {
+        return;
+      }
+      this.ui.settingInputs.forEach((input) => {
+        input.addEventListener('change', () => this.handleSettingChange(input));
+      });
+    }
+
+    handleSettingChange(input) {
+      const key = input.dataset.reminderSetting;
+      if (!key) {
+        return;
+      }
+      const parsed = Number.parseFloat(input.value);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        input.value = String(this.getSettingMinutes(key));
+        return;
+      }
+      this.state.settings = {
+        ...this.state.settings,
+        [key]: parsed,
+      };
+      this.store.update({ settings: { [key]: parsed } });
+      this.updateSettingsUI();
+      this.evaluateReminders(true);
+    }
+
+    updateSettingsUI() {
+      if (!this.ui.settingInputs) {
+        return;
+      }
+      const settings = {
+        ...DEFAULT_SETTINGS,
+        ...(this.state.settings || {}),
+      };
+      this.ui.settingInputs.forEach((input) => {
+        const key = input.dataset.reminderSetting;
+        if (!key) {
+          return;
+        }
+        const value = settings[key];
+        if (typeof value !== 'undefined') {
+          input.value = String(value);
+        }
       });
     }
 
@@ -270,7 +350,8 @@
 
     recordIdleSession() {
       const lastEnd = this.state.lastSessionEnded;
-      if (lastEnd && Date.now() - lastEnd >= MOMENTUM_THRESHOLD_MS) {
+      const threshold = this.getSettingMs('momentumThresholdMinutes');
+      if (lastEnd && threshold && Date.now() - lastEnd >= threshold) {
         this.maybeShowMomentum(true);
       }
       this.state.lastSessionEnded = null;
@@ -288,6 +369,7 @@
         return;
       }
       const now = Date.now();
+      const threshold = this.getSettingMs('momentumThresholdMinutes');
       const sinceRequest = this.state.lastNextTaskRequest
         ? now - this.state.lastNextTaskRequest
         : Infinity;
@@ -298,16 +380,16 @@
       if (!this.state.lastNextTaskRequest && !forceIdle) {
         return;
       }
-      if (forceIdle && sinceRequest < MOMENTUM_THRESHOLD_MS && this.state.lastNextTaskRequest) {
+      if (threshold && forceIdle && sinceRequest < threshold && this.state.lastNextTaskRequest) {
         return;
       }
-      if (!forceIdle && sinceRequest < MOMENTUM_THRESHOLD_MS) {
+      if (threshold && !forceIdle && sinceRequest < threshold) {
         return;
       }
       const sincePrompt = this.state.lastMomentumPrompt
         ? now - this.state.lastMomentumPrompt
         : Infinity;
-      if (sincePrompt < MOMENTUM_THRESHOLD_MS) {
+      if (threshold && sincePrompt < threshold) {
         return;
       }
       this.presentMomentumReminder();
@@ -326,7 +408,7 @@
         return;
       }
       const now = Date.now();
-      const nextAt = activeTask.checkinNextAt || now + randomCheckinDelay();
+      const nextAt = activeTask.checkinNextAt || now + this.getRandomCheckinDelay();
       if (now < nextAt) {
         this.updateCheckinHint();
         return;
@@ -334,7 +416,8 @@
       const recentNotification = activeTask.lastNotificationAt
         ? now - activeTask.lastNotificationAt
         : Infinity;
-      if (recentNotification < CHECKIN_MIN_DELAY_MS) {
+      const minDelay = this.getSettingMs('checkinMinMinutes');
+      if (minDelay && recentNotification < minDelay) {
         return;
       }
       this.presentCheckinReminder(activeTask);
@@ -347,18 +430,23 @@
     presentMomentumReminder() {
       const message =
         MOMENTUM_MESSAGES[Math.floor(Math.random() * MOMENTUM_MESSAGES.length)];
+      const snoozeMinutes = Math.max(
+        1,
+        Math.round(this.getSettingMinutes('momentumSnoozeMinutes')),
+      );
+      const snoozeLabel = `Snooze ${snoozeMinutes}m`;
       this.showNotification('Need a nudge?', {
         body: message,
         tag: 'mindloom-momentum',
         data: { type: 'momentum' },
         actions: [
           { action: 'momentum_next', title: 'Next task' },
-          { action: 'momentum_snooze', title: 'Snooze 30m' },
+          { action: 'momentum_snooze', title: snoozeLabel },
         ],
       });
       this.showInlineToast(message, [
         { label: 'Next task', handler: () => this.launchNextTask() },
-        { label: 'Snooze 30m', handler: () => this.snoozeMomentum() },
+        { label: snoozeLabel, handler: () => this.snoozeMomentum() },
       ]);
     }
 
@@ -367,8 +455,9 @@
         COMPLETION_MESSAGES[
           Math.floor(Math.random() * COMPLETION_MESSAGES.length)
         ];
-      this.state.lastCompletionPrompt = Date.now();
-      this.store.save();
+      const now = Date.now();
+      this.state.lastCompletionPrompt = now;
+      this.store.update({ lastCompletionPrompt: now });
       this.showNotification('Nice work!', {
         body: message,
         tag: 'mindloom-completion',
@@ -556,7 +645,7 @@
         ...task,
         startedAt: timestamp,
         lastActivityAt: timestamp,
-        checkinNextAt: timestamp + randomCheckinDelay(),
+        checkinNextAt: timestamp + this.getRandomCheckinDelay(),
         lastNotificationAt: null,
       };
       this.state.activeTask = this.store.setActiveTask(payload);
@@ -585,7 +674,7 @@
       }
       this.state.activeTask.lastActivityAt = Date.now();
       this.state.activeTask.checkinNextAt =
-        Date.now() + randomCheckinDelay();
+        Date.now() + this.getRandomCheckinDelay();
       this.store.setActiveTask(this.state.activeTask);
     }
 
@@ -594,17 +683,15 @@
         return;
       }
       this.state.activeTask.checkinNextAt =
-        Date.now() + randomCheckinDelay();
+        Date.now() + this.getRandomCheckinDelay();
       this.store.setActiveTask(this.state.activeTask);
       this.renderActiveTask();
     }
 
     updateStopForNow(value) {
       this.state.stopForNow = Boolean(value);
-      if (this.ui.stopForNowToggle) {
-        this.ui.stopForNowToggle.checked = this.state.stopForNow;
-      }
       this.store.update({ stopForNow: this.state.stopForNow });
+      this.syncStopForNowToggle();
       this.showInlineToast(
         this.state.stopForNow ? 'Reminders paused.' : 'Reminders re-enabled.',
         [],
@@ -612,9 +699,14 @@
     }
 
     snoozeMomentum() {
-      const snoozeUntil = Date.now() + MOMENTUM_SNOOZE_MS;
+      const snoozeMs = this.getSettingMs('momentumSnoozeMinutes');
+      const snoozeMinutes = Math.max(
+        1,
+        Math.round(this.getSettingMinutes('momentumSnoozeMinutes')),
+      );
+      const snoozeUntil = Date.now() + snoozeMs;
       this.store.update({ snoozes: { momentumUntil: snoozeUntil } });
-      this.showInlineToast('Momentum reminder snoozed for 30 minutes.', []);
+      this.showInlineToast(`Momentum reminder snoozed for ${snoozeMinutes} minutes.`, []);
     }
 
     snoozeCheckinsForToday() {
@@ -692,13 +784,11 @@
     recordNextTaskRequest() {
       this.state.lastNextTaskRequest = Date.now();
       this.state.stopForNow = false;
-      if (this.ui.stopForNowToggle) {
-        this.ui.stopForNowToggle.checked = false;
-      }
       this.store.update({
         lastNextTaskRequest: this.state.lastNextTaskRequest,
         stopForNow: this.state.stopForNow,
       });
+      this.syncStopForNowToggle();
     }
 
     recordCompletionEvent(detail = {}) {
@@ -706,15 +796,18 @@
         return;
       }
       const now = Date.now();
+      const cooldownMs = this.getSettingMs('completionCooldownMinutes');
       if (
         this.state.lastCompletionPrompt &&
-        now - this.state.lastCompletionPrompt < COMPLETION_WINDOW_MS
+        cooldownMs &&
+        now - this.state.lastCompletionPrompt < cooldownMs
       ) {
         return;
       }
+      const retention = cooldownMs || 1;
       this.state.completionRecords = (this.state.completionRecords || [])
         .concat(now)
-        .filter((entry) => now - entry < COMPLETION_WINDOW_MS);
+        .filter((entry) => now - entry < retention);
       this.store.update({
         completionRecords: this.state.completionRecords,
       });
@@ -732,7 +825,27 @@
         this.state.checkinSnoozedDay !== isoDate()
       ) {
         this.store.update({ checkinSnoozedDay: '' });
+        this.state.checkinSnoozedDay = '';
       }
+    }
+
+    getSettingMinutes(key) {
+      const candidate = this.state.settings?.[key];
+      if (Number.isFinite(Number(candidate)) && candidate >= 0) {
+        return Number(candidate);
+      }
+      return DEFAULT_SETTINGS[key];
+    }
+
+    getSettingMs(key) {
+      const minutes = this.getSettingMinutes(key);
+      return toMs(minutes);
+    }
+
+    getRandomCheckinDelay() {
+      const minMs = this.getSettingMs('checkinMinMinutes');
+      const maxMs = this.getSettingMs('checkinMaxMinutes');
+      return randomCheckinDelay(minMs, maxMs);
     }
   }
 
