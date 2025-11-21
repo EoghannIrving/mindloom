@@ -97,3 +97,31 @@ self.addEventListener('fetch', (event) => {
     }),
   );
 });
+
+self.addEventListener('notificationclick', (event) => {
+  const notification = event.notification;
+  const action = event.action || 'default';
+  const payload = {
+    type: notification?.data?.type,
+    action,
+    taskId: notification?.data?.taskId,
+  };
+  event.waitUntil(
+    self.clients
+      .matchAll({ includeUncontrolled: true, type: 'window' })
+      .then((clients) => {
+        if (!clients || clients.length === 0) {
+          return self.clients.openWindow('/');
+        }
+        const client = clients[0];
+        client.focus();
+        client.postMessage({
+          type: 'mindloom-notification-action',
+          payload,
+        });
+      }),
+  );
+  if (notification) {
+    notification.close();
+  }
+});
