@@ -14,8 +14,18 @@
             <span class="font-medium text-white">{{ end_date.strftime('%b %d, %Y') }}</span>.
           </p>
         </div>
-        <div class="rounded-2xl border border-white/40 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white shadow-inner backdrop-blur">
-          {{ total_events }} {{ "event" if total_events == 1 else "events" }}
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="rounded-2xl border border-white/40 bg-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white shadow-inner backdrop-blur">
+            {{ total_events }} {{ "event" if total_events == 1 else "events" }}
+          </div>
+          <button
+            type="button"
+            data-open-new-task-modal
+            data-new-task-default-due="{{ today_iso }}"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-indigo-700 shadow transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            New Task
+          </button>
         </div>
       </div>
       <div class="mt-6 grid gap-4 sm:grid-cols-3">

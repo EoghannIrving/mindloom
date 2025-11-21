@@ -102,156 +102,16 @@
     <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
       <div class="space-y-1">
         <h2 class="text-xl font-semibold text-gray-800">New Task</h2>
-        <p class="text-sm text-gray-600">Capture a task directly from this page and refresh the list automatically.</p>
+        <p class="text-sm text-gray-600">Open the shared modal to capture a task from anywhere without leaving this page.</p>
       </div>
-      <form id="newTaskForm" class="space-y-4" novalidate>
-        <div class="space-y-4">
-          <div class="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-end md:gap-3">
-            <div class="flex flex-1 flex-col gap-1">
-              <label for="newTaskTitle" class="text-sm font-medium text-gray-700">Title</label>
-              <input
-                id="newTaskTitle"
-                name="newTaskTitle"
-                type="text"
-                required
-                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                placeholder="Describe the next action"
-              />
-            </div>
-            <div class="flex flex-col gap-1 md:w-48">
-              <label for="newTaskDue" class="text-sm font-medium text-gray-700">Due date</label>
-              <input
-                id="newTaskDue"
-                name="newTaskDue"
-                type="date"
-                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-              />
-            </div>
-            <div class="flex items-end gap-2 md:basis-full md:justify-end">
-              <button
-                type="reset"
-                class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-200"
-              >
-                Clear
-              </button>
-              <button
-                id="createTaskBtn"
-                type="submit"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-              >
-                Create task
-              </button>
-            </div>
-          </div>
-          <div id="newTaskFeedback" class="hidden text-sm"></div>
-        </div>
-        <details id="newTaskAdvanced" class="group rounded-2xl border border-gray-200 bg-gray-50/60 p-4">
-          <summary class="flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400">
-            <span>More options</span>
-            <span class="text-xs font-medium text-gray-500 group-open:hidden">Show</span>
-            <span class="hidden text-xs font-medium text-gray-500 group-open:inline">Hide</span>
-          </summary>
-          <div class="mt-4 space-y-4">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div class="flex flex-col gap-1">
-                <label for="newTaskProject" class="text-sm font-medium text-gray-700">Project</label>
-                <input
-                  id="newTaskProject"
-                  name="newTaskProject"
-                  type="text"
-                  list="newTaskProjects"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Optional project"
-                />
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="newTaskArea" class="text-sm font-medium text-gray-700">Area</label>
-                <input
-                  id="newTaskArea"
-                  name="newTaskArea"
-                  type="text"
-                  list="newTaskAreas"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Optional life area"
-                />
-              </div>
-            </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div class="flex flex-col gap-1">
-                <label for="newTaskEffort" class="text-sm font-medium text-gray-700">Effort</label>
-                <select
-                  id="newTaskEffort"
-                  name="newTaskEffort"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="newTaskStatus" class="text-sm font-medium text-gray-700">Status</label>
-                <select
-                  id="newTaskStatus"
-                  name="newTaskStatus"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                  <option value="active" selected>active</option>
-                  <option value="complete">complete</option>
-                </select>
-              </div>
-              <div class="flex flex-col gap-1">
-                <label for="newTaskRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
-                <select
-                  id="newTaskRecurrence"
-                  name="newTaskRecurrence"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                  <option value=""></option>
-                  <option value="daily">daily</option>
-                  <option value="weekly">weekly</option>
-                  <option value="monthly">monthly</option>
-                  <option value="yearly">yearly</option>
-                </select>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div class="flex flex-col gap-1">
-                <label for="newTaskEnergy" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
-                <input
-                  id="newTaskEnergy"
-                  name="newTaskEnergy"
-                  type="number"
-                  min="1"
-                  max="5"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Auto-computed if blank"
-                />
-              </div>
-              <div class="flex flex-col gap-1 md:col-span-2">
-                <label for="newTaskNotes" class="text-sm font-medium text-gray-700">Notes</label>
-                <textarea
-                  id="newTaskNotes"
-                  name="newTaskNotes"
-                  rows="2"
-                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  placeholder="Optional context"
-                ></textarea>
-              </div>
-            </div>
-          </div>
-        </details>
-        <datalist id="newTaskProjects">
-          {% for p in project_options %}
-            <option value="{{ p }}">
-          {% endfor %}
-        </datalist>
-        <datalist id="newTaskAreas">
-          {% for a in area_options %}
-            <option value="{{ a }}">
-          {% endfor %}
-        </datalist>
-      </form>
+      <button
+        type="button"
+        data-open-new-task-modal
+        class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+      >
+        + Add task
+      </button>
+      <p class="text-xs text-gray-500">The list reloads automatically after the task is saved.</p>
     </section>
     </aside>
     <form method="post" id="manage-tasks-form" class="flex flex-col rounded-3xl border border-gray-200 bg-white/80 shadow-sm">
@@ -407,9 +267,9 @@
     </form>
     <button
       type="button"
-      id="scrollToNewTaskBtn"
+      data-open-new-task-modal
       class="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 lg:hidden"
-      aria-label="Jump to the new task form"
+      aria-label="Open new task modal"
     >
       + New Task
     </button>
@@ -450,113 +310,6 @@
         initializeTaskDetails();
 
         const manageTasksForm = document.getElementById('manage-tasks-form');
-        const newTaskForm = document.getElementById('newTaskForm');
-        const newTaskFeedback = document.getElementById('newTaskFeedback');
-        const newTaskTitle = document.getElementById('newTaskTitle');
-        const createTaskBtn = document.getElementById('createTaskBtn');
-        const newTaskProject = document.getElementById('newTaskProject');
-        const newTaskArea = document.getElementById('newTaskArea');
-        const newTaskEffort = document.getElementById('newTaskEffort');
-        const newTaskStatus = document.getElementById('newTaskStatus');
-        const newTaskDue = document.getElementById('newTaskDue');
-        const newTaskRecurrence = document.getElementById('newTaskRecurrence');
-        const newTaskEnergy = document.getElementById('newTaskEnergy');
-        const newTaskNotes = document.getElementById('newTaskNotes');
-        const newTaskAdvanced = document.getElementById('newTaskAdvanced');
-        const scrollToNewTaskBtn = document.getElementById('scrollToNewTaskBtn');
-
-        if (newTaskTitle) {
-          attachFieldValidation(newTaskTitle);
-        }
-
-        const requiredTaskFields = [{ element: newTaskTitle, message: 'Task title is required.' }];
-
-        if (newTaskForm && createTaskBtn) {
-          const submitTask = performActionWithFeedback(createTaskBtn, {
-            loadingText: 'Creating…',
-            errorMessage: 'Unable to create task',
-            action: async () => {
-              clearFeedback(newTaskFeedback);
-              const ok = validateRequiredFields(requiredTaskFields, {
-                feedbackEl: newTaskFeedback,
-                summaryMessage: 'Add a task title before saving.',
-              });
-              if (!ok) {
-                return null;
-              }
-
-              const payload = {
-                title: (newTaskTitle?.value || '').trim(),
-                effort: (newTaskEffort?.value || 'low').trim(),
-                status: (newTaskStatus?.value || 'active').trim(),
-              };
-
-              const optionalTextFields = [
-                { element: newTaskProject, key: 'project' },
-                { element: newTaskArea, key: 'area' },
-                { element: newTaskRecurrence, key: 'recurrence' },
-              ];
-              optionalTextFields.forEach(({ element, key }) => {
-                if (!element) {
-                  return;
-                }
-                const value = (element.value || '').trim();
-                if (value) {
-                  payload[key] = value;
-                }
-              });
-
-              if (newTaskDue && newTaskDue.value) {
-                payload.due = newTaskDue.value;
-              }
-
-              if (newTaskEnergy && newTaskEnergy.value) {
-                const parsedEnergy = Number.parseInt(newTaskEnergy.value, 10);
-                if (!Number.isNaN(parsedEnergy)) {
-                  payload.energy_cost = parsedEnergy;
-                }
-              }
-
-              const notesValue = (newTaskNotes?.value || '').trim();
-              if (notesValue) {
-                payload.notes = notesValue;
-              }
-
-              const res = await fetch('/tasks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-              });
-              ensureOkResponse(res);
-              await res.json();
-              updateFeedback(newTaskFeedback, 'Task created successfully. Refreshing the list…', 'success');
-              if (newTaskAdvanced) {
-                newTaskAdvanced.open = false;
-              }
-              setTimeout(() => {
-                window.location.reload();
-              }, 600);
-              return null;
-            },
-          });
-
-          newTaskForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            submitTask();
-          });
-
-          newTaskForm.addEventListener('reset', () => {
-            clearFeedback(newTaskFeedback);
-            setTimeout(() => {
-              if (newTaskTitle) {
-                setFieldValidity(newTaskTitle, true);
-              }
-              if (newTaskAdvanced) {
-                newTaskAdvanced.open = false;
-              }
-            }, 0);
-          });
-        }
 
         if (manageTasksForm) {
           const submitManageTasksForm = () => {
@@ -843,16 +596,6 @@
           }
         }
 
-        if (scrollToNewTaskBtn && newTaskForm) {
-          scrollToNewTaskBtn.addEventListener('click', () => {
-            newTaskForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            if (newTaskTitle) {
-              setTimeout(() => {
-                newTaskTitle.focus();
-              }, 250);
-            }
-          });
-        }
       });
     </script>
 

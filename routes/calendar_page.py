@@ -18,7 +18,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from calendar_integration import Event, load_events
 from config import config
 from utils.logging import configure_logger
-from utils.tasks import resolve_energy_cost, task_due_date
+from utils.tasks import build_option_values, resolve_energy_cost, task_due_date
 from tasks import mark_tasks_complete, read_tasks
 
 from utils.template_helpers import create_templates
@@ -213,6 +213,10 @@ def calendar_page(request: Request):
         events_by_date[event.start.date()].append(event)
 
     tasks = read_tasks()
+    project_area_options = {
+        "project_options": build_option_values(tasks, "project"),
+        "area_options": build_option_values(tasks, "area"),
+    }
     tasks_by_date: dict[date, list[dict]] = defaultdict(list)
     overdue_tasks: list[tuple[dict, date]] = []
     for task in tasks:
@@ -324,6 +328,7 @@ def calendar_page(request: Request):
             "focus_tasks_due": focus_tasks_due,
             "today": effective_today,
             "today_iso": effective_today.isoformat(),
+            **project_area_options,
         },
     )
 

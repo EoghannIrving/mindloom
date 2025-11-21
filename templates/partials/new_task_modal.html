@@ -1,0 +1,427 @@
+<div
+  id="newTaskModal"
+  class="fixed inset-0 z-50 hidden"
+  aria-hidden="true"
+  data-new-task-modal
+>
+  <div
+    class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"
+    data-new-task-modal-overlay
+  ></div>
+  <div class="relative flex min-h-full items-center justify-center px-4 py-6">
+    <div
+      class="mx-auto w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-gray-900/10"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="newTaskModalTitle"
+    >
+      <div class="flex items-start justify-between border-b border-gray-200 px-6 py-5">
+        <div class="space-y-1">
+          <h2 id="newTaskModalTitle" class="text-lg font-semibold text-gray-900">New Task</h2>
+          <p class="text-sm text-gray-500">Capture a task without leaving any page.</p>
+        </div>
+        <button
+          type="button"
+          class="rounded-full border border-transparent bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+          aria-label="Close new task modal"
+          data-new-task-modal-close
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="max-h-[75vh] overflow-auto px-6 pb-6 pt-2">
+        <form id="newTaskForm" class="space-y-4" novalidate>
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-4 md:flex-nowrap md:items-end">
+              <div class="flex-1 min-w-0">
+                <label for="newTaskTitle" class="text-sm font-medium text-gray-700">Title</label>
+                <input
+                  id="newTaskTitle"
+                  name="newTaskTitle"
+                  type="text"
+                  required
+                  class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  placeholder="Describe the next action"
+                />
+              </div>
+              <div class="w-full md:w-48">
+                <label for="newTaskDue" class="text-sm font-medium text-gray-700">Due date</label>
+                <input
+                  id="newTaskDue"
+                  name="newTaskDue"
+                  type="date"
+                  class="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
+              </div>
+              <div class="flex items-center gap-2 md:justify-end">
+                <button
+                  type="reset"
+                  class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+                >
+                  Clear
+                </button>
+                <button
+                  id="createTaskBtn"
+                  type="submit"
+                  class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                >
+                  Create task
+                </button>
+              </div>
+            </div>
+            <div id="newTaskFeedback" class="hidden text-sm"></div>
+          </div>
+          <details
+            id="newTaskAdvanced"
+            class="group rounded-2xl border border-gray-200 bg-gray-50/60 p-4"
+          >
+            <summary
+              class="flex cursor-pointer items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+            >
+              <span>More options</span>
+              <span class="text-xs font-medium text-gray-500 group-open:hidden">Show</span>
+              <span class="hidden text-xs font-medium text-gray-500 group-open:inline">Hide</span>
+            </summary>
+            <div class="mt-4 space-y-4">
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskProject" class="text-sm font-medium text-gray-700">Project</label>
+                  <input
+                    id="newTaskProject"
+                    name="newTaskProject"
+                    type="text"
+                    list="newTaskProjects"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Optional project"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskArea" class="text-sm font-medium text-gray-700">Area</label>
+                  <input
+                    id="newTaskArea"
+                    name="newTaskArea"
+                    type="text"
+                    list="newTaskAreas"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Optional life area"
+                  />
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskEffort" class="text-sm font-medium text-gray-700">Effort</label>
+                  <select
+                    id="newTaskEffort"
+                    name="newTaskEffort"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="low">low</option>
+                    <option value="medium">medium</option>
+                    <option value="high">high</option>
+                  </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskStatus" class="text-sm font-medium text-gray-700">Status</label>
+                  <select
+                    id="newTaskStatus"
+                    name="newTaskStatus"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="active" selected>active</option>
+                    <option value="complete">complete</option>
+                  </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
+                  <select
+                    id="newTaskRecurrence"
+                    name="newTaskRecurrence"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value=""></option>
+                    <option value="daily">daily</option>
+                    <option value="weekly">weekly</option>
+                    <option value="monthly">monthly</option>
+                    <option value="yearly">yearly</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskEnergy" class="text-sm font-medium text-gray-700">Energy cost (1-5)</label>
+                  <input
+                    id="newTaskEnergy"
+                    name="newTaskEnergy"
+                    type="number"
+                    min="1"
+                    max="5"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Auto-computed if blank"
+                  />
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label for="newTaskNotes" class="text-sm font-medium text-gray-700">Notes</label>
+                  <textarea
+                    id="newTaskNotes"
+                    name="newTaskNotes"
+                    rows="2"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                    placeholder="Optional context"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </details>
+        </form>
+        <datalist id="newTaskProjects">
+          {% for project in project_options|default([]) %}
+            <option value="{{ project }}">
+          {% endfor %}
+        </datalist>
+        <datalist id="newTaskAreas">
+          {% for area in area_options|default([]) %}
+            <option value="{{ area }}">
+          {% endfor %}
+        </datalist>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('newTaskModal');
+    const form = document.getElementById('newTaskForm');
+    if (!modal || !form) {
+      return;
+    }
+
+    const feedbackEl = document.getElementById('newTaskFeedback');
+    const titleField = document.getElementById('newTaskTitle');
+    const projectField = document.getElementById('newTaskProject');
+    const areaField = document.getElementById('newTaskArea');
+    const effortField = document.getElementById('newTaskEffort');
+    const statusField = document.getElementById('newTaskStatus');
+    const dueField = document.getElementById('newTaskDue');
+    const recurrenceField = document.getElementById('newTaskRecurrence');
+    const energyField = document.getElementById('newTaskEnergy');
+    const notesField = document.getElementById('newTaskNotes');
+    const advancedDetails = document.getElementById('newTaskAdvanced');
+    const createButton = document.getElementById('createTaskBtn');
+    const overlay = modal.querySelector('[data-new-task-modal-overlay]');
+    const dismissButtons = modal.querySelectorAll('[data-new-task-modal-close]');
+    let lastTrigger = null;
+
+    if (titleField) {
+      attachFieldValidation(titleField);
+    }
+
+    const requiredFields = [
+      { element: titleField, message: 'Task title is required.' },
+    ];
+
+    const fieldMap = {
+      title: titleField,
+      project: projectField,
+      area: areaField,
+      effort: effortField,
+      status: statusField,
+      due: dueField,
+      recurrence: recurrenceField,
+      energy: energyField,
+      energy_cost: energyField,
+      notes: notesField,
+    };
+
+    const applyDefaults = (values = {}) => {
+      Object.entries(values).forEach(([key, value]) => {
+        if (!value) {
+          return;
+        }
+        const normalized = key.trim();
+        const target = fieldMap[normalized];
+        if (!target) {
+          return;
+        }
+        target.value = value;
+      });
+    };
+
+    const parseDatasetDefaults = (dataset) => {
+      const defaults = {};
+      Object.keys(dataset).forEach((key) => {
+        if (!key.startsWith('newTaskDefault')) {
+          return;
+        }
+        const fieldKey = key.slice('newTaskDefault'.length);
+        if (!fieldKey) {
+          return;
+        }
+        const normalizedKey = fieldKey.charAt(0).toLowerCase() + fieldKey.slice(1);
+        defaults[normalizedKey] = dataset[key];
+      });
+      return defaults;
+    };
+
+    const toggleBodyScroll = (enabled) => {
+      if (enabled) {
+        document.body.classList.add('overflow-hidden');
+      } else {
+        document.body.classList.remove('overflow-hidden');
+      }
+    };
+
+    const closeModal = () => {
+      if (modal.dataset.open !== 'true') {
+        return;
+      }
+      modal.classList.add('hidden');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.dataset.open = 'false';
+      toggleBodyScroll(false);
+      if (lastTrigger) {
+        lastTrigger.focus();
+        lastTrigger = null;
+      }
+    };
+
+    const openModal = (defaults = {}, trigger = null) => {
+      form.reset();
+      clearFeedback(feedbackEl);
+      if (advancedDetails) {
+        advancedDetails.open = false;
+      }
+      applyDefaults(defaults);
+      modal.classList.remove('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.dataset.open = 'true';
+      toggleBodyScroll(true);
+      if (trigger) {
+        lastTrigger = trigger;
+      }
+      if (titleField) {
+        setTimeout(() => {
+          titleField.focus();
+        }, 50);
+      }
+    };
+
+    const handleSubmit = async () => {
+      if (!createButton || createButton.disabled) {
+        return null;
+      }
+      const submit = performActionWithFeedback(createButton, {
+        loadingText: 'Creating…',
+        errorMessage: 'Unable to create task',
+        action: async () => {
+          clearFeedback(feedbackEl);
+          const ok = validateRequiredFields(requiredFields, {
+            feedbackEl,
+            summaryMessage: 'Add a task title before saving.',
+          });
+          if (!ok) {
+            return null;
+          }
+
+          const payload = {
+            title: (titleField?.value || '').trim(),
+            effort: (effortField?.value || 'low').trim(),
+            status: (statusField?.value || 'active').trim(),
+          };
+
+          const optionalFields = [
+            { element: projectField, key: 'project' },
+            { element: areaField, key: 'area' },
+            { element: recurrenceField, key: 'recurrence' },
+          ];
+          optionalFields.forEach(({ element, key }) => {
+            if (!element) {
+              return;
+            }
+            const value = (element.value || '').trim();
+            if (value) {
+              payload[key] = value;
+            }
+          });
+
+          if (dueField && dueField.value) {
+            payload.due = dueField.value;
+          }
+
+          if (energyField && energyField.value) {
+            const parsedEnergy = Number.parseInt(energyField.value, 10);
+            if (!Number.isNaN(parsedEnergy)) {
+              payload.energy_cost = parsedEnergy;
+            }
+          }
+
+          const notesValue = (notesField?.value || '').trim();
+          if (notesValue) {
+            payload.notes = notesValue;
+          }
+
+          const response = await fetch('/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          ensureOkResponse(response);
+          await response.json();
+          updateFeedback(feedbackEl, 'Task created successfully. Refreshing the list…', 'success');
+          if (advancedDetails) {
+            advancedDetails.open = false;
+          }
+          setTimeout(() => {
+            closeModal();
+            window.location.reload();
+          }, 600);
+          return null;
+        },
+      });
+      return submit();
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      handleSubmit();
+    });
+
+    form.addEventListener('reset', () => {
+      clearFeedback(feedbackEl);
+      setTimeout(() => {
+        if (titleField) {
+          setFieldValidity(titleField, true);
+        }
+        if (advancedDetails) {
+          advancedDetails.open = false;
+        }
+      }, 0);
+    });
+
+    const triggers = document.querySelectorAll('[data-open-new-task-modal]');
+    triggers.forEach((trigger) => {
+      trigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        const defaults = parseDatasetDefaults(trigger.dataset);
+        openModal(defaults, trigger);
+      });
+    });
+
+    overlay?.addEventListener('click', closeModal);
+    dismissButtons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeModal();
+      });
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.dataset.open === 'true') {
+        event.preventDefault();
+        closeModal();
+      }
+    });
+
+    window.openNewTaskModal = (defaults = {}) => {
+      openModal(defaults);
+    };
+  });
+</script>
