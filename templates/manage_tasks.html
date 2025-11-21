@@ -2,117 +2,119 @@
 {% block title %}Edit Tasks{% endblock %}
 {% block content %}
   <div class="max-w-5xl mx-auto space-y-8 lg:grid lg:grid-cols-[minmax(18rem,22rem)_1fr] lg:gap-8 lg:space-y-0">
-    <aside class="space-y-8 lg:space-y-6 lg:sticky lg:top-6">
-      <section class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
-      <div class="space-y-2">
-        <h1 class="text-3xl font-bold">Curate your task list</h1>
-        <p class="text-lg text-indigo-100">
-          Filter and refine every detail while staying in the same ambient flow as the Mindloom home experience.
-        </p>
-      </div>
-      <form method="get" class="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur space-y-6">
-        {% if selected_due_on %}
-        <input type="hidden" name="due_on" value="{{ selected_due_on }}" />
-        <div class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-100/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
-          Filtering tasks due on or before {{ selected_due_on }}
-        </div>
-        {% endif %}
-        <div class="space-y-1">
-          <label for="task-search" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Search</label>
-          <input
-            id="task-search"
-            type="search"
-            name="q"
-            value="{{ search_query or '' }}"
-            placeholder="Search tasks"
-            class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none"
-          />
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="flex flex-col gap-1">
-            <label for="status-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Status</label>
-            <select
-              id="status-filter"
-              name="status"
-              class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
-            >
-              <option value="" class="text-gray-900">All</option>
-              {% for opt in status_options %}
-                <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_status == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
+    <aside class="space-y-8 lg:space-y-6">
+      <div class="space-y-6 lg:sticky lg:top-6 lg:self-start lg:z-20">
+        <section class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
+          <div class="space-y-2">
+            <h1 class="text-3xl font-bold">Curate your task list</h1>
+            <p class="text-lg text-indigo-100">
+              Filter and refine every detail while staying in the same ambient flow as the Mindloom home experience.
+            </p>
           </div>
-          <div class="flex flex-col gap-1">
-            <label for="project-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Project</label>
-            <select
-              id="project-filter"
-              name="project"
-              class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
-            >
-              <option value="" class="text-gray-900">All</option>
-              {% for opt in project_options %}
-                <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_project == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
+          <form method="get" class="rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur space-y-6">
+            {% if selected_due_on %}
+            <input type="hidden" name="due_on" value="{{ selected_due_on }}" />
+            <div class="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-100/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-amber-800">
+              Filtering tasks due on or before {{ selected_due_on }}
+            </div>
+            {% endif %}
+            <div class="space-y-1">
+              <label for="task-search" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Search</label>
+              <input
+                id="task-search"
+                type="search"
+                name="q"
+                value="{{ search_query or '' }}"
+                placeholder="Search tasks"
+                class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none"
+              />
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="status-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Status</label>
+                <select
+                  id="status-filter"
+                  name="status"
+                  class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                >
+                  <option value="" class="text-gray-900">All</option>
+                  {% for opt in status_options %}
+                    <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_status == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="project-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Project</label>
+                <select
+                  id="project-filter"
+                  name="project"
+                  class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                >
+                  <option value="" class="text-gray-900">All</option>
+                  {% for opt in project_options %}
+                    <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_project == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="area-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Area</label>
+                <select
+                  id="area-filter"
+                  name="area"
+                  class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                >
+                  <option value="" class="text-gray-900">All</option>
+                  {% for opt in area_options %}
+                    <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_area == opt %}selected{% endif %}>{{ opt }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="sort-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Sort</label>
+                <select
+                  id="sort-filter"
+                  name="sort"
+                  class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
+                >
+                  {% for value, label in sort_options %}
+                    <option value="{{ value }}" style="color: #111827;" class="text-gray-900" {% if selected_sort == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-3">
+              <a
+                href="{{ url_for('manage_tasks_page') }}"
+                class="inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Clear filters
+              </a>
+              <button
+                type="submit"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-5 py-2 text-sm font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+              >
+                Apply filters
+              </button>
+            </div>
+          </form>
+        </section>
+        <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+          <div class="space-y-1">
+            <h2 class="text-xl font-semibold text-gray-800">New Task</h2>
+            <p class="text-sm text-gray-600">Open the shared modal to capture a task from anywhere without leaving this page.</p>
           </div>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="flex flex-col gap-1">
-            <label for="area-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Area</label>
-            <select
-              id="area-filter"
-              name="area"
-              class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
-            >
-              <option value="" class="text-gray-900">All</option>
-              {% for opt in area_options %}
-                <option value="{{ opt }}" style="color: #111827;" class="text-gray-900" {% if selected_area == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label for="sort-filter" class="text-xs font-semibold uppercase tracking-wide text-indigo-100">Sort</label>
-            <select
-              id="sort-filter"
-              name="sort"
-              class="rounded-xl border-0 bg-white/20 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-amber-300 focus:outline-none"
-            >
-              {% for value, label in sort_options %}
-                <option value="{{ value }}" style="color: #111827;" class="text-gray-900" {% if selected_sort == value %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center justify-end gap-3">
-          <a
-            href="{{ url_for('manage_tasks_page') }}"
-            class="inline-flex items-center justify-center rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-          >
-            Clear filters
-          </a>
           <button
-            type="submit"
-            class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-5 py-2 text-sm font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+            type="button"
+            data-open-new-task-modal
+            class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
           >
-            Apply filters
+            + Add task
           </button>
-        </div>
-      </form>
-    </section>
-    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-      <div class="space-y-1">
-        <h2 class="text-xl font-semibold text-gray-800">New Task</h2>
-        <p class="text-sm text-gray-600">Open the shared modal to capture a task from anywhere without leaving this page.</p>
+          <p class="text-xs text-gray-500">The list reloads automatically after the task is saved.</p>
+        </section>
       </div>
-      <button
-        type="button"
-        data-open-new-task-modal
-        class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-      >
-        + Add task
-      </button>
-      <p class="text-xs text-gray-500">The list reloads automatically after the task is saved.</p>
-    </section>
     </aside>
     <form method="post" id="manage-tasks-form" class="flex flex-col rounded-3xl border border-gray-200 bg-white/80 shadow-sm">
       <input type="hidden" name="q" value="{{ search_query or '' }}" />
