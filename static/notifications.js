@@ -247,6 +247,7 @@
       this.renderActiveTask();
       this.recordIdleSession();
       this.listenToServiceWorker();
+      this.maybeRequestNotificationPermission();
       this.evaluateReminders(true);
       window.addEventListener('focus', () => this.evaluateReminders());
       document.addEventListener('visibilitychange', () => {
@@ -277,6 +278,7 @@
       this.ui.reminderToast = document.getElementById('reminderToast');
       this.ui.reminderToastMessage = document.getElementById('reminderToastMessage');
       this.ui.reminderToastActions = document.getElementById('reminderToastActions');
+      this.ui.reminderToastClose = document.getElementById('reminderToastClose');
       this.ui.snoozeCheckinButton = document.querySelector('[data-snooze-checkin]');
       this.ui.settingInputs = Array.from(
         document.querySelectorAll('[data-reminder-setting]'),
@@ -307,6 +309,9 @@
         });
       });
       this.bindSettingControls();
+      if (this.ui.reminderToastClose) {
+        this.ui.reminderToastClose.addEventListener('click', () => this.hideInlineToast());
+      }
     }
 
     bindSettingControls() {
@@ -399,6 +404,22 @@
           this.handleNotificationAction(payload.payload);
         }
       });
+    }
+
+    maybeRequestNotificationPermission() {
+      if (!('Notification' in window)) {
+        return;
+      }
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'denied') {
+            this.showInlineToast(
+              'Notifications are disabled. Allow them in your browser settings to see reminders outside the app.',
+              [],
+            );
+          }
+        });
+      }
     }
 
     recordIdleSession() {
@@ -602,6 +623,9 @@
       }
       this.ui.reminderToastMessage.textContent = message;
       this.ui.reminderToastActions.innerHTML = '';
+      if (this.ui.reminderToastClose) {
+        this.ui.reminderToastClose.classList.remove('hidden');
+      }
       actions.forEach(({ label, handler }) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -617,10 +641,27 @@
       this.ui.reminderToast.classList.remove('hidden');
       if (this.toastTimer) {
         window.clearTimeout(this.toastTimer);
+        this.toastTimer = null;
       }
-      this.toastTimer = window.setTimeout(() => {
-        this.ui.reminderToast?.classList.add('hidden');
-      }, 8000);
+      const duration = actions.length === 0 ? 15000 : 0;
+      if (duration > 0) {
+        this.toastTimer = window.setTimeout(() => {
+          this.hideInlineToast();
+        }, duration);
+      }
+    }
+
+    hideInlineToast() {
+      if (this.toastTimer) {
+        window.clearTimeout(this.toastTimer);
+        this.toastTimer = null;
+      }
+      if (this.ui.reminderToast) {
+        this.ui.reminderToast.classList.add('hidden');
+      }
+      if (this.ui.reminderToastClose) {
+        this.ui.reminderToastClose.classList.add('hidden');
+      }
     }
 
     handleNotificationAction(payload) {
