@@ -427,7 +427,7 @@
       window.addEventListener('load', () => {
         const swPath = '{{ static_url(request, "sw.js") }}';
         navigator.serviceWorker
-          .register(swPath)
+          .register(swPath, { scope: '/' })
           .then((registration) => {
             console.info('Registered Mindloom service worker', registration.scope);
           })
