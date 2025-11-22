@@ -52,19 +52,6 @@
     'Ready for another or taking a break?',
   ];
 
-  const REMINDER_HELP_TEXT = {
-    momentumThresholdMinutes:
-      'Wait this many minutes after the last “next task” request before the momentum reminder fires again.',
-    momentumSnoozeMinutes:
-      'Reset that timer for this many minutes when you snooze the momentum reminder.',
-    checkinMinMinutes:
-      'Minimum time between check-in prompts while a task stays marked as active.',
-    checkinMaxMinutes:
-      'Maximum random delay that can be applied before the next check-in reminder pops up.',
-    completionCooldownMinutes:
-      'How many minutes must pass after a completion reminder before another can show.',
-  };
-
   const SAMPLE_CONFIGS = {
     gentle: {
       momentumThresholdMinutes: 120,
@@ -248,6 +235,7 @@
       this.ui = {};
       this.swRegistration = null;
       this.toastTimer = null;
+      this.initialized = false;
     }
 
     init() {
@@ -270,6 +258,12 @@
         this.store.save();
       });
       this.activeTaskTimer = window.setInterval(() => this.renderActiveTask(), 60_000);
+      this.initialized = true;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('mindloom-reminder-controller-ready', { detail: this }),
+        );
+      }
     }
 
     queryElements() {
@@ -286,13 +280,6 @@
       this.ui.settingInputs = Array.from(
         document.querySelectorAll('[data-reminder-setting]'),
       );
-      this.ui.sampleButtons = Array.from(
-        document.querySelectorAll('[data-sample-config]'),
-      );
-      this.ui.helpButtons = Array.from(document.querySelectorAll('[data-help-key]'));
-      this.ui.helpPopup = document.getElementById('reminderHelpPopup');
-      this.ui.helpContent = document.getElementById('reminderHelpContent');
-      this.ui.helpClose = document.querySelector('[data-close-help]');
     }
 
     bindUI() {
@@ -319,8 +306,6 @@
         });
       });
       this.bindSettingControls();
-      this.bindSampleButtons();
-      this.bindHelpButtons();
     }
 
     bindSettingControls() {
@@ -330,26 +315,6 @@
       this.ui.settingInputs.forEach((input) => {
         input.addEventListener('change', () => this.handleSettingChange(input));
       });
-    }
-
-    bindSampleButtons() {
-      if (!this.ui.sampleButtons) {
-        return;
-      }
-      this.ui.sampleButtons.forEach((button) => {
-        button.addEventListener('click', () => this.applySampleConfig(button));
-      });
-    }
-
-    bindHelpButtons() {
-      if (this.ui.helpButtons) {
-        this.ui.helpButtons.forEach((button) => {
-          button.addEventListener('click', () => this.showHelp(button));
-        });
-      }
-      if (this.ui.helpClose) {
-        this.ui.helpClose.addEventListener('click', () => this.closeHelp());
-      }
     }
 
     handleSettingChange(input) {
@@ -409,23 +374,6 @@
           input.value = String(value);
         }
       });
-    }
-
-    showHelp(button) {
-      if (!this.ui.helpPopup || !this.ui.helpContent) {
-        return;
-      }
-      const key = button.dataset.helpKey;
-      const text = button.dataset.helpText || REMINDER_HELP_TEXT[key] || 'No help available.';
-      this.ui.helpContent.textContent = text;
-      this.ui.helpPopup.classList.remove('hidden');
-    }
-
-    closeHelp() {
-      if (!this.ui.helpPopup) {
-        return;
-      }
-      this.ui.helpPopup.classList.add('hidden');
     }
 
     syncStopForNowToggle() {
@@ -958,5 +906,22 @@
   window.addEventListener('mindloom-task-completed', (event) =>
     controller.recordCompletionEvent(event.detail),
   );
+  const ensureControllerReady = (callback) => {
+    if (typeof callback !== 'function') {
+      return;
+    }
+    if (controller.initialized) {
+      callback();
+      return;
+    }
+    const handler = () => {
+      callback();
+      window.removeEventListener('mindloom-reminder-controller-ready', handler);
+    };
+    window.addEventListener('mindloom-reminder-controller-ready', handler);
+  };
+  window.applyReminderSampleConfig = (button) => {
+    ensureControllerReady(() => controller.applySampleConfig(button));
+  };
   document.addEventListener('DOMContentLoaded', () => controller.init());
 })();

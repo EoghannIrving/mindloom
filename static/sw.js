@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mindloom-shell-v1';
+const CACHE_NAME = 'mindloom-shell-v2';
 const RUNTIME_CACHE = 'mindloom-runtime-v1';
 const OFFLINE_URL = '/offline';
 const PRECACHE_URLS = [
@@ -12,6 +12,7 @@ const PRECACHE_URLS = [
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
   OFFLINE_URL,
+  '/static/notifications.js',
 ];
 
 self.addEventListener('install', (event) => {
