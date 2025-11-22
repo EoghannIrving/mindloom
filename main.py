@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from routes import (
     projects,
@@ -32,7 +33,22 @@ if not logger.handlers:
 
 logger.info("Initializing FastAPI app")
 app = FastAPI()
-app.mount("/static", StaticFiles(directory=PROJECT_ROOT / "static"), name="static")
+app.mount(
+    "/static",
+    StaticFiles(directory=PROJECT_ROOT / "static"),
+    name="static",
+)
+
+
+class ServiceWorkerHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        if request.url.path.endswith("sw.js"):
+            response.headers.setdefault("Service-Worker-Allowed", "/")
+        return response
+
+
+app.add_middleware(ServiceWorkerHeadersMiddleware)
 app.include_router(projects.router)
 app.include_router(energy.router)
 app.include_router(web.router)

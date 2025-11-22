@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Mindloom{% endblock %}
 {% block content %}
-  <div class="max-w-5xl mx-auto space-y-6 py-6">
+  <div class="max-w-5xl mx-auto space-y-6 pt-6 pb-24">
     <section
       class="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-3xl shadow-2xl p-8 space-y-6">
       <div class="space-y-2">
@@ -10,61 +10,73 @@
           Quickly focus on what matters most. Choose your planning focus and let Mindloom surface the next best step.
         </p>
       </div>
-      <div class="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="plannerMode" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Focus</label>
-          <select id="plannerMode"
-            class="w-full rounded-lg border-0 bg-white/10 text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-            <option value="next_task" selected>Next task</option>
-            <option value="plan">Daily plan</option>
-          </select>
+      <div class="space-y-5">
+        <div class="grid gap-4 md:grid-cols-3">
+          <div class="flex flex-col gap-1">
+            <label for="plannerMode" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Focus</label>
+            <select id="plannerMode"
+              class="w-full rounded-lg border-0 bg-white/10 text-white placeholder-indigo-200 focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+              <option value="next_task" selected>Next task</option>
+              <option value="plan">Daily plan</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="energy" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Energy</label>
+            <select id="energy"
+              class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+              <option value="1">🪫 Drained</option>
+              <option value="2">😴 Low</option>
+              <option value="3">🙂 OK</option>
+              <option value="4">⚡ Energized</option>
+              <option value="5">💥 Turbo</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-1">
+            <label for="mood" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Mood</label>
+            <select id="mood"
+              class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+              <option value="Sad">😔 Sad</option>
+              <option value="Meh">😐 Meh</option>
+              <option value="Okay">😊 Okay</option>
+              <option value="Calm">😌 Calm</option>
+              <option value="Joyful">😍 Joyful</option>
+            </select>
+          </div>
         </div>
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="energy" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Energy</label>
-          <select id="energy"
-            class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-            <option value="1">🪫 Drained</option>
-            <option value="2">😴 Low</option>
-            <option value="3">🙂 OK</option>
-            <option value="4">⚡ Energized</option>
-            <option value="5">💥 Turbo</option>
-          </select>
+        <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <button id="focusAskBtn"
+            class="w-full md:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 text-lg font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+            Ask Mindloom
+          </button>
+          <details class="rounded-2xl border border-white/30 bg-white/10 p-4 text-sm text-indigo-100">
+            <summary class="flex cursor-pointer items-center justify-between font-semibold text-indigo-50 transition hover:text-white">
+              Advanced filters
+              <span class="text-xs text-indigo-200">Project · Area</span>
+            </summary>
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <label for="projectFilter" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Project</label>
+                <select id="projectFilter"
+                  class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+                  <option value="">Any project</option>
+                  {% for project in project_options %}
+                  <option value="{{ project }}">{{ project }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="areaFilter" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Area</label>
+                <select id="areaFilter"
+                  class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
+                  <option value="">Any area</option>
+                  {% for area in area_options %}
+                  <option value="{{ area }}">{{ area }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </details>
         </div>
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="mood" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Mood</label>
-          <select id="mood"
-            class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-            <option value="Sad">😔 Sad</option>
-            <option value="Meh">😐 Meh</option>
-            <option value="Okay">😊 Okay</option>
-            <option value="Calm">😌 Calm</option>
-            <option value="Joyful">😍 Joyful</option>
-          </select>
-        </div>
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="projectFilter" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Project</label>
-          <select id="projectFilter"
-            class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-            <option value="">Any project</option>
-            {% for project in project_options %}
-            <option value="{{ project }}">{{ project }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="flex flex-col gap-1 w-full sm:max-w-sm lg:flex-1">
-          <label for="areaFilter" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Area</label>
-          <select id="areaFilter"
-            class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-            <option value="">Any area</option>
-            {% for area in area_options %}
-            <option value="{{ area }}">{{ area }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <button id="focusAskBtn"
-          class="w-full sm:w-auto lg:self-end inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 text-lg font-semibold text-gray-900 shadow-lg transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
-          Ask Mindloom
-        </button>
       </div>
       <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-indigo-100">
         <button
@@ -205,53 +217,55 @@
             {% if achievable_tasks %}
             <ul class="space-y-3">
               {% for task in achievable_tasks %}
-              <li class="flex items-start gap-3 rounded-2xl p-4 {% if task.is_overdue %}border border-rose-300 bg-rose-50/70{% else %}border border-slate-200 bg-slate-50/80{% endif %}">
-                <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
-                <div class="flex-1">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
-                    {% if task.is_overdue %}
-                    <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
-                      Overdue
+              <li class="flex flex-col gap-3 rounded-2xl p-4 {% if task.is_overdue %}border border-rose-300 bg-rose-50/70{% else %}border border-slate-200 bg-slate-50/80{% endif %}">
+                <label class="flex w-full cursor-pointer items-start gap-3">
+                  <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                  <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-3">
+                      <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                      {% if task.is_overdue %}
+                      <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
+                        Overdue
+                      </span>
+                      {% endif %}
+                      <span class="text-xs font-mono uppercase text-slate-500">
+                        Energy {{ task.energy_cost }}
+                      </span>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                      {% if task.project %}
+                      <span>Project {{ task.project }}</span>
+                      {% endif %}
+                      {% if task.area %}
+                      <span>Area {{ task.area }}</span>
+                      {% endif %}
+                      <span>
+                        Leaves {{ task.capacity_gap | round(1) }} energy
+                      </span>
+                    {% if task.executive_penalty and task.executive_penalty > 0 %}
+                    <span class="text-rose-500">
+                      Exec penalty {{ task.executive_penalty }}
                     </span>
                     {% endif %}
-                    <span class="text-xs font-mono uppercase text-slate-500">
-                      Energy {{ task.energy_cost }}
-                    </span>
-                  </div>
-                  <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
-                    {% if task.project %}
-                    <span>Project {{ task.project }}</span>
+                    </div>
+                    {% if task.reason %}
+                    <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
                     {% endif %}
-                    {% if task.area %}
-                    <span>Area {{ task.area }}</span>
-                    {% endif %}
-                    <span>
-                      Leaves {{ task.capacity_gap | round(1) }} energy
-                    </span>
-                  {% if task.executive_penalty and task.executive_penalty > 0 %}
-                  <span class="text-rose-500">
-                    Exec penalty {{ task.executive_penalty }}
-                  </span>
-                  {% endif %}
                   </div>
-                  {% if task.reason %}
-                  <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
-                  {% endif %}
-                  <div class="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      data-start-active-task
-                      data-task-id="{{ task.id }}"
-                      data-task-title="{{ task.title | e }}"
-                      data-task-project="{{ task.project | default('') | e }}"
-                      data-task-area="{{ task.area | default('') | e }}"
-                      class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
-                    >
-                      Start working
-                    </button>
-                    <span class="text-xs text-slate-400">Track progress without leaving the page.</span>
-                  </div>
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    data-start-active-task
+                    data-task-id="{{ task.id }}"
+                    data-task-title="{{ task.title | e }}"
+                    data-task-project="{{ task.project | default('') | e }}"
+                    data-task-area="{{ task.area | default('') | e }}"
+                    class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    Start working
+                  </button>
+                  <span class="text-xs text-slate-400">Track progress without leaving the page.</span>
                 </div>
               </li>
               {% endfor %}
@@ -278,53 +292,55 @@
             {% if over_limit_tasks %}
             <ul class="space-y-3">
               {% for task in over_limit_tasks %}
-              <li class="flex items-start gap-3 rounded-2xl border p-4 {% if task.is_overdue %}border-rose-400 bg-rose-50/80{% else %}border-rose-200 bg-white{% endif %}">
-                <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-rose-300 text-rose-500 focus:ring-rose-500">
-                <div class="flex-1">
-                  <div class="flex flex-wrap items-center gap-3">
-                    <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
-                    {% if task.is_overdue %}
-                    <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
-                      Overdue
-                    </span>
+              <li class="flex flex-col gap-3 rounded-2xl border p-4 {% if task.is_overdue %}border-rose-400 bg-rose-50/80{% else %}border-rose-200 bg-white{% endif %}">
+                <label class="flex w-full cursor-pointer items-start gap-3">
+                  <input type="checkbox" name="task_id" value="{{ task.id }}" class="mt-1 h-4 w-4 shrink-0 rounded border-rose-300 text-rose-500 focus:ring-rose-500">
+                  <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-3">
+                      <p class="text-base font-semibold text-slate-900">{{ task.title }}</p>
+                      {% if task.is_overdue %}
+                      <span class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-600">
+                        Overdue
+                      </span>
+                      {% endif %}
+                      <span class="text-xs font-mono uppercase text-slate-500">
+                        Energy {{ task.energy_cost }}
+                      </span>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                      {% if task.project %}
+                      <span>Project {{ task.project }}</span>
+                      {% endif %}
+                      {% if task.area %}
+                      <span>Area {{ task.area }}</span>
+                      {% endif %}
+                      <span>
+                        Exceeds limit by {{ (-task.capacity_gap) | round(1) }}
+                      </span>
+                      {% if task.executive_penalty and task.executive_penalty > 0 %}
+                      <span class="text-rose-500">
+                        Exec penalty {{ task.executive_penalty }}
+                      </span>
+                      {% endif %}
+                    </div>
+                    {% if task.reason %}
+                    <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
                     {% endif %}
-                    <span class="text-xs font-mono uppercase text-slate-500">
-                      Energy {{ task.energy_cost }}
-                    </span>
                   </div>
-                  <div class="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
-                    {% if task.project %}
-                    <span>Project {{ task.project }}</span>
-                    {% endif %}
-                    {% if task.area %}
-                    <span>Area {{ task.area }}</span>
-                    {% endif %}
-                    <span>
-                      Exceeds limit by {{ (-task.capacity_gap) | round(1) }}
-                    </span>
-                    {% if task.executive_penalty and task.executive_penalty > 0 %}
-                    <span class="text-rose-500">
-                      Exec penalty {{ task.executive_penalty }}
-                    </span>
-                    {% endif %}
-                  </div>
-                  {% if task.reason %}
-                  <p class="mt-2 text-xs text-slate-600">{{ task.reason }}</p>
-                  {% endif %}
-                  <div class="mt-3 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      data-start-active-task
-                      data-task-id="{{ task.id }}"
-                      data-task-title="{{ task.title | e }}"
-                      data-task-project="{{ task.project | default('') | e }}"
-                      data-task-area="{{ task.area | default('') | e }}"
-                      class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
-                    >
-                      Start working
-                    </button>
-                    <span class="text-xs text-slate-400">Log this one when you’re ready.</span>
-                  </div>
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    data-start-active-task
+                    data-task-id="{{ task.id }}"
+                    data-task-title="{{ task.title | e }}"
+                    data-task-project="{{ task.project | default('') | e }}"
+                    data-task-area="{{ task.area | default('') | e }}"
+                    class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                  >
+                    Start working
+                  </button>
+                  <span class="text-xs text-slate-400">Log this one when you’re ready.</span>
                 </div>
               </li>
               {% endfor %}
@@ -340,6 +356,13 @@
             <button type="submit" class="flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               Mark Complete
             </button>
+          </div>
+          <div class="pointer-events-auto md:hidden">
+            <div class="fixed inset-x-4 bottom-4 z-40 flex justify-center">
+              <button type="submit" class="w-full max-w-md rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                Mark Complete
+              </button>
+            </div>
           </div>
         </form>
       </div>
