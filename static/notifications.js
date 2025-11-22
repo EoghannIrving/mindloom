@@ -236,6 +236,7 @@
       this.swRegistration = null;
       this.toastTimer = null;
       this.initialized = false;
+      this.pendingNotifications = [];
     }
 
     init() {
@@ -389,6 +390,7 @@
       navigator.serviceWorker.ready
         .then((registration) => {
           this.swRegistration = registration;
+          this.flushPendingNotifications();
         })
         .catch(() => {});
       navigator.serviceWorker.addEventListener('message', (event) => {
@@ -549,11 +551,22 @@
         this.showInlineToast(options.body || title, []);
         return;
       }
+      const payload = { ...options };
+      const requiresServiceWorker =
+        Array.isArray(payload.actions) && payload.actions.length > 0;
       const display = () => {
+        if (requiresServiceWorker) {
+          if (this.swRegistration && this.swRegistration.showNotification) {
+            this.swRegistration.showNotification(title, payload);
+          } else {
+            this.pendingNotifications.push({ title, options: payload });
+          }
+          return;
+        }
         if (this.swRegistration && this.swRegistration.showNotification) {
-          this.swRegistration.showNotification(title, options);
+          this.swRegistration.showNotification(title, payload);
         } else {
-          new Notification(title, options);
+          new Notification(title, payload);
         }
       };
       if (Notification.permission === 'granted') {
@@ -565,12 +578,22 @@
           if (permission === 'granted') {
             display();
           } else {
-            this.showInlineToast(options.body || title, []);
+            this.showInlineToast(payload.body || title, []);
           }
         });
         return;
       }
-      this.showInlineToast(options.body || title, []);
+      this.showInlineToast(payload.body || title, []);
+    }
+
+    flushPendingNotifications() {
+      if (!this.swRegistration || !this.pendingNotifications.length) {
+        return;
+      }
+      while (this.pendingNotifications.length) {
+        const { title, options } = this.pendingNotifications.shift();
+        this.swRegistration.showNotification(title, options);
+      }
     }
 
     showInlineToast(message, actions = []) {
