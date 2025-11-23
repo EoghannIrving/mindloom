@@ -24,22 +24,22 @@
             <label for="energy" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Energy</label>
             <select id="energy"
               class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-              <option value="1">🪫 Drained</option>
-              <option value="2">😴 Low</option>
-              <option value="3">🙂 OK</option>
-              <option value="4">⚡ Energized</option>
-              <option value="5">💥 Turbo</option>
+              <option value="1" {% if energy_summary.energy == 1 %}selected{% endif %}>🪫 Drained</option>
+              <option value="2" {% if energy_summary.energy == 2 %}selected{% endif %}>😴 Low</option>
+              <option value="3" {% if energy_summary.energy == 3 %}selected{% endif %}>🙂 OK</option>
+              <option value="4" {% if energy_summary.energy == 4 %}selected{% endif %}>⚡ Energized</option>
+              <option value="5" {% if energy_summary.energy == 5 %}selected{% endif %}>💥 Turbo</option>
             </select>
           </div>
           <div class="flex flex-col gap-1">
             <label for="mood" class="text-sm font-medium uppercase tracking-wide text-indigo-100">Mood</label>
             <select id="mood"
               class="w-full rounded-lg border-0 bg-white/10 text-white focus:ring-2 focus:ring-amber-300 focus:outline-none py-2 px-3">
-              <option value="Sad">😔 Sad</option>
-              <option value="Meh">😐 Meh</option>
-              <option value="Okay">😊 Okay</option>
-              <option value="Calm">😌 Calm</option>
-              <option value="Joyful">😍 Joyful</option>
+              <option value="Sad" {% if energy_summary.mood == 'Sad' %}selected{% endif %}>😔 Sad</option>
+              <option value="Meh" {% if energy_summary.mood == 'Meh' %}selected{% endif %}>😐 Meh</option>
+              <option value="Okay" {% if energy_summary.mood == 'Okay' %}selected{% endif %}>😊 Okay</option>
+              <option value="Calm" {% if energy_summary.mood == 'Calm' %}selected{% endif %}>😌 Calm</option>
+              <option value="Joyful" {% if energy_summary.mood == 'Joyful' %}selected{% endif %}>😍 Joyful</option>
             </select>
           </div>
         </div>
