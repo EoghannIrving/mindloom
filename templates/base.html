@@ -65,6 +65,9 @@
           return;
         }
         el.textContent = text;
+        if (el.dataset.revealOnContent === 'true') {
+          el.classList.remove('hidden');
+        }
         if (el.classList.contains('data-placeholder')) {
           const placeholderClass = el.dataset.placeholderClass;
           if (placeholderClass) {
