@@ -204,16 +204,17 @@
         </div>
         <div class="flex flex-col gap-1">
           <label for="recurrence-{{t.id}}" class="text-sm font-medium text-gray-700">Recurrence</label>
-          <select
+          <input
             id="recurrence-{{t.id}}"
             name="recurrence-{{t.id}}"
+            type="text"
+            list="recurrence-options"
+            data-recurrence-field="true"
+            value="{{ t.recurrence or '' }}"
+            placeholder="daily, every 9 days, first saturday"
             class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
           >
-              <option value="" {% if not t.recurrence %}selected{% endif %}></option>
-              {% for opt in ["daily", "weekly", "bi-weekly", "monthly", "quarterly", "bi-annual", "yearly"] %}
-                <option value="{{ opt }}" {% if t.recurrence == opt %}selected{% endif %}>{{ opt }}</option>
-              {% endfor %}
-            </select>
+          <span class="text-xs text-gray-500">Examples: daily · every 9 days · first saturday</span>
         </div>
         <div class="flex flex-col gap-1">
           <label for="last_completed-{{t.id}}" class="text-sm font-medium text-gray-700">Last completed</label>

@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Union
 import yaml
 
+from utils.recurrence import normalize_recurrence_value
+
 from config import config
 from tasks import read_tasks_raw, write_tasks
 
@@ -181,9 +183,6 @@ def projects_to_tasks(projects, start_id: int = 1):
                 "area": proj.get("area", ""),
                 "type": "task",
                 "due": line_due if line_due else proj.get("due"),
-                "recurrence": (
-                    line_recurrence if line_recurrence else proj.get("recurrence")
-                ),
                 "effort": effort_value,
                 "energy_cost": energy_cost,
                 "status": "complete" if completed else proj.get("status", "active"),
@@ -191,6 +190,18 @@ def projects_to_tasks(projects, start_id: int = 1):
                 "executive_trigger": proj.get("executive_trigger"),
                 "source": "markdown",
             }
+
+            recurrence_candidate = line_recurrence or proj.get("recurrence")
+            normalized_recurrence = normalize_recurrence_value(recurrence_candidate)
+            if recurrence_candidate and not normalized_recurrence:
+                logger.warning(
+                    "Ignoring unsupported recurrence '%s' for task '%s' in %s",
+                    recurrence_candidate,
+                    title,
+                    proj.get("path"),
+                )
+            if normalized_recurrence:
+                task["recurrence"] = normalized_recurrence
 
             if metadata.get("last_completed"):
                 task["last_completed"] = metadata["last_completed"]

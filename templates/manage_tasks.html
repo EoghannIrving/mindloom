@@ -362,7 +362,22 @@
         const manageTasksForm = document.getElementById('manage-tasks-form');
 
         if (manageTasksForm) {
+          const recurrenceFieldSelector = '[data-recurrence-field]';
+          const normalizeRecurrenceFields = () => {
+            const fields = manageTasksForm.querySelectorAll(recurrenceFieldSelector);
+            let allValid = true;
+            fields.forEach((field) => {
+              const valid = ensureRecurrenceFieldValidity(field, { normalize: true });
+              if (!valid) {
+                allValid = false;
+              }
+            });
+            return allValid;
+          };
           const submitManageTasksForm = () => {
+            if (!normalizeRecurrenceFields()) {
+              return;
+            }
             if (typeof manageTasksForm.requestSubmit === 'function') {
               manageTasksForm.requestSubmit();
             } else {
@@ -491,15 +506,6 @@
               }
             });
           }
-          const recurrenceDays = {
-            daily: 1,
-            weekly: 7,
-            "bi-weekly": 14,
-            monthly: 30,
-            quarterly: 91,
-            "bi-annual": 182,
-            yearly: 365,
-          };
           manageTasksForm.addEventListener('change', (event) => {
             const target = event.target;
             if (!target || !target.matches || !target.matches('[data-bulk-checkbox]')) {
@@ -551,14 +557,6 @@
               const statusSelect = document.getElementById(`status-${taskId}`);
               const recurrenceInput = document.getElementById(`recurrence-${taskId}`);
               const isRecurring = Boolean(recurrenceInput?.value?.trim());
-              const recurrenceKey = (recurrenceInput?.value || '').trim().toLowerCase();
-              const daysToAdd = recurrenceDays[recurrenceKey];
-              const dueInput = document.getElementById(`due-${taskId}`);
-              if (daysToAdd && dueInput) {
-                const nextDueDate = new Date(localDate);
-                nextDueDate.setDate(nextDueDate.getDate() + daysToAdd);
-                dueInput.value = nextDueDate.toISOString().slice(0, 10);
-              }
               const nextStatus = isRecurring ? 'active' : 'complete';
               if (statusSelect) {
                 statusSelect.value = nextStatus;
@@ -576,6 +574,24 @@
               return;
             }
           });
+          manageTasksForm.addEventListener('input', (event) => {
+            const target = event.target;
+            if (!target || !target.matches || !target.matches(recurrenceFieldSelector)) {
+              return;
+            }
+            ensureRecurrenceFieldValidity(target);
+          });
+          manageTasksForm.addEventListener(
+            'blur',
+            (event) => {
+              const target = event.target;
+              if (!target || !target.matches || !target.matches(recurrenceFieldSelector)) {
+                return;
+              }
+              ensureRecurrenceFieldValidity(target, { normalize: true });
+            },
+            true,
+          );
           if (toggleSelectButton) {
             toggleSelectButton.addEventListener('click', (event) => {
               event.preventDefault();

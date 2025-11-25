@@ -5,15 +5,17 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Dict, List
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import MO, TU, WE, TH, FR, SA, SU, relativedelta
 
 import yaml
 
 from config import config
+from utils.recurrence import normalize_recurrence_value
 from utils.tasks import resolve_energy_cost
 
 TASKS_FILE = Path(config.TASKS_PATH)
@@ -52,21 +54,77 @@ CALENDAR_RECURRENCE_DELTAS = {
     "yearly": relativedelta(years=1),
 }
 
+_INTERVAL_PATTERN = re.compile(r"^every\s+(\d+)\s+days$", re.IGNORECASE)
+_ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "last": -1}
+_WEEKDAY_MAP = {
+    "monday": MO,
+    "tuesday": TU,
+    "wednesday": WE,
+    "thursday": TH,
+    "friday": FR,
+    "saturday": SA,
+    "sunday": SU,
+}
+
+
+def _nth_weekday_of_month(year: int, month: int, ordinal: int, weekday_cls) -> date:
+    start = date(year, month, 1)
+    return start + relativedelta(weekday=weekday_cls(ordinal))
+
+
+def _next_monthly_weekday(base: date, ordinal: int, weekday_cls) -> date:
+    candidate = _nth_weekday_of_month(base.year, base.month, ordinal, weekday_cls)
+    if candidate <= base:
+        next_month = base + relativedelta(months=1)
+        candidate = _nth_weekday_of_month(
+            next_month.year, next_month.month, ordinal, weekday_cls
+        )
+    return candidate
+
+
+def _parse_interval_days(value: str) -> int | None:
+    match = _INTERVAL_PATTERN.match(value)
+    if not match:
+        return None
+    count = int(match.group(1))
+    return count if count >= 1 else None
+
+
+def _parse_monthly_ordinal(value: str) -> tuple[int, type[MO]] | None:
+    parts = value.split()
+    if len(parts) != 2:
+        return None
+    ordinal_word, weekday_word = parts
+    ordinal = _ORDINALS.get(ordinal_word)
+    weekday_cls = _WEEKDAY_MAP.get(weekday_word)
+    if ordinal is None or weekday_cls is None:
+        return None
+    return ordinal, weekday_cls
+
 
 def _advance_for_recurrence(base: date, recurrence: str) -> date | None:
     if not base:
         return None
-    key = str(recurrence or "").lower()
-    if not key:
+    normalized = normalize_recurrence_value(recurrence)
+    if not normalized:
         return None
 
-    calendar_delta = CALENDAR_RECURRENCE_DELTAS.get(key)
+    calendar_delta = CALENDAR_RECURRENCE_DELTAS.get(normalized)
     if calendar_delta:
         return base + calendar_delta
 
-    days = RECURRENCE_DAYS.get(key)
+    days = RECURRENCE_DAYS.get(normalized)
     if days:
         return base + timedelta(days=days)
+
+    interval_days = _parse_interval_days(normalized)
+    if interval_days:
+        return base + timedelta(days=interval_days)
+
+    ordinal = _parse_monthly_ordinal(normalized)
+    if ordinal:
+        ordinal_value, weekday_cls = ordinal
+        return _next_monthly_weekday(base, ordinal_value, weekday_cls)
 
     return None
 

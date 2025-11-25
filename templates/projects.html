@@ -154,16 +154,15 @@
               </div>
               <div class="flex flex-col gap-1">
                 <label for="projectRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
-                  <select id="projectRecurrence" name="projectRecurrence" class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                    <option value=""></option>
-                    <option value="daily">daily</option>
-                    <option value="weekly">weekly</option>
-                    <option value="bi-weekly">bi-weekly</option>
-                    <option value="monthly">monthly</option>
-                    <option value="quarterly">quarterly</option>
-                    <option value="bi-annual">bi-annual</option>
-                    <option value="yearly">yearly</option>
-                  </select>
+                  <input
+                    id="projectRecurrence"
+                    name="projectRecurrence"
+                    type="text"
+                    list="recurrence-options"
+                    data-recurrence-field="true"
+                    placeholder="daily, every 9 days, first saturday"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  />
                 <span class="text-[11px] text-gray-500">How often it recurs, if applicable.</span>
               </div>
               <div class="flex flex-col gap-1">
@@ -374,7 +373,7 @@
     const projectAreaInput = document.getElementById('projectArea');
     const projectEffortSelect = document.getElementById('projectEffort');
     const projectDueInput = document.getElementById('projectDue');
-    const projectRecurrenceSelect = document.getElementById('projectRecurrence');
+    const projectRecurrenceInput = document.getElementById('projectRecurrence');
     const projectLastCompletedInput = document.getElementById('projectLastCompleted');
     const projectExecutiveTriggerSelect = document.getElementById('projectExecutiveTrigger');
     const projectLastReviewedInput = document.getElementById('projectLastReviewed');
@@ -401,6 +400,13 @@
         attachFieldValidation(element);
       }
     });
+
+    if (projectRecurrenceInput) {
+      projectRecurrenceInput.addEventListener('input', () => ensureRecurrenceFieldValidity(projectRecurrenceInput));
+      projectRecurrenceInput.addEventListener('blur', () =>
+        ensureRecurrenceFieldValidity(projectRecurrenceInput, { normalize: true }),
+      );
+    }
 
     let projectSlugManuallyEdited = false;
 
@@ -496,8 +502,8 @@
         if (projectDueInput) {
           projectDueInput.value = data.due || '';
         }
-        if (projectRecurrenceSelect) {
-          projectRecurrenceSelect.value = data.recurrence || '';
+        if (projectRecurrenceInput) {
+          projectRecurrenceInput.value = data.recurrence || '';
         }
         if (projectLastCompletedInput) {
           projectLastCompletedInput.value = data.last_completed || '';
@@ -584,6 +590,18 @@
             return null;
           }
 
+          if (projectRecurrenceInput) {
+            const recurrenceValid = ensureRecurrenceFieldValidity(projectRecurrenceInput, { normalize: true });
+            if (!recurrenceValid) {
+              updateFeedback(
+                projectFeedbackEl,
+                'Recurrence must be daily, every 9 days, or first saturday.',
+                'error',
+              );
+              return null;
+            }
+          }
+
           let slugValue = '';
           if (!currentEditSlug) {
             slugValue = sanitizeSlug(projectSlugInput.value);
@@ -609,7 +627,7 @@
 
           const optionalFields = [
             { element: projectDueInput, key: 'due' },
-            { element: projectRecurrenceSelect, key: 'recurrence' },
+            { element: projectRecurrenceInput, key: 'recurrence' },
             { element: projectLastCompletedInput, key: 'last_completed' },
             { element: projectExecutiveTriggerSelect, key: 'executive_trigger' },
             { element: projectLastReviewedInput, key: 'last_reviewed' },

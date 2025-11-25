@@ -252,6 +252,23 @@ def test_line_overrides_frontmatter():
     assert tasks[0]["recurrence"] == "weekly"
 
 
+def test_projects_to_tasks_normalizes_custom_recurrence():
+    """Custom recurrence text should be normalized before storing."""
+    projects = [
+        {
+            "title": "custom",
+            "path": "custom.md",
+            "tasks": [
+                "- [ ] First | recur:First Saturday",
+                "- [ ] Second | recur:9 days",
+            ],
+        }
+    ]
+    tasks = parse_projects.projects_to_tasks(projects)
+    assert tasks[0]["recurrence"] == "first saturday"
+    assert tasks[1]["recurrence"] == "every 9 days"
+
+
 def test_line_energy_overrides_defaults():
     """Per-line energy should override derived effort mapping."""
     projects = [

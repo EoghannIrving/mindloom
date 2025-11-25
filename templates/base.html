@@ -243,11 +243,67 @@
         }
       }
 
+      const RECURRENCE_KEYWORDS = ['daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'bi-annual', 'yearly'];
+      const RECURRENCE_INTERVAL_RE = /^\s*(?:every\s+)?(\d+)\s+days?\s*$/i;
+      const _RECURRENCE_WEEKDAY_LIST = 'monday|tuesday|wednesday|thursday|friday|saturday|sunday';
+      const RECURRENCE_ORDINAL_RE = new RegExp(
+        `^\\s*(first|second|third|fourth|last)\\s+(${_RECURRENCE_WEEKDAY_LIST})\\s*$`,
+        'i',
+      );
+
+      function normalizeRecurrenceValue(value) {
+        if (value === undefined || value === null) {
+          return null;
+        }
+        const candidate = String(value).trim();
+        if (!candidate) {
+          return null;
+        }
+        const lower = candidate.toLowerCase();
+        if (RECURRENCE_KEYWORDS.includes(lower)) {
+          return lower;
+        }
+        const intervalMatch = RECURRENCE_INTERVAL_RE.exec(candidate);
+        if (intervalMatch) {
+          const count = Number(intervalMatch[1]);
+          if (count >= 1) {
+            return `every ${count} days`;
+          }
+        }
+        const ordinalMatch = RECURRENCE_ORDINAL_RE.exec(candidate);
+        if (ordinalMatch) {
+          return `${ordinalMatch[1].toLowerCase()} ${ordinalMatch[2].toLowerCase()}`;
+        }
+        return null;
+      }
+
+      function ensureRecurrenceFieldValidity(field, options = {}) {
+        const { normalize = false } = options;
+        const el = resolveElement(field);
+        if (!el) {
+          return true;
+        }
+        const candidate = (el.value ?? '').toString().trim();
+        if (!candidate) {
+          setFieldValidity(el, true);
+          return true;
+        }
+        const normalized = normalizeRecurrenceValue(candidate);
+        const isValid = Boolean(normalized);
+        setFieldValidity(el, isValid);
+        if (isValid && normalize && normalized !== candidate) {
+          el.value = normalized;
+        }
+        return isValid;
+      }
+
       window.setPreContent = setPreContent;
       window.isPlaceholder = isPlaceholder;
       window.displayInlineError = displayInlineError;
       window.performActionWithFeedback = performActionWithFeedback;
       window.ensureOkResponse = ensureOkResponse;
+      window.normalizeRecurrenceValue = normalizeRecurrenceValue;
+      window.ensureRecurrenceFieldValidity = ensureRecurrenceFieldValidity;
       window.updateFeedback = updateFeedback;
       window.clearFeedback = clearFeedback;
       window.validateRequiredFields = validateRequiredFields;
@@ -271,9 +327,9 @@
     [data-dropdown][data-open="true"] .nav-dropdown-menu {
       visibility: visible;
       opacity: 1;
-    }
+  }
   </style>
-</head>
+  </head>
 <body class="px-4 pb-4 pt-0">
   {% set current_path = request.url.path %}
   {% macro nav_link(href, label) %}
@@ -440,5 +496,17 @@
       });
     }
   </script>
+  <datalist id="recurrence-options">
+    <option value="daily">
+    <option value="weekly">
+    <option value="bi-weekly">
+    <option value="monthly">
+    <option value="quarterly">
+    <option value="bi-annual">
+    <option value="yearly">
+    <option value="every 9 days">
+    <option value="first saturday">
+    <option value="last friday">
+  </datalist>
 </body>
 </html>

@@ -130,6 +130,36 @@ def test_mark_biweekly_task_updates_due(tmp_path: Path):
     assert updated[0]["next_due"] == expected_due
 
 
+def test_every_n_days_recurrence_advances_by_interval():
+    """Custom 'every N days' shifts due date by that interval."""
+    task = {
+        "id": 5,
+        "title": "interval",
+        "status": "active",
+        "recurrence": "every 9 days",
+        "due": date(2024, 1, 1).isoformat(),
+    }
+    complete_task(task, today=date(2024, 1, 1))
+    assert task["due"] == date(2024, 1, 10).isoformat()
+    assert task["status"] == "active"
+
+
+def test_monthly_ordinal_recurrence_jumps_to_next_month():
+    """Ordinal-monthly recurrence should pick the next specified weekday."""
+    base_date = date(2024, 1, 6)  # First Saturday in January
+    task = {
+        "id": 6,
+        "title": "first saturday",
+        "status": "active",
+        "recurrence": "first saturday",
+        "due": base_date.isoformat(),
+    }
+    complete_task(task, today=base_date)
+    expected = date(2024, 2, 3)  # First Saturday in February
+    assert task["due"] == expected.isoformat()
+    assert task["status"] == "active"
+
+
 def test_recurrence_days_supports_new_intervals():
     """RECURRENCE_DAYS should expose the added cadences."""
     assert RECURRENCE_DAYS["bi-weekly"] == 14

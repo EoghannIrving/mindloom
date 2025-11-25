@@ -64,7 +64,7 @@ retained (with end-of-month adjustments for shorter months).
 - **energy_cost** – numeric 1–5 rating of how taxing the task will be for the individual.
 - **executive_trigger** – tasks that are high-friction starts.
 - **project** – path of the project this task originated from.
-- **recurrence** – cadence for repeating tasks (values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`).
+- **recurrence** – cadence for repeating tasks (values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`, or expressions such as `every 9 days` or `first saturday`).
 
 _A future update will add `activation_difficulty` for high-friction starts._
 
@@ -85,7 +85,7 @@ Rules:
 Supported keys:
 
 - `due` – due date in `YYYY-MM-DD` format
-- `recur` – recurrence rule (supported values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`)
+- `recur` – recurrence rule (supported values: `daily`, `weekly`, `bi-weekly`, `monthly`, `quarterly`, `bi-annual`, `yearly`, or natural-language expressions such as `every 9 days` or `first saturday`)
 - `effort` – estimated effort (`low`, `med`, `high`)
 - `energy` – energy cost from 1–5
 - `last` – date last completed

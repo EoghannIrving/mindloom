@@ -188,20 +188,16 @@
                 </div>
                 <div class="flex flex-col gap-1">
                   <label for="newTaskRecurrence" class="text-sm font-medium text-gray-700">Recurrence</label>
-                    <select
-                      id="newTaskRecurrence"
-                      name="newTaskRecurrence"
+                  <input
+                    id="newTaskRecurrence"
+                    name="newTaskRecurrence"
+                    type="text"
+                    list="recurrence-options"
+                    data-recurrence-field="true"
+                    placeholder="daily, every 9 days, first saturday"
                     class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                   >
-                    <option value=""></option>
-                    <option value="daily">daily</option>
-                    <option value="weekly">weekly</option>
-                    <option value="bi-weekly">bi-weekly</option>
-                    <option value="monthly">monthly</option>
-                    <option value="quarterly">quarterly</option>
-                    <option value="bi-annual">bi-annual</option>
-                    <option value="yearly">yearly</option>
-                  </select>
+                  <span class="text-xs text-gray-500">Examples: daily · every 9 days · first saturday</span>
                 </div>
               </div>
               <div class="grid gap-4 md:grid-cols-2">
@@ -281,6 +277,10 @@
     const statusField = document.getElementById('newTaskStatus');
     const dueField = document.getElementById('newTaskDue');
     const recurrenceField = document.getElementById('newTaskRecurrence');
+    if (recurrenceField) {
+      recurrenceField.addEventListener('input', () => ensureRecurrenceFieldValidity(recurrenceField));
+      recurrenceField.addEventListener('blur', () => ensureRecurrenceFieldValidity(recurrenceField, { normalize: true }));
+    }
     const energyField = document.getElementById('newTaskEnergy');
     const notesField = document.getElementById('newTaskNotes');
     const advancedDetails = document.getElementById('newTaskAdvanced');
@@ -390,20 +390,32 @@
       if (!createButton || createButton.disabled) {
         return null;
       }
-      const submit = performActionWithFeedback(createButton, {
-        loadingText: 'Creating…',
-        errorMessage: 'Unable to create task',
-        action: async () => {
-          clearFeedback(feedbackEl);
-          const ok = validateRequiredFields(requiredFields, {
-            feedbackEl,
-            summaryMessage: 'Add a task title before saving.',
-          });
-          if (!ok) {
-            return null;
-          }
+          const submit = performActionWithFeedback(createButton, {
+            loadingText: 'Creating…',
+            errorMessage: 'Unable to create task',
+            action: async () => {
+              clearFeedback(feedbackEl);
+              const ok = validateRequiredFields(requiredFields, {
+                feedbackEl,
+                summaryMessage: 'Add a task title before saving.',
+              });
+              if (!ok) {
+                return null;
+              }
 
-          const payload = {
+              if (recurrenceField) {
+                const recurrenceValid = ensureRecurrenceFieldValidity(recurrenceField, { normalize: true });
+                if (!recurrenceValid) {
+                  updateFeedback(
+                    feedbackEl,
+                    'Enter a recurrence like daily, every 9 days, or first saturday.',
+                    'error',
+                  );
+                  return null;
+                }
+              }
+
+              const payload = {
             title: (titleField?.value || '').trim(),
             effort: (effortField?.value || 'low').trim(),
             status: (statusField?.value || 'active').trim(),
