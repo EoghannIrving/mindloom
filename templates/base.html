@@ -245,6 +245,7 @@
 
       const RECURRENCE_KEYWORDS = ['daily', 'weekly', 'bi-weekly', 'monthly', 'quarterly', 'bi-annual', 'yearly'];
       const RECURRENCE_INTERVAL_RE = /^\s*(?:every\s+)?(\d+)\s+days?\s*$/i;
+      const RECURRENCE_MONTH_INTERVAL_RE = /^\s*(?:every\s+)?(\d+)\s+months?\s*$/i;
       const _RECURRENCE_WEEKDAY_LIST = 'monday|tuesday|wednesday|thursday|friday|saturday|sunday';
       const RECURRENCE_ORDINAL_RE = new RegExp(
         `^\\s*(first|second|third|fourth|last)\\s+(${_RECURRENCE_WEEKDAY_LIST})\\s*$`,
@@ -268,6 +269,17 @@
           const count = Number(intervalMatch[1]);
           if (count >= 1) {
             return `every ${count} days`;
+          }
+        }
+        const monthIntervalMatch = RECURRENCE_MONTH_INTERVAL_RE.exec(candidate);
+        if (monthIntervalMatch) {
+          const count = Number(monthIntervalMatch[1]);
+          if (count >= 1) {
+            const keywordMap = { 1: 'monthly', 3: 'quarterly', 6: 'bi-annual', 12: 'yearly' };
+            if (keywordMap[count]) {
+              return keywordMap[count];
+            }
+            return `every ${count} months`;
           }
         }
         const ordinalMatch = RECURRENCE_ORDINAL_RE.exec(candidate);

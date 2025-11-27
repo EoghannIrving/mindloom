@@ -62,6 +62,59 @@ def test_save_tasks_redirect_preserves_filters(monkeypatch: pytest.MonkeyPatch):
     assert written["tasks"][0]["status"] == "complete"
 
 
+def test_save_tasks_marks_recurring_complete(monkeypatch: pytest.MonkeyPatch):
+    """Completing a recurring task via manage tasks advances it and stays active."""
+
+    initial_tasks = [
+        {
+            "id": 1,
+            "title": "Recurring task",
+            "status": "active",
+            "recurrence": "weekly",
+            "due": "2024-04-01",
+        }
+    ]
+
+    monkeypatch.setattr(tasks_page, "read_tasks", lambda: [dict(initial_tasks[0])])
+
+    written: dict[str, list] = {}
+
+    def fake_write_tasks(data: list[dict], path=None) -> None:
+        written["tasks"] = data
+
+    monkeypatch.setattr(tasks_page, "write_tasks", fake_write_tasks)
+    monkeypatch.setattr(tasks_page, "write_tasks_to_projects", lambda *_, **__: None)
+
+    completed: dict[str, bool] = {}
+
+    def fake_complete_task(task: dict, today=None) -> None:
+        completed["called"] = True
+        task["due"] = "2024-04-08"
+        task["status"] = "active"
+        task["last_completed"] = "2024-04-01"
+
+    monkeypatch.setattr(tasks_page, "complete_task", fake_complete_task)
+
+    client = TestClient(app)
+    response = client.post(
+        "/manage-tasks",
+        data={
+            "title-1": "Recurring task",
+            "recurrence-1": "weekly",
+            "due-1": "2024-04-01",
+            "status-1": "active",
+            "complete-1": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert completed.get("called") is True
+    assert written["tasks"][0]["due"] == "2024-04-08"
+    assert written["tasks"][0]["status"] == "active"
+    assert written["tasks"][0]["last_completed"] == "2024-04-01"
+
+
 def test_manage_tasks_default_hides_complete_tasks(monkeypatch: pytest.MonkeyPatch):
     """Without an explicit status filter completed tasks are hidden."""
 

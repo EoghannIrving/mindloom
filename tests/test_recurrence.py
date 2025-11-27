@@ -11,6 +11,11 @@ def test_interval_values():
     assert normalize_recurrence_value("Every 14 days") == "every 14 days"
 
 
+def test_month_interval_values():
+    assert normalize_recurrence_value("every 6 months") == "bi-annual"
+    assert normalize_recurrence_value("2 months") == "every 2 months"
+
+
 def test_weekday_ordinals():
     assert normalize_recurrence_value("First Saturday") == "first saturday"
     assert normalize_recurrence_value("last Friday") == "last friday"

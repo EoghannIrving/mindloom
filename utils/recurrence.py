@@ -16,6 +16,9 @@ SUPPORTED_KEYWORDS = (
 )
 
 _INTERVAL_PATTERN = re.compile(r"^\s*(?:every\s+)?(\d+)\s+days?\s*$", re.IGNORECASE)
+_MONTH_INTERVAL_PATTERN = re.compile(
+    r"^\s*(?:every\s+)?(\d+)\s+months?\s*$", re.IGNORECASE
+)
 _ORDINAL_PATTERN = re.compile(
     r"^\s*(first|second|third|fourth|last)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s*$",
     re.IGNORECASE,
@@ -40,6 +43,15 @@ def normalize_recurrence_value(value: str | None) -> str | None:
         count = int(interval_match.group(1))
         if count >= 1:
             return f"every {count} days"
+
+    month_interval_match = _MONTH_INTERVAL_PATTERN.match(candidate)
+    if month_interval_match:
+        count = int(month_interval_match.group(1))
+        if count >= 1:
+            keyword_map = {1: "monthly", 3: "quarterly", 6: "bi-annual", 12: "yearly"}
+            if count in keyword_map:
+                return keyword_map[count]
+            return f"every {count} months"
 
     ordinal_match = _ORDINAL_PATTERN.match(candidate)
     if ordinal_match:

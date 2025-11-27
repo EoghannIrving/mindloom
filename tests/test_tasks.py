@@ -109,6 +109,49 @@ def test_mark_recurring_task_updates_due(tmp_path: Path):
     assert updated[0]["next_due"] == expected_due
 
 
+def test_mark_recurring_task_advances_due_when_completed_before_due(tmp_path: Path):
+    """Completing early should still push the recurring due date forward."""
+    path = tmp_path / "tasks.yaml"
+    today = date.today()
+    tasks = [
+        {
+            "id": 99,
+            "title": "habit",
+            "status": "active",
+            "recurrence": "weekly",
+            "due": (today + timedelta(days=3)).isoformat(),
+        }
+    ]
+    write_tasks(tasks, path)
+    mark_tasks_complete([99], path)
+    updated = read_tasks(path)
+    expected_due = (today + timedelta(days=10)).isoformat()
+    assert updated[0]["due"] == expected_due
+    assert updated[0]["next_due"] == expected_due
+
+
+def test_mark_recurring_task_uses_schedule_when_completed_late(tmp_path: Path):
+    """Completing late should still follow the scheduled recurrence."""
+    path = tmp_path / "tasks.yaml"
+    today = date.today()
+    overdue_due = today - timedelta(days=2)
+    tasks = [
+        {
+            "id": 100,
+            "title": "habit",
+            "status": "active",
+            "recurrence": "weekly",
+            "due": overdue_due.isoformat(),
+        }
+    ]
+    write_tasks(tasks, path)
+    mark_tasks_complete([100], path)
+    updated = read_tasks(path)
+    expected_due = (overdue_due + timedelta(days=7)).isoformat()
+    assert updated[0]["due"] == expected_due
+    assert updated[0]["next_due"] == expected_due
+
+
 def test_mark_biweekly_task_updates_due(tmp_path: Path):
     """Completing a bi-weekly recurring task should jump two weeks ahead."""
     path = tmp_path / "tasks.yaml"
@@ -135,6 +178,39 @@ def test_every_n_days_recurrence_advances_by_interval():
     task = {
         "id": 5,
         "title": "interval",
+        "status": "active",
+        "recurrence": "every 9 days",
+        "due": date(2024, 1, 1).isoformat(),
+    }
+    complete_task(task, today=date(2024, 1, 1))
+    assert task["due"] == date(2024, 1, 10).isoformat()
+    assert task["status"] == "active"
+
+
+def test_every_n_months_recurrence_advances_calendar():
+    """Month-based custom recurrences should advance by calendar months."""
+    task = {
+        "id": 6,
+        "title": "deep clean",
+        "status": "active",
+        "recurrence": "every 6 months",
+        "due": date(2024, 1, 31).isoformat(),
+    }
+    complete_task(task, today=date(2024, 1, 31))
+    assert task["due"] == date(2024, 7, 31).isoformat()
+    assert task["status"] == "active"
+
+
+def test_every_n_days_completion_handles_log_errors(monkeypatch):
+    """Completion logging failures should not block due updates."""
+
+    def boom(*_, **__):
+        raise PermissionError("cannot write log")
+
+    monkeypatch.setattr("tasks._write_task_completions", boom)
+    task = {
+        "id": 55,
+        "title": "clip nails",
         "status": "active",
         "recurrence": "every 9 days",
         "due": date(2024, 1, 1).isoformat(),

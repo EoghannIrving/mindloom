@@ -55,6 +55,7 @@ CALENDAR_RECURRENCE_DELTAS = {
 }
 
 _INTERVAL_PATTERN = re.compile(r"^every\s+(\d+)\s+days$", re.IGNORECASE)
+_MONTH_INTERVAL_PATTERN = re.compile(r"^every\s+(\d+)\s+months$", re.IGNORECASE)
 _ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "last": -1}
 _WEEKDAY_MAP = {
     "monday": MO,
@@ -84,6 +85,14 @@ def _next_monthly_weekday(base: date, ordinal: int, weekday_cls) -> date:
 
 def _parse_interval_days(value: str) -> int | None:
     match = _INTERVAL_PATTERN.match(value)
+    if not match:
+        return None
+    count = int(match.group(1))
+    return count if count >= 1 else None
+
+
+def _parse_interval_months(value: str) -> int | None:
+    match = _MONTH_INTERVAL_PATTERN.match(value)
     if not match:
         return None
     count = int(match.group(1))
@@ -121,6 +130,10 @@ def _advance_for_recurrence(base: date, recurrence: str) -> date | None:
     if interval_days:
         return base + timedelta(days=interval_days)
 
+    interval_months = _parse_interval_months(normalized)
+    if interval_months:
+        return base + relativedelta(months=interval_months)
+
     ordinal = _parse_monthly_ordinal(normalized)
     if ordinal:
         ordinal_value, weekday_cls = ordinal
@@ -129,7 +142,7 @@ def _advance_for_recurrence(base: date, recurrence: str) -> date | None:
     return None
 
 
-def _next_due(task: Dict, today: date) -> date:
+def _next_due(task: Dict, today: date, *, ignore_current_cycle: bool = False) -> date:
     """Return the next due date for a recurring task."""
     recurrence = str(task.get("recurrence", "")).lower()
     if not recurrence:
@@ -148,10 +161,18 @@ def _next_due(task: Dict, today: date) -> date:
     due_date = _parse_date(task.get("due"))
     last_completed_date = _parse_date(task.get("last_completed"))
 
-    recurrence_date = _advance_for_recurrence(last_completed_date or today, recurrence)
-    if due_date and (not last_completed_date or due_date > last_completed_date):
+    base_date_for_recurrence = due_date or last_completed_date or today
+    recurrence_date = _advance_for_recurrence(base_date_for_recurrence, recurrence)
+    due_candidate = None
+    if (
+        due_date
+        and not ignore_current_cycle
+        and (not last_completed_date or due_date > last_completed_date)
+    ):
         # Respect a manually entered due date for the current cycle.
-        return due_date
+        due_candidate = due_date
+    if due_candidate:
+        return due_candidate
 
     return recurrence_date or today
 
@@ -164,7 +185,7 @@ def complete_task(task: Dict, today: date | None = None) -> None:
     record_task_completion(task, completed_at=iso_today)
     if task.get("recurrence"):
         task["status"] = "active"
-        next_due = _next_due(task, today_date)
+        next_due = _next_due(task, today_date, ignore_current_cycle=True)
         task["due"] = next_due.isoformat()
     else:
         task["status"] = "complete"
@@ -287,7 +308,10 @@ def record_task_completion(
     if key in seen:
         return
     entries.append(entry)
-    _write_task_completions(entries, path=path)
+    try:
+        _write_task_completions(entries, path=path)
+    except OSError as exc:  # pragma: no cover - defensive fallback
+        logger.warning("Unable to persist task completion log to %s: %s", path, exc)
 
 
 def task_completion_history(

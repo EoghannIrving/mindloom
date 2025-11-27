@@ -553,6 +553,12 @@
               if (lastCompletedInput) {
                 lastCompletedInput.value = localDate;
               }
+              const completeInput = manageTasksForm.querySelector(
+                `[data-complete-input][data-task-id="${taskId}"]`
+              );
+              if (completeInput) {
+                completeInput.value = "1";
+              }
 
               const statusSelect = document.getElementById(`status-${taskId}`);
               const recurrenceInput = document.getElementById(`recurrence-${taskId}`);
